@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output          = "../src/generated"
+  binaryTargets   = ["native", "windows"]  
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  EMP_ID          String   @id @default(cuid())
+  EMPNAME         String
+  EMPFNAME        String
+  EMPPROFILEPHOTO String?
+  EMPDESG         String
+  DEVICEID        String?  
+  STATUS          String   @default("NA") // "A" = Approved, "NA" = Not Approved
+  EMPTYPE         String // "SUPERVISOR" | "INDIVIDUAL"
+  CREATEDAT       DateTime @default(now())
+
+  attendances Attendance[]
+
+  @@map("employees")
+}
+
+model Attendance {
+  EMP_ID    String
+  CREATEDAT DateTime @default(now())
+  PHOTO     String? // internal path
+  LOCATION  String? // location name string
+  STATUS    String // "P" = Present, "A" = Absent
+  MARKED_BY String? // EMP_ID of supervisor if marked by supervisor
+
+  employee Employee @relation(fields: [EMP_ID], references: [EMP_ID])
+
+  @@id([EMP_ID, CREATEDAT])
+  @@map("attendance")
+}
