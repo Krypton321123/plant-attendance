@@ -42,6 +42,10 @@ export { Prisma }
 path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node")
 path.join(process.cwd(), "src/generated/libquery_engine-darwin-arm64.dylib.node")
 
+// file annotations for bundling tools to include these files
+path.join(__dirname, "query_engine-windows.dll.node")
+path.join(process.cwd(), "src/generated/query_engine-windows.dll.node")
+
 /**
  * Model Employee
  * 
@@ -52,3 +56,43 @@ export type Employee = Prisma.EmployeeModel
  * 
  */
 export type Attendance = Prisma.AttendanceModel
+/**
+ * Model FillingEntry
+ * 
+ */
+export type FillingEntry = Prisma.FillingEntryModel
+/**
+ * Model WastageEntry
+ * 
+ */
+export type WastageEntry = Prisma.WastageEntryModel
+/**
+ * Model DispatchSession
+ * 
+ */
+export type DispatchSession = Prisma.DispatchSessionModel
+/**
+ * Model DispatchItem
+ * 
+ */
+export type DispatchItem = Prisma.DispatchItemModel
+/**
+ * Model DispatchEmptyItem
+ * 
+ */
+export type DispatchEmptyItem = Prisma.DispatchEmptyItemModel
+/**
+ * Model mstitm
+ * 
+ */
+export type mstitm = Prisma.mstitmModel
+/**
+ * Model mstparty
+ * 
+ */
+export type mstparty = Prisma.mstpartyModel
+/**
+ * Model mstunit
+ * 
+ */
+export type mstunit = Prisma.mstunitModel

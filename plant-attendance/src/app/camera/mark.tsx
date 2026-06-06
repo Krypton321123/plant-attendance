@@ -3,12 +3,13 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+
   Alert,
   ActivityIndicator,
   Image,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { captureRef } from "react-native-view-shot";
 import { API_URL } from "../../constants/config";
 import { getCurrentLocationWithName } from "../../util/Location";
+import { C } from "../../constants/theme";
 
 export default function MarkCameraScreen() {
   const router = useRouter();
@@ -34,9 +36,7 @@ export default function MarkCameraScreen() {
   const [processing, setProcessing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locationName, setLocationName] = useState<string>("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const cameraRef = useRef<CameraView | null>(null);
   const overlayRef = useRef<View | null>(null);
@@ -133,8 +133,11 @@ export default function MarkCameraScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.permBox}>
-          <Ionicons name="camera-outline" size={52} color="#444" />
+          <View style={styles.permIconWrap}>
+            <Ionicons name="camera-outline" size={32} color={C.primary} />
+          </View>
           <Text style={styles.permTitle}>Camera Required</Text>
+          <Text style={styles.permSub}>We need camera access to mark attendance.</Text>
           <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
             <Text style={styles.permBtnText}>Grant Permission</Text>
           </TouchableOpacity>
@@ -143,7 +146,6 @@ export default function MarkCameraScreen() {
     );
   }
 
-  // Overlay component rendered over the photo
   const PhotoOverlay = () => (
     <LinearGradient
       colors={["transparent", "rgba(0,0,0,0.75)", "rgba(0,0,0,0.92)"]}
@@ -178,22 +180,23 @@ export default function MarkCameraScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.topBar}>
           <TouchableOpacity
+            style={styles.backBtn}
             onPress={() => {
               setPhotoUri(null);
               setFinalUri(null);
             }}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+            <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.topBarTitle}>Photo Preview</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: 36 }} />
         </View>
 
         <Text style={styles.subLabel}>
-          Marking: <Text style={{ color: "#E8A020" }}>{empName}</Text>
+          Marking:{" "}
+          <Text style={{ color: C.primary, fontWeight: "700" }}>{empName}</Text>
         </Text>
 
-        {/* Capturable view */}
         <View
           style={styles.photoContainer}
           ref={overlayRef}
@@ -209,7 +212,7 @@ export default function MarkCameraScreen() {
 
         {processing && (
           <View style={styles.processingRow}>
-            <ActivityIndicator size="small" color="#E8A020" />
+            <ActivityIndicator size="small" color={C.primary} />
             <Text style={styles.processingText}>Processing image...</Text>
           </View>
         )}
@@ -222,7 +225,7 @@ export default function MarkCameraScreen() {
               setFinalUri(null);
             }}
           >
-            <Ionicons name="refresh" size={20} color="#FFF" />
+            <Ionicons name="refresh" size={20} color={C.textSecondary} />
             <Text style={styles.retakeBtnText}>Retake</Text>
           </TouchableOpacity>
 
@@ -235,10 +238,10 @@ export default function MarkCameraScreen() {
             disabled={!finalUri || processing || uploading}
           >
             {uploading ? (
-              <ActivityIndicator color="#0D0D0D" />
+              <ActivityIndicator color={C.textInverse} />
             ) : (
               <>
-                <Ionicons name="checkmark" size={20} color="#0D0D0D" />
+                <Ionicons name="checkmark" size={20} color={C.textInverse} />
                 <Text style={styles.useBtnText}>Mark Present</Text>
               </>
             )}
@@ -251,19 +254,20 @@ export default function MarkCameraScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Take Photo</Text>
         <TouchableOpacity
+          style={styles.backBtn}
           onPress={() => setFacing(facing === "back" ? "front" : "back")}
         >
-          <Ionicons name="camera-reverse-outline" size={24} color="#FFF" />
+          <Ionicons name="camera-reverse-outline" size={20} color={C.textPrimary} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.empLabel}>
-        <Ionicons name="person-outline" size={14} color="#E8A020" />
+        <Ionicons name="person-outline" size={14} color={C.primary} />
         <Text style={styles.empLabelText}>{empName}</Text>
       </View>
 
@@ -272,13 +276,13 @@ export default function MarkCameraScreen() {
       <View style={styles.shutterArea}>
         {locationName ? (
           <View style={styles.locationChip}>
-            <Ionicons name="location-outline" size={13} color="#888" />
+            <Ionicons name="location-outline" size={13} color={C.textSecondary} />
             <Text style={styles.locationChipText} numberOfLines={1}>
               {locationName}
             </Text>
           </View>
         ) : (
-          <ActivityIndicator size="small" color="#444" />
+          <ActivityIndicator size="small" color={C.textMuted} />
         )}
 
         <TouchableOpacity style={styles.shutterBtn} onPress={takePicture}>
@@ -306,43 +310,61 @@ const overlayStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0D0D0D" },
+  container: { flex: 1, backgroundColor: C.pageBg },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    backgroundColor: C.cardBg,
   },
-  topBarTitle: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  topBarTitle: { color: C.textPrimary, fontSize: 16, fontWeight: "700" },
   subLabel: {
-    color: "#555",
+    color: C.textSecondary,
     fontSize: 14,
     textAlign: "center",
-    marginBottom: 12,
+    marginVertical: 12,
   },
   empLabel: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     alignSelf: "center",
-    backgroundColor: "#1A1200",
+    backgroundColor: C.primaryLight,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#2A2000",
+    borderColor: C.primaryMuted,
   },
-  empLabelText: { color: "#E8A020", fontSize: 13, fontWeight: "700" },
+  empLabelText: { color: C.primary, fontSize: 13, fontWeight: "700" },
   camera: { flex: 1 },
   photoContainer: {
     marginHorizontal: 20,
     borderRadius: 20,
     overflow: "hidden",
     height: 400,
-    backgroundColor: "#111",
+    backgroundColor: C.border,
     position: "relative",
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   processingRow: {
     flexDirection: "row",
@@ -351,30 +373,35 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
   },
-  processingText: { color: "#555", fontSize: 13 },
+  processingText: { color: C.textSecondary, fontSize: 13 },
   shutterArea: {
     paddingBottom: 40,
     paddingTop: 20,
     alignItems: "center",
     gap: 16,
+    backgroundColor: C.cardBg,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
   },
   locationChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: C.inputBg,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     maxWidth: 280,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  locationChipText: { color: "#666", fontSize: 12, flex: 1 },
+  locationChipText: { color: C.textSecondary, fontSize: 12, flex: 1 },
   shutterBtn: {
     width: 72,
     height: 72,
     borderRadius: 36,
     borderWidth: 4,
-    borderColor: "#E8A020",
+    borderColor: C.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -382,7 +409,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
   },
   actionRow: {
     flexDirection: "row",
@@ -395,26 +422,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: C.cardBg,
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: C.border,
   },
-  retakeBtnText: { color: "#FFF", fontSize: 15, fontWeight: "600" },
+  retakeBtnText: { color: C.textSecondary, fontSize: 15, fontWeight: "600" },
   useBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#22C55E",
+    backgroundColor: C.green,
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
   },
-  useBtnDisabled: { backgroundColor: "#1A1A1A" },
-  useBtnText: { color: "#0D0D0D", fontSize: 15, fontWeight: "800" },
+  useBtnDisabled: { backgroundColor: C.border },
+  useBtnText: { color: C.textInverse, fontSize: 15, fontWeight: "800" },
   permBox: {
     flex: 1,
     justifyContent: "center",
@@ -422,12 +449,23 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 40,
   },
-  permTitle: { color: "#FFF", fontSize: 20, fontWeight: "700" },
+  permIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: C.primaryLight,
+    borderWidth: 1,
+    borderColor: C.primaryMuted,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  permTitle: { color: C.textPrimary, fontSize: 20, fontWeight: "700" },
+  permSub: { color: C.textSecondary, fontSize: 14, textAlign: "center", lineHeight: 20 },
   permBtn: {
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 28,
   },
-  permBtnText: { color: "#0D0D0D", fontWeight: "800", fontSize: 15 },
+  permBtnText: { color: C.textInverse, fontWeight: "800", fontSize: 15 },
 });

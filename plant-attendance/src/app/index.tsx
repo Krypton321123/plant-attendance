@@ -22,31 +22,44 @@ export default function IndexScreen() {
       const employee = JSON.parse(raw);
       const deviceId = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
 
-      // Re-check approval status from server
       const res = await fetch(
-        `${API_URL}/employees/${employee.EMP_ID}/status?deviceId=${deviceId}`
+        `${API_URL}/employees/${employee.EMP_ID}/status?deviceId=${deviceId}`,
       );
       const data = await res.json();
 
       if (!data.success) {
-        // Something's wrong, start fresh
         await AsyncStorage.removeItem(STORAGE_KEYS.EMPLOYEE);
         router.replace("/auth/select-employee");
         return;
       }
 
       const updated = { ...employee, ...data.data };
-      await AsyncStorage.setItem(STORAGE_KEYS.EMPLOYEE, JSON.stringify(updated));
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.EMPLOYEE,
+        JSON.stringify(updated),
+      );
 
       if (updated.STATUS !== "A") {
         router.replace("/auth/pending");
         return;
       }
 
-      if (updated.EMPTYPE === "SUPERVISOR") {
-        router.replace("/supervisor/home");
-      } else {
-        router.replace("/individual/home");
+      // Route based on EMPTYPE
+      switch (updated.EMPTYPE) {
+        case "ADMIN":
+          router.replace("/admin/home");
+          break;
+        case "SUPERVISOR":
+          router.replace("/supervisor/home");
+          break;
+        case "PPSUPERVISOR": 
+          router.replace("/supervisor/home");
+          break;
+          case "OFFICE": 
+          router.replace("/supervisor/home");
+          break;
+        default:
+          router.replace("/individual/home");
       }
     } catch {
       router.replace("/auth/select-employee");
@@ -63,7 +76,7 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0D0D0D",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -5,19 +5,19 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
   Alert,
-  ScrollView,
   Image,
   Platform,
 } from "react-native";
 import { useEffect, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 import { API_URL } from "../../constants/config";
+import { C } from "../../constants/theme";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ type AttendanceRecord = {
   todayStatus: "P" | "A" | null;
   markedAt: string | null;
   location: string | null;
-  photo: string | null; // server path e.g. "attendance/xxx.jpg"
+  photo: string | null;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,7 +52,6 @@ const formatDate = () =>
     year: "numeric",
   });
 
-/** Convert an image URL to base64 so it embeds in the PDF HTML */
 const toBase64 = async (url: string): Promise<string | null> => {
   try {
     const localUri = FileSystem.cacheDirectory + `att_img_${Date.now()}.jpg`;
@@ -73,7 +72,6 @@ const buildHtml = async (
   dateStr: string,
   apiUrl: string,
 ): Promise<string> => {
-  // Pre-fetch all photos as base64
   const photoMap: Record<string, string> = {};
   await Promise.all(
     records.map(async (r) => {
@@ -127,13 +125,11 @@ const buildHtml = async (
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1a1a1a; padding: 32px; }
-
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; border-bottom: 3px solid #E8A020; padding-bottom: 16px; }
-  .header-left h1 { font-size: 22px; font-weight: 800; color: #0D0D0D; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; border-bottom: 3px solid #2563EB; padding-bottom: 16px; }
+  .header-left h1 { font-size: 22px; font-weight: 800; color: #0F172A; }
   .header-left p  { font-size: 13px; color: #888; margin-top: 4px; }
   .header-right   { text-align: right; }
   .logo-text       { font-size: 11px; color: #bbb; letter-spacing: 1px; text-transform: uppercase; }
-
   .stats { display: flex; gap: 12px; margin-bottom: 24px; }
   .stat  { flex: 1; border-radius: 10px; padding: 12px 16px; text-align: center; }
   .stat-p { background: #f0fdf4; border: 1px solid #bbf7d0; }
@@ -144,34 +140,27 @@ const buildHtml = async (
   .stat-a .stat-num { color: #dc2626; }
   .stat-u .stat-num { color: #d97706; }
   .stat-label { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead tr { background: #f8f8f8; }
   th { padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 2px solid #eee; }
   td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:nth-child(even) { background: #fafafa; }
-
   .photo-cell { width: 60px; }
   .att-photo  { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
   .no-photo   { width: 48px; height: 48px; border-radius: 8px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #bbb; text-align: center; line-height: 1.3; padding: 4px; }
-
   .emp-name  { font-weight: 700; color: #1a1a1a; font-size: 13px; }
   .emp-desg  { font-size: 11px; color: #888; margin-top: 2px; }
-
   .badge     { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
   .badge-p   { background: #dcfce7; color: #16a34a; }
   .badge-a   { background: #fee2e2; color: #dc2626; }
   .badge-u   { background: #fef9c3; color: #ca8a04; }
-
   .time-cell { color: #555; font-size: 12px; white-space: nowrap; }
   .loc-cell  { color: #888; font-size: 11px; max-width: 140px; }
-
   .footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #bbb; }
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-left">
     <h1>Attendance Report</h1>
@@ -181,48 +170,24 @@ const buildHtml = async (
     <div class="logo-text">Plant Attendance</div>
   </div>
 </div>
-
 <div class="stats">
-  <div class="stat stat-p">
-    <div class="stat-num">${present}</div>
-    <div class="stat-label">Present</div>
-  </div>
-  <div class="stat stat-a">
-    <div class="stat-num">${absent}</div>
-    <div class="stat-label">Absent</div>
-  </div>
-  <div class="stat stat-u">
-    <div class="stat-num">${unmarked}</div>
-    <div class="stat-label">Unmarked</div>
-  </div>
+  <div class="stat stat-p"><div class="stat-num">${present}</div><div class="stat-label">Present</div></div>
+  <div class="stat stat-a"><div class="stat-num">${absent}</div><div class="stat-label">Absent</div></div>
+  <div class="stat stat-u"><div class="stat-num">${unmarked}</div><div class="stat-label">Unmarked</div></div>
 </div>
-
 <table>
-  <thead>
-    <tr>
-      <th>Photo</th>
-      <th>Employee</th>
-      <th>Status</th>
-      <th>Time</th>
-      <th>Location</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${rows}
-  </tbody>
+  <thead><tr><th>Photo</th><th>Employee</th><th>Status</th><th>Time</th><th>Location</th></tr></thead>
+  <tbody>${rows}</tbody>
 </table>
-
 <div class="footer">
   <span>Generated on ${new Date().toLocaleString("en-IN")}</span>
   <span>Total: ${records.length} employees</span>
 </div>
-
 </body>
 </html>`;
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
-
 
 export default function AttendanceReportScreen() {
   const router = useRouter();
@@ -231,7 +196,6 @@ export default function AttendanceReportScreen() {
   const [generating, setGenerating] = useState(false);
 
   const dateStr = formatDate();
-  
 
   useEffect(() => {
     fetchData();
@@ -254,7 +218,6 @@ export default function AttendanceReportScreen() {
           location: emp.todayAttendance?.LOCATION ?? null,
           photo: emp.todayAttendance?.PHOTO ?? null,
         }));
-        // Sort: Present → Absent → Unmarked
         mapped.sort((a: AttendanceRecord, b: AttendanceRecord) => {
           const order = { P: 0, A: 1, null: 2 };
           return (
@@ -275,23 +238,15 @@ export default function AttendanceReportScreen() {
     setGenerating(true);
     try {
       const html = await buildHtml(records, dateStr, STATIC_URL);
-
-      const { uri } = await Print.printToFileAsync({
-        html,
-        base64: false,
-      });
-
-      // Rename to something meaningful
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
       const dateTag = new Date().toISOString().slice(0, 10);
       const destUri = FileSystem.cacheDirectory + `attendance_${dateTag}.pdf`;
       await FileSystem.moveAsync({ from: uri, to: destUri });
-
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         Alert.alert("Error", "Sharing is not available on this device");
         return;
       }
-
       await Sharing.shareAsync(destUri, {
         mimeType: "application/pdf",
         dialogTitle: "Send Attendance Report",
@@ -312,22 +267,16 @@ export default function AttendanceReportScreen() {
     const photoUrl = item.photo ? `${STATIC_URL}/uploads/${item.photo}` : null;
     return (
       <View style={styles.row}>
-        {/* Photo */}
         <View style={styles.rowPhoto}>
           {photoUrl && item.todayStatus === "P" ? (
-            <Image
-              source={{ uri: photoUrl }}
-              style={styles.rowImg}
-              onError={() => console.log("Image load failed:", photoUrl)}
-            />
+            <Image source={{ uri: photoUrl }} style={styles.rowImg} />
           ) : (
             <View style={styles.rowImgPlaceholder}>
-              <Ionicons name="person" size={18} color="#333" />
+              <Ionicons name="person" size={18} color={C.textMuted} />
             </View>
           )}
         </View>
 
-        {/* Name + Desg */}
         <View style={styles.rowInfo}>
           <Text style={styles.rowName}>
             {item.EMPNAME} {item.EMPFNAME}
@@ -340,7 +289,6 @@ export default function AttendanceReportScreen() {
           ) : null}
         </View>
 
-        {/* Status + Time */}
         <View style={styles.rowRight}>
           <View
             style={[
@@ -381,12 +329,12 @@ export default function AttendanceReportScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Attendance Report</Text>
-        <TouchableOpacity onPress={fetchData}>
-          <Ionicons name="refresh" size={22} color="#555" />
+        <TouchableOpacity style={styles.backBtn} onPress={fetchData}>
+          <Ionicons name="refresh" size={20} color={C.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -394,27 +342,22 @@ export default function AttendanceReportScreen() {
 
       {/* Stats */}
       <View style={styles.statsRow}>
-        <View style={[styles.statCard, { borderColor: "#22C55E44" }]}>
-          <Text style={[styles.statNum, { color: "#22C55E" }]}>{present}</Text>
+        <View style={[styles.statCard, { backgroundColor: C.greenBg, borderColor: C.greenLight }]}>
+          <Text style={[styles.statNum, { color: C.green }]}>{present}</Text>
           <Text style={styles.statLabel}>Present</Text>
         </View>
-        <View style={[styles.statCard, { borderColor: "#EF444444" }]}>
-          <Text style={[styles.statNum, { color: "#EF4444" }]}>{absent}</Text>
+        <View style={[styles.statCard, { backgroundColor: C.redBg, borderColor: C.redLight }]}>
+          <Text style={[styles.statNum, { color: C.red }]}>{absent}</Text>
           <Text style={styles.statLabel}>Absent</Text>
         </View>
-        <View style={[styles.statCard, { borderColor: "#E8A02044" }]}>
-          <Text style={[styles.statNum, { color: "#E8A020" }]}>{unmarked}</Text>
+        <View style={[styles.statCard, { backgroundColor: C.amberBg, borderColor: C.amberLight }]}>
+          <Text style={[styles.statNum, { color: C.amber }]}>{unmarked}</Text>
           <Text style={styles.statLabel}>Pending</Text>
         </View>
       </View>
 
-      {/* List preview */}
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#E8A020"
-          style={{ marginTop: 40 }}
-        />
+        <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={records}
@@ -439,15 +382,13 @@ export default function AttendanceReportScreen() {
         >
           {generating ? (
             <>
-              <ActivityIndicator color="#0D0D0D" size="small" />
+              <ActivityIndicator color="#fff" size="small" />
               <Text style={styles.genBtnText}>Generating PDF…</Text>
             </>
           ) : (
             <>
-              <Ionicons name="logo-whatsapp" size={20} color="#0D0D0D" />
-              <Text style={styles.genBtnText}>
-                Generate & Share via WhatsApp
-              </Text>
+              <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+              <Text style={styles.genBtnText}>Generate & Share via WhatsApp</Text>
             </>
           )}
         </TouchableOpacity>
@@ -459,32 +400,42 @@ export default function AttendanceReportScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0D0D0D" },
-
+  container: { flex: 1, backgroundColor: C.pageBg },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    backgroundColor: C.cardBg,
   },
-  topBarTitle: { color: "#FFF", fontSize: 16, fontWeight: "700" },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  topBarTitle: { color: C.textPrimary, fontSize: 16, fontWeight: "700" },
   dateLabel: {
-    color: "#555",
+    color: C.textMuted,
     fontSize: 13,
     textAlign: "center",
-    marginBottom: 16,
+    marginVertical: 14,
   },
-
   statsRow: {
     flexDirection: "row",
     marginHorizontal: 20,
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#111",
     borderRadius: 14,
     padding: 14,
     alignItems: "center",
@@ -492,82 +443,86 @@ const styles = StyleSheet.create({
   },
   statNum: { fontSize: 26, fontWeight: "800", marginBottom: 2 },
   statLabel: {
-    color: "#555",
+    color: C.textMuted,
     fontSize: 11,
     fontWeight: "600",
     letterSpacing: 0.5,
   },
-
-  list: { paddingHorizontal: 20, paddingBottom: 16, gap: 8 },
+  list: { paddingHorizontal: 20, paddingBottom: 100, gap: 8 },
   listHeader: {
-    color: "#444",
+    color: C.textMuted,
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 0.5,
     marginBottom: 10,
     textTransform: "uppercase",
   },
-
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#141414",
+    backgroundColor: C.cardBg,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#1E1E1E",
+    borderColor: C.border,
     gap: 10,
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   rowPhoto: {},
   rowImg: {
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: "#222",
+    backgroundColor: C.border,
   },
   rowImgPlaceholder: {
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
     justifyContent: "center",
     alignItems: "center",
   },
   rowInfo: { flex: 1 },
-  rowName: { color: "#DDD", fontSize: 13, fontWeight: "700", marginBottom: 2 },
-  rowDesg: { color: "#555", fontSize: 11, marginBottom: 2 },
-  rowLoc: { color: "#3A3A3A", fontSize: 10 },
-
+  rowName: { color: C.textPrimary, fontSize: 13, fontWeight: "700", marginBottom: 2 },
+  rowDesg: { color: C.textMuted, fontSize: 11, marginBottom: 2 },
+  rowLoc: { color: C.textMuted, fontSize: 10 },
   rowRight: { alignItems: "flex-end", gap: 4 },
   badge: {
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
-  badgeP: { backgroundColor: "#14532D" },
-  badgeA: { backgroundColor: "#450A0A" },
-  badgeU: { backgroundColor: "#1A1200" },
+  badgeP: { backgroundColor: C.greenLight },
+  badgeA: { backgroundColor: C.redLight },
+  badgeU: { backgroundColor: C.amberBg },
   badgeText: { fontSize: 11, fontWeight: "700" },
-  badgeTextP: { color: "#22C55E" },
-  badgeTextA: { color: "#EF4444" },
-  badgeTextU: { color: "#E8A020" },
-  rowTime: { color: "#444", fontSize: 11 },
-
+  badgeTextP: { color: C.green },
+  badgeTextA: { color: C.red },
+  badgeTextU: { color: C.amber },
+  rowTime: { color: C.textMuted, fontSize: 11 },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: "#1A1A1A",
+    borderTopColor: C.border,
+    backgroundColor: C.cardBg,
   },
   genBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#25D366", // WhatsApp green
+    backgroundColor: "#25D366",
     borderRadius: 16,
     paddingVertical: 18,
     gap: 10,
   },
-  genBtnDisabled: { backgroundColor: "#1A1A1A" },
-  genBtnText: { color: "#0D0D0D", fontSize: 15, fontWeight: "800" },
+  genBtnDisabled: { backgroundColor: C.border },
+  genBtnText: { color: "#fff", fontSize: 15, fontWeight: "800" },
 });

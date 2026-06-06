@@ -27,3 +27,43 @@ export type Employee = Prisma.EmployeeModel
  * 
  */
 export type Attendance = Prisma.AttendanceModel
+/**
+ * Model FillingEntry
+ * 
+ */
+export type FillingEntry = Prisma.FillingEntryModel
+/**
+ * Model WastageEntry
+ * 
+ */
+export type WastageEntry = Prisma.WastageEntryModel
+/**
+ * Model DispatchSession
+ * 
+ */
+export type DispatchSession = Prisma.DispatchSessionModel
+/**
+ * Model DispatchItem
+ * 
+ */
+export type DispatchItem = Prisma.DispatchItemModel
+/**
+ * Model DispatchEmptyItem
+ * 
+ */
+export type DispatchEmptyItem = Prisma.DispatchEmptyItemModel
+/**
+ * Model mstitm
+ * 
+ */
+export type mstitm = Prisma.mstitmModel
+/**
+ * Model mstparty
+ * 
+ */
+export type mstparty = Prisma.mstpartyModel
+/**
+ * Model mstunit
+ * 
+ */
+export type mstunit = Prisma.mstunitModel

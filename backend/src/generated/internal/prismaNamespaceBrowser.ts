@@ -50,7 +50,15 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 export const ModelName = {
   Employee: 'Employee',
-  Attendance: 'Attendance'
+  Attendance: 'Attendance',
+  FillingEntry: 'FillingEntry',
+  WastageEntry: 'WastageEntry',
+  DispatchSession: 'DispatchSession',
+  DispatchItem: 'DispatchItem',
+  DispatchEmptyItem: 'DispatchEmptyItem',
+  mstitm: 'mstitm',
+  mstparty: 'mstparty',
+  mstunit: 'mstunit'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -95,6 +103,119 @@ export const AttendanceScalarFieldEnum = {
 } as const
 
 export type AttendanceScalarFieldEnum = (typeof AttendanceScalarFieldEnum)[keyof typeof AttendanceScalarFieldEnum]
+
+
+export const FillingEntryScalarFieldEnum = {
+  ENTRY_ID: 'ENTRY_ID',
+  SESSION_ID: 'SESSION_ID',
+  ITMCD: 'ITMCD',
+  ITMNM: 'ITMNM',
+  ITMSUBCAT: 'ITMSUBCAT',
+  FILLING: 'FILLING',
+  WASTAGE: 'WASTAGE',
+  OPERATOR_ID: 'OPERATOR_ID',
+  DONE_BY: 'DONE_BY',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type FillingEntryScalarFieldEnum = (typeof FillingEntryScalarFieldEnum)[keyof typeof FillingEntryScalarFieldEnum]
+
+
+export const WastageEntryScalarFieldEnum = {
+  ENTRY_ID: 'ENTRY_ID',
+  SESSION_ID: 'SESSION_ID',
+  ITMCD: 'ITMCD',
+  ITMNM: 'ITMNM',
+  ITMSUBCAT: 'ITMSUBCAT',
+  CARTON_WASTAGE: 'CARTON_WASTAGE',
+  PCS_WASTAGE: 'PCS_WASTAGE',
+  LOOSE_OIL: 'LOOSE_OIL',
+  DONE_BY: 'DONE_BY',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type WastageEntryScalarFieldEnum = (typeof WastageEntryScalarFieldEnum)[keyof typeof WastageEntryScalarFieldEnum]
+
+
+export const DispatchSessionScalarFieldEnum = {
+  SESSION_ID: 'SESSION_ID',
+  DISPATCH_TO: 'DISPATCH_TO',
+  PARTY_CD: 'PARTY_CD',
+  PARTY_NM: 'PARTY_NM',
+  VEHICLE_NO: 'VEHICLE_NO',
+  TRANSPORTER: 'TRANSPORTER',
+  DRIVER_NAME: 'DRIVER_NAME',
+  DRIVER_NO: 'DRIVER_NO',
+  KAANTA_WT: 'KAANTA_WT',
+  GRR_NO: 'GRR_NO',
+  STATUS: 'STATUS',
+  DONE_BY: 'DONE_BY',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type DispatchSessionScalarFieldEnum = (typeof DispatchSessionScalarFieldEnum)[keyof typeof DispatchSessionScalarFieldEnum]
+
+
+export const DispatchItemScalarFieldEnum = {
+  ITEM_ID: 'ITEM_ID',
+  SESSION_ID: 'SESSION_ID',
+  ITMCD: 'ITMCD',
+  ITMNM: 'ITMNM',
+  QTY: 'QTY',
+  FULL_BOX_WT: 'FULL_BOX_WT'
+} as const
+
+export type DispatchItemScalarFieldEnum = (typeof DispatchItemScalarFieldEnum)[keyof typeof DispatchItemScalarFieldEnum]
+
+
+export const DispatchEmptyItemScalarFieldEnum = {
+  ITEM_ID: 'ITEM_ID',
+  SESSION_ID: 'SESSION_ID',
+  ITMCD: 'ITMCD',
+  ITMNM: 'ITMNM',
+  QTY: 'QTY'
+} as const
+
+export type DispatchEmptyItemScalarFieldEnum = (typeof DispatchEmptyItemScalarFieldEnum)[keyof typeof DispatchEmptyItemScalarFieldEnum]
+
+
+export const MstitmScalarFieldEnum = {
+  rowid: 'rowid',
+  itmcd: 'itmcd',
+  itmnm: 'itmnm',
+  pcksz: 'pcksz',
+  wgtconv: 'wgtconv',
+  itmsubcat: 'itmsubcat',
+  itmcatgrp: 'itmcatgrp',
+  lsitmnm: 'lsitmnm',
+  itmrate: 'itmrate',
+  curcstamt: 'curcstamt'
+} as const
+
+export type MstitmScalarFieldEnum = (typeof MstitmScalarFieldEnum)[keyof typeof MstitmScalarFieldEnum]
+
+
+export const MstpartyScalarFieldEnum = {
+  ledcd: 'ledcd',
+  lednm: 'lednm',
+  empcd: 'empcd',
+  areacd: 'areacd',
+  areanm: 'areanm',
+  ledadr1: 'ledadr1',
+  outs: 'outs',
+  mobile: 'mobile'
+} as const
+
+export type MstpartyScalarFieldEnum = (typeof MstpartyScalarFieldEnum)[keyof typeof MstpartyScalarFieldEnum]
+
+
+export const MstunitScalarFieldEnum = {
+  untcd: 'untcd',
+  untshnm: 'untshnm',
+  untnm: 'untnm'
+} as const
+
+export type MstunitScalarFieldEnum = (typeof MstunitScalarFieldEnum)[keyof typeof MstunitScalarFieldEnum]
 
 
 export const SortOrder = {

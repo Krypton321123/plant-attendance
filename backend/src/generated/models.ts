@@ -10,4 +10,12 @@
  */
 export type * from './models/Employee'
 export type * from './models/Attendance'
+export type * from './models/FillingEntry'
+export type * from './models/WastageEntry'
+export type * from './models/DispatchSession'
+export type * from './models/DispatchItem'
+export type * from './models/DispatchEmptyItem'
+export type * from './models/mstitm'
+export type * from './models/mstparty'
+export type * from './models/mstunit'
 export type * from './commonInputTypes'

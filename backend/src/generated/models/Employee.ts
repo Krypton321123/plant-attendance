@@ -215,6 +215,10 @@ export type EmployeeWhereInput = {
   EMPTYPE?: Prisma.StringFilter<"Employee"> | string
   CREATEDAT?: Prisma.DateTimeFilter<"Employee"> | Date | string
   attendances?: Prisma.AttendanceListRelationFilter
+  fillingAsOperator?: Prisma.FillingEntryListRelationFilter
+  fillingAsSupervisor?: Prisma.FillingEntryListRelationFilter
+  wastageEntries?: Prisma.WastageEntryListRelationFilter
+  dispatchSession?: Prisma.DispatchSessionListRelationFilter
 }
 
 export type EmployeeOrderByWithRelationInput = {
@@ -228,6 +232,10 @@ export type EmployeeOrderByWithRelationInput = {
   EMPTYPE?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
   attendances?: Prisma.AttendanceOrderByRelationAggregateInput
+  fillingAsOperator?: Prisma.FillingEntryOrderByRelationAggregateInput
+  fillingAsSupervisor?: Prisma.FillingEntryOrderByRelationAggregateInput
+  wastageEntries?: Prisma.WastageEntryOrderByRelationAggregateInput
+  dispatchSession?: Prisma.DispatchSessionOrderByRelationAggregateInput
 }
 
 export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
@@ -244,6 +252,10 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   EMPTYPE?: Prisma.StringFilter<"Employee"> | string
   CREATEDAT?: Prisma.DateTimeFilter<"Employee"> | Date | string
   attendances?: Prisma.AttendanceListRelationFilter
+  fillingAsOperator?: Prisma.FillingEntryListRelationFilter
+  fillingAsSupervisor?: Prisma.FillingEntryListRelationFilter
+  wastageEntries?: Prisma.WastageEntryListRelationFilter
+  dispatchSession?: Prisma.DispatchSessionListRelationFilter
 }, "EMP_ID">
 
 export type EmployeeOrderByWithAggregationInput = {
@@ -287,6 +299,10 @@ export type EmployeeCreateInput = {
   EMPTYPE: string
   CREATEDAT?: Date | string
   attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
 }
 
 export type EmployeeUncheckedCreateInput = {
@@ -300,6 +316,10 @@ export type EmployeeUncheckedCreateInput = {
   EMPTYPE: string
   CREATEDAT?: Date | string
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
 }
 
 export type EmployeeUpdateInput = {
@@ -313,6 +333,10 @@ export type EmployeeUpdateInput = {
   EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
 }
 
 export type EmployeeUncheckedUpdateInput = {
@@ -326,6 +350,10 @@ export type EmployeeUncheckedUpdateInput = {
   EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
 }
 
 export type EmployeeCreateManyInput = {
@@ -431,6 +459,62 @@ export type EmployeeUpdateOneRequiredWithoutAttendancesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutAttendancesInput, Prisma.EmployeeUpdateWithoutAttendancesInput>, Prisma.EmployeeUncheckedUpdateWithoutAttendancesInput>
 }
 
+export type EmployeeCreateNestedOneWithoutFillingAsOperatorInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsOperatorInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutFillingAsOperatorInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeCreateNestedOneWithoutFillingAsSupervisorInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsSupervisorInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutFillingAsSupervisorInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutFillingAsOperatorNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsOperatorInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutFillingAsOperatorInput
+  upsert?: Prisma.EmployeeUpsertWithoutFillingAsOperatorInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutFillingAsOperatorInput, Prisma.EmployeeUpdateWithoutFillingAsOperatorInput>, Prisma.EmployeeUncheckedUpdateWithoutFillingAsOperatorInput>
+}
+
+export type EmployeeUpdateOneRequiredWithoutFillingAsSupervisorNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsSupervisorInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutFillingAsSupervisorInput
+  upsert?: Prisma.EmployeeUpsertWithoutFillingAsSupervisorInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutFillingAsSupervisorInput, Prisma.EmployeeUpdateWithoutFillingAsSupervisorInput>, Prisma.EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput>
+}
+
+export type EmployeeCreateNestedOneWithoutWastageEntriesInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedCreateWithoutWastageEntriesInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutWastageEntriesInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutWastageEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedCreateWithoutWastageEntriesInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutWastageEntriesInput
+  upsert?: Prisma.EmployeeUpsertWithoutWastageEntriesInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutWastageEntriesInput, Prisma.EmployeeUpdateWithoutWastageEntriesInput>, Prisma.EmployeeUncheckedUpdateWithoutWastageEntriesInput>
+}
+
+export type EmployeeCreateNestedOneWithoutDispatchSessionInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedCreateWithoutDispatchSessionInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDispatchSessionInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutDispatchSessionNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedCreateWithoutDispatchSessionInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDispatchSessionInput
+  upsert?: Prisma.EmployeeUpsertWithoutDispatchSessionInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutDispatchSessionInput, Prisma.EmployeeUpdateWithoutDispatchSessionInput>, Prisma.EmployeeUncheckedUpdateWithoutDispatchSessionInput>
+}
+
 export type EmployeeCreateWithoutAttendancesInput = {
   EMP_ID?: string
   EMPNAME: string
@@ -441,6 +525,10 @@ export type EmployeeCreateWithoutAttendancesInput = {
   STATUS?: string
   EMPTYPE: string
   CREATEDAT?: Date | string
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
 }
 
 export type EmployeeUncheckedCreateWithoutAttendancesInput = {
@@ -453,6 +541,10 @@ export type EmployeeUncheckedCreateWithoutAttendancesInput = {
   STATUS?: string
   EMPTYPE: string
   CREATEDAT?: Date | string
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
 }
 
 export type EmployeeCreateOrConnectWithoutAttendancesInput = {
@@ -481,6 +573,10 @@ export type EmployeeUpdateWithoutAttendancesInput = {
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
@@ -493,6 +589,330 @@ export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeCreateWithoutFillingAsOperatorInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeUncheckedCreateWithoutFillingAsOperatorInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeCreateOrConnectWithoutFillingAsOperatorInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsOperatorInput>
+}
+
+export type EmployeeCreateWithoutFillingAsSupervisorInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeUncheckedCreateWithoutFillingAsSupervisorInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeCreateOrConnectWithoutFillingAsSupervisorInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsSupervisorInput>
+}
+
+export type EmployeeUpsertWithoutFillingAsOperatorInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedUpdateWithoutFillingAsOperatorInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsOperatorInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutFillingAsOperatorInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutFillingAsOperatorInput, Prisma.EmployeeUncheckedUpdateWithoutFillingAsOperatorInput>
+}
+
+export type EmployeeUpdateWithoutFillingAsOperatorInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutFillingAsOperatorInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeUpsertWithoutFillingAsSupervisorInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedCreateWithoutFillingAsSupervisorInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutFillingAsSupervisorInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutFillingAsSupervisorInput, Prisma.EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput>
+}
+
+export type EmployeeUpdateWithoutFillingAsSupervisorInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeCreateWithoutWastageEntriesInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeUncheckedCreateWithoutWastageEntriesInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeCreateOrConnectWithoutWastageEntriesInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedCreateWithoutWastageEntriesInput>
+}
+
+export type EmployeeUpsertWithoutWastageEntriesInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedUpdateWithoutWastageEntriesInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedCreateWithoutWastageEntriesInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutWastageEntriesInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutWastageEntriesInput, Prisma.EmployeeUncheckedUpdateWithoutWastageEntriesInput>
+}
+
+export type EmployeeUpdateWithoutWastageEntriesInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutWastageEntriesInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeCreateWithoutDispatchSessionInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeUncheckedCreateWithoutDispatchSessionInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  CREATEDAT?: Date | string
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+}
+
+export type EmployeeCreateOrConnectWithoutDispatchSessionInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedCreateWithoutDispatchSessionInput>
+}
+
+export type EmployeeUpsertWithoutDispatchSessionInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedUpdateWithoutDispatchSessionInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedCreateWithoutDispatchSessionInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutDispatchSessionInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutDispatchSessionInput, Prisma.EmployeeUncheckedUpdateWithoutDispatchSessionInput>
+}
+
+export type EmployeeUpdateWithoutDispatchSessionInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutDispatchSessionInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
 }
 
 
@@ -502,10 +922,18 @@ export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
 
 export type EmployeeCountOutputType = {
   attendances: number
+  fillingAsOperator: number
+  fillingAsSupervisor: number
+  wastageEntries: number
+  dispatchSession: number
 }
 
 export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   attendances?: boolean | EmployeeCountOutputTypeCountAttendancesArgs
+  fillingAsOperator?: boolean | EmployeeCountOutputTypeCountFillingAsOperatorArgs
+  fillingAsSupervisor?: boolean | EmployeeCountOutputTypeCountFillingAsSupervisorArgs
+  wastageEntries?: boolean | EmployeeCountOutputTypeCountWastageEntriesArgs
+  dispatchSession?: boolean | EmployeeCountOutputTypeCountDispatchSessionArgs
 }
 
 /**
@@ -525,6 +953,34 @@ export type EmployeeCountOutputTypeCountAttendancesArgs<ExtArgs extends runtime.
   where?: Prisma.AttendanceWhereInput
 }
 
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountFillingAsOperatorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FillingEntryWhereInput
+}
+
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountFillingAsSupervisorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FillingEntryWhereInput
+}
+
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountWastageEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WastageEntryWhereInput
+}
+
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountDispatchSessionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DispatchSessionWhereInput
+}
+
 
 export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   EMP_ID?: boolean
@@ -537,6 +993,10 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   EMPTYPE?: boolean
   CREATEDAT?: boolean
   attendances?: boolean | Prisma.Employee$attendancesArgs<ExtArgs>
+  fillingAsOperator?: boolean | Prisma.Employee$fillingAsOperatorArgs<ExtArgs>
+  fillingAsSupervisor?: boolean | Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>
+  wastageEntries?: boolean | Prisma.Employee$wastageEntriesArgs<ExtArgs>
+  dispatchSession?: boolean | Prisma.Employee$dispatchSessionArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
@@ -557,6 +1017,10 @@ export type EmployeeSelectScalar = {
 export type EmployeeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"EMP_ID" | "EMPNAME" | "EMPFNAME" | "EMPPROFILEPHOTO" | "EMPDESG" | "DEVICEID" | "STATUS" | "EMPTYPE" | "CREATEDAT", ExtArgs["result"]["employee"]>
 export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   attendances?: boolean | Prisma.Employee$attendancesArgs<ExtArgs>
+  fillingAsOperator?: boolean | Prisma.Employee$fillingAsOperatorArgs<ExtArgs>
+  fillingAsSupervisor?: boolean | Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>
+  wastageEntries?: boolean | Prisma.Employee$wastageEntriesArgs<ExtArgs>
+  dispatchSession?: boolean | Prisma.Employee$dispatchSessionArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -564,6 +1028,10 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Employee"
   objects: {
     attendances: Prisma.$AttendancePayload<ExtArgs>[]
+    fillingAsOperator: Prisma.$FillingEntryPayload<ExtArgs>[]
+    fillingAsSupervisor: Prisma.$FillingEntryPayload<ExtArgs>[]
+    wastageEntries: Prisma.$WastageEntryPayload<ExtArgs>[]
+    dispatchSession: Prisma.$DispatchSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     EMP_ID: string
@@ -916,6 +1384,10 @@ readonly fields: EmployeeFieldRefs;
 export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   attendances<T extends Prisma.Employee$attendancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$attendancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fillingAsOperator<T extends Prisma.Employee$fillingAsOperatorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$fillingAsOperatorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillingEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fillingAsSupervisor<T extends Prisma.Employee$fillingAsSupervisorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillingEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  wastageEntries<T extends Prisma.Employee$wastageEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$wastageEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WastageEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dispatchSession<T extends Prisma.Employee$dispatchSessionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$dispatchSessionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DispatchSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1317,6 +1789,102 @@ export type Employee$attendancesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.AttendanceScalarFieldEnum | Prisma.AttendanceScalarFieldEnum[]
+}
+
+/**
+ * Employee.fillingAsOperator
+ */
+export type Employee$fillingAsOperatorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FillingEntry
+   */
+  select?: Prisma.FillingEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FillingEntry
+   */
+  omit?: Prisma.FillingEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FillingEntryInclude<ExtArgs> | null
+  where?: Prisma.FillingEntryWhereInput
+  orderBy?: Prisma.FillingEntryOrderByWithRelationInput | Prisma.FillingEntryOrderByWithRelationInput[]
+  cursor?: Prisma.FillingEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FillingEntryScalarFieldEnum | Prisma.FillingEntryScalarFieldEnum[]
+}
+
+/**
+ * Employee.fillingAsSupervisor
+ */
+export type Employee$fillingAsSupervisorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FillingEntry
+   */
+  select?: Prisma.FillingEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FillingEntry
+   */
+  omit?: Prisma.FillingEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FillingEntryInclude<ExtArgs> | null
+  where?: Prisma.FillingEntryWhereInput
+  orderBy?: Prisma.FillingEntryOrderByWithRelationInput | Prisma.FillingEntryOrderByWithRelationInput[]
+  cursor?: Prisma.FillingEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FillingEntryScalarFieldEnum | Prisma.FillingEntryScalarFieldEnum[]
+}
+
+/**
+ * Employee.wastageEntries
+ */
+export type Employee$wastageEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WastageEntry
+   */
+  select?: Prisma.WastageEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WastageEntry
+   */
+  omit?: Prisma.WastageEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WastageEntryInclude<ExtArgs> | null
+  where?: Prisma.WastageEntryWhereInput
+  orderBy?: Prisma.WastageEntryOrderByWithRelationInput | Prisma.WastageEntryOrderByWithRelationInput[]
+  cursor?: Prisma.WastageEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WastageEntryScalarFieldEnum | Prisma.WastageEntryScalarFieldEnum[]
+}
+
+/**
+ * Employee.dispatchSession
+ */
+export type Employee$dispatchSessionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DispatchSession
+   */
+  select?: Prisma.DispatchSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DispatchSession
+   */
+  omit?: Prisma.DispatchSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DispatchSessionInclude<ExtArgs> | null
+  where?: Prisma.DispatchSessionWhereInput
+  orderBy?: Prisma.DispatchSessionOrderByWithRelationInput | Prisma.DispatchSessionOrderByWithRelationInput[]
+  cursor?: Prisma.DispatchSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DispatchSessionScalarFieldEnum | Prisma.DispatchSessionScalarFieldEnum[]
 }
 
 /**

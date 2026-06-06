@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { API_URL, STORAGE_KEYS } from "../../constants/config";
-import * as Location from "expo-location";
+import { C } from "../../constants/theme";
 
 export default function RegisterPhotoScreen() {
   const router = useRouter();
@@ -86,7 +86,9 @@ export default function RegisterPhotoScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.permissionBox}>
-          <Ionicons name="camera-outline" size={56} color="#444" />
+          <View style={styles.permIconWrap}>
+            <Ionicons name="camera-outline" size={32} color={C.primary} />
+          </View>
           <Text style={styles.permTitle}>Camera Required</Text>
           <Text style={styles.permSub}>
             We need your camera to take a registration photo.
@@ -102,11 +104,11 @@ export default function RegisterPhotoScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Registration Photo</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 36 }} />
       </View>
 
       <Text style={styles.instruction}>
@@ -117,7 +119,6 @@ export default function RegisterPhotoScreen() {
         <>
           <View style={styles.cameraContainer}>
             <CameraView style={styles.camera} ref={cameraRef} facing={facing}>
-              {/* Overlay with name + time */}
               <View style={styles.overlayBottom}>
                 <View style={styles.overlayRow}>
                   <Ionicons name="time-outline" size={13} color="#FFF" />
@@ -148,7 +149,7 @@ export default function RegisterPhotoScreen() {
               style={styles.retakeBtn}
               onPress={() => setPhoto(null)}
             >
-              <Ionicons name="refresh" size={20} color="#FFF" />
+              <Ionicons name="refresh" size={20} color={C.textSecondary} />
               <Text style={styles.retakeBtnText}>Retake</Text>
             </TouchableOpacity>
 
@@ -158,10 +159,10 @@ export default function RegisterPhotoScreen() {
               disabled={submitting}
             >
               {submitting ? (
-                <ActivityIndicator color="#0D0D0D" />
+                <ActivityIndicator color={C.textInverse} />
               ) : (
                 <>
-                  <Ionicons name="checkmark" size={20} color="#0D0D0D" />
+                  <Ionicons name="checkmark" size={20} color={C.textInverse} />
                   <Text style={styles.submitBtnText}>Submit</Text>
                 </>
               )}
@@ -174,24 +175,38 @@ export default function RegisterPhotoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0D0D0D" },
+  container: { flex: 1, backgroundColor: C.pageBg },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    backgroundColor: C.cardBg,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
   },
   topBarTitle: {
-    color: "#FFF",
+    color: C.textPrimary,
     fontSize: 16,
     fontWeight: "700",
   },
   instruction: {
-    color: "#666",
+    color: C.textSecondary,
     fontSize: 14,
     textAlign: "center",
     marginHorizontal: 40,
+    marginTop: 20,
     marginBottom: 20,
     lineHeight: 20,
   },
@@ -200,8 +215,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     aspectRatio: 3 / 4,
-    backgroundColor: "#111",
+    backgroundColor: C.border,
     position: "relative",
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   camera: { flex: 1 },
   overlayBottom: {
@@ -231,7 +251,7 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 4,
-    borderColor: "#E8A020",
+    borderColor: C.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -239,7 +259,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
   },
   actionRow: {
     flexDirection: "row",
@@ -252,25 +272,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: C.cardBg,
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: C.border,
   },
-  retakeBtnText: { color: "#FFF", fontSize: 15, fontWeight: "600" },
+  retakeBtnText: { color: C.textSecondary, fontSize: 15, fontWeight: "600" },
   submitBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
   },
-  submitBtnText: { color: "#0D0D0D", fontSize: 15, fontWeight: "800" },
+  submitBtnText: { color: C.textInverse, fontSize: 15, fontWeight: "800" },
   permissionBox: {
     flex: 1,
     justifyContent: "center",
@@ -278,13 +298,23 @@ const styles = StyleSheet.create({
     padding: 40,
     gap: 16,
   },
-  permTitle: { color: "#FFF", fontSize: 22, fontWeight: "700" },
-  permSub: { color: "#666", fontSize: 14, textAlign: "center", lineHeight: 20 },
+  permIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: C.primaryLight,
+    borderWidth: 1,
+    borderColor: C.primaryMuted,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  permTitle: { color: C.textPrimary, fontSize: 22, fontWeight: "700" },
+  permSub: { color: C.textSecondary, fontSize: 14, textAlign: "center", lineHeight: 20 },
   permBtn: {
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },
-  permBtnText: { color: "#0D0D0D", fontWeight: "800", fontSize: 15 },
+  permBtnText: { color: C.textInverse, fontWeight: "800", fontSize: 15 },
 });

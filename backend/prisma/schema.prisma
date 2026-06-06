@@ -1,7 +1,8 @@
 generator client {
-  provider = "prisma-client"
+  provider        = "prisma-client"
   output          = "../src/generated"
-  binaryTargets   = ["native", "windows"]  
+  previewFeatures = ["views"]
+  binaryTargets   = ["native", "windows"]
 }
 
 datasource db {
@@ -10,17 +11,20 @@ datasource db {
 }
 
 model Employee {
-  EMP_ID          String   @id @default(cuid())
-  EMPNAME         String
-  EMPFNAME        String
-  EMPPROFILEPHOTO String?
-  EMPDESG         String
-  DEVICEID        String?  
-  STATUS          String   @default("NA") // "A" = Approved, "NA" = Not Approved
-  EMPTYPE         String // "SUPERVISOR" | "INDIVIDUAL"
-  CREATEDAT       DateTime @default(now())
-
-  attendances Attendance[]
+  EMP_ID              String         @id @default(cuid())
+  EMPNAME             String
+  EMPFNAME            String
+  EMPPROFILEPHOTO     String?
+  EMPDESG             String
+  DEVICEID            String?
+  STATUS              String         @default("NA")
+  EMPTYPE             String
+  CREATEDAT           DateTime       @default(now())
+  attendances         Attendance[]
+  fillingAsOperator   FillingEntry[] @relation("FillingOperator")
+  fillingAsSupervisor FillingEntry[] @relation("FillingDoneBy")
+  wastageEntries      WastageEntry[] @relation("WastageDoneBy")
+  dispatchSession     DispatchSession[] @relation("DispatchDoneBy")
 
   @@map("employees")
 }
@@ -28,13 +32,120 @@ model Employee {
 model Attendance {
   EMP_ID    String
   CREATEDAT DateTime @default(now())
-  PHOTO     String? // internal path
-  LOCATION  String? // location name string
-  STATUS    String // "P" = Present, "A" = Absent
-  MARKED_BY String? // EMP_ID of supervisor if marked by supervisor
-
-  employee Employee @relation(fields: [EMP_ID], references: [EMP_ID])
+  PHOTO     String?
+  LOCATION  String?
+  STATUS    String
+  MARKED_BY String?
+  employee  Employee @relation(fields: [EMP_ID], references: [EMP_ID])
 
   @@id([EMP_ID, CREATEDAT])
   @@map("attendance")
+}
+
+model FillingEntry {
+  ENTRY_ID    String   @id @default(cuid())
+  SESSION_ID  String
+  ITMCD       String   @db.VarChar(50)
+  ITMNM       String   @db.VarChar(250)
+  ITMSUBCAT   String?  @db.VarChar(50)
+  FILLING     Decimal  @db.Decimal(18, 3)
+  WASTAGE     Decimal  @db.Decimal(18, 3)
+  OPERATOR_ID String
+  DONE_BY     String
+  CREATEDAT   DateTime @default(now())
+
+  operator Employee @relation("FillingOperator", fields: [OPERATOR_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  doneBy   Employee @relation("FillingDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("filling_entries")
+}
+
+model WastageEntry {
+  ENTRY_ID       String   @id @default(cuid())
+  SESSION_ID     String
+  ITMCD          String   @db.VarChar(50)
+  ITMNM          String   @db.VarChar(250)
+  ITMSUBCAT      String?  @db.VarChar(50)
+  CARTON_WASTAGE Decimal  @db.Decimal(18, 3)
+  PCS_WASTAGE    Decimal  @db.Decimal(18, 3)
+  LOOSE_OIL      Decimal? @db.Decimal(18, 3) // nullable — only filled when received
+  DONE_BY        String
+  CREATEDAT      DateTime @default(now())
+  doneBy         Employee @relation("WastageDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("wastage_entries")
+}
+
+model DispatchSession {
+  SESSION_ID    String          @id @default(cuid())
+  DISPATCH_TO   String          @db.VarChar(10)   // "DEPO" | "PARTY"
+  PARTY_CD      String          @db.VarChar(250)  // ledcd for party, untcd for depo
+  PARTY_NM      String          @db.VarChar(250)
+  VEHICLE_NO    String?         @db.VarChar(100)
+  TRANSPORTER   String?         @db.VarChar(250)
+  DRIVER_NAME   String?         @db.VarChar(250)
+  DRIVER_NO     String?         @db.VarChar(50)
+  KAANTA_WT     String?         @db.VarChar(100)
+  GRR_NO        String?         @db.VarChar(100)
+  STATUS        String          @default("DRAFT") // "DRAFT" | "COMPLETED"
+  DONE_BY       String
+  CREATEDAT     DateTime        @default(now())
+  doneBy        Employee        @relation("DispatchDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  items         DispatchItem[]
+  emptyItems    DispatchEmptyItem[]
+
+  @@map("dispatch_sessions")
+}
+
+model DispatchItem {
+  ITEM_ID       String          @id @default(cuid())
+  SESSION_ID    String
+  ITMCD         String          @db.VarChar(50)
+  ITMNM         String          @db.VarChar(250)
+  QTY           Decimal         @db.Decimal(18, 3)
+  FULL_BOX_WT   Decimal?        @db.Decimal(18, 3)  // filled by PPSUPERVISOR
+  session       DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("dispatch_items")
+}
+
+model DispatchEmptyItem {
+  ITEM_ID       String          @id @default(cuid())
+  SESSION_ID    String
+  ITMCD         String          @db.VarChar(50)
+  ITMNM         String          @db.VarChar(250)
+  QTY           Decimal         @db.Decimal(18, 3)
+  session       DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("dispatch_empty_items")
+}
+
+view mstitm {
+  rowid     BigInt
+  itmcd     String   @db.VarChar(50)
+  itmnm     String   @db.VarChar(250)
+  pcksz     Decimal? @db.Decimal(18, 0)
+  wgtconv   Decimal? @db.Decimal(18, 3)
+  itmsubcat String?  @db.VarChar(50)
+  itmcatgrp String?  @db.VarChar(50)
+  lsitmnm   String?  @db.VarChar(250)
+  itmrate   Int
+  curcstamt Decimal? @db.Decimal(18, 2)
+}
+
+view mstparty {
+  ledcd   String  @db.VarChar(250)
+  lednm   String? @db.VarChar(250)
+  empcd   String? @db.VarChar(50)
+  areacd  String  @db.VarChar(50)
+  areanm  String? @db.VarChar(250)
+  ledadr1 String? @db.VarChar(500)
+  outs    Decimal @db.Decimal(38, 2)
+  mobile  String? @db.VarChar(100)
+}
+
+view mstunit {
+  untcd   String  @db.VarChar(50)
+  untshnm String? @db.VarChar(50)
+  untnm   String  @db.VarChar(250)
 }

@@ -5,15 +5,16 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
   TextInput,
 } from "react-native";
 import { useEffect, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { API_URL, STORAGE_KEYS } from "../../constants/config";
 import { getOrCreateDeviceId } from "../../util/deviceid";
+import { C } from "../../constants/theme";
 
 type Employee = {
   EMP_ID: string;
@@ -71,9 +72,7 @@ export default function SelectEmployeeScreen() {
 
     const deviceId = await getOrCreateDeviceId();
 
-    // If this employee already has a device registered with same deviceId → they registered before
     if (selected.DEVICEID === deviceId) {
-      // Just restore session and navigate
       await AsyncStorage.setItem(
         STORAGE_KEYS.EMPLOYEE,
         JSON.stringify({ ...selected, DEVICEID: deviceId })
@@ -89,7 +88,6 @@ export default function SelectEmployeeScreen() {
       return;
     }
 
-    // New device or new employee → go to photo registration
     await AsyncStorage.setItem(
       STORAGE_KEYS.EMPLOYEE,
       JSON.stringify({ ...selected, DEVICEID: deviceId })
@@ -120,12 +118,14 @@ export default function SelectEmployeeScreen() {
           <Text style={[styles.empDesg, isSelected && styles.empDesgSelected]}>
             {item.EMPDESG}
           </Text>
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{item.EMPTYPE}</Text>
+          <View style={[styles.typeBadge, isSelected && styles.typeBadgeSelected]}>
+            <Text style={[styles.typeText, isSelected && styles.typeTextSelected]}>
+              {item.EMPTYPE}
+            </Text>
           </View>
         </View>
         {isSelected && (
-          <Ionicons name="checkmark-circle" size={24} color="#E8A020" />
+          <Ionicons name="checkmark-circle" size={24} color={C.primary} />
         )}
       </TouchableOpacity>
     );
@@ -135,8 +135,18 @@ export default function SelectEmployeeScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <Ionicons name="business" size={24} color="#E8A020" />
+        <View style={styles.headerTop}>
+          <View style={styles.headerIcon}>
+            <Ionicons name="business" size={22} color={C.primary} />
+          </View>
+          <TouchableOpacity
+            style={styles.adminLink}
+            onPress={() => router.push("/auth/admin-login")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="shield-checkmark-outline" size={14} color={C.textMuted} />
+            <Text style={styles.adminLinkText}>Admin</Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.headerTitle}>Plant Attendance</Text>
         <Text style={styles.headerSub}>Who are you? Select your name below.</Text>
@@ -144,11 +154,11 @@ export default function SelectEmployeeScreen() {
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={18} color="#888" style={styles.searchIcon} />
+        <Ionicons name="search" size={18} color={C.textMuted} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or role..."
-          placeholderTextColor="#555"
+          placeholderTextColor={C.textMuted}
           value={search}
           onChangeText={setSearch}
         />
@@ -156,7 +166,7 @@ export default function SelectEmployeeScreen() {
 
       {/* List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#E8A020" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
@@ -182,11 +192,11 @@ export default function SelectEmployeeScreen() {
             disabled={continuing}
           >
             {continuing ? (
-              <ActivityIndicator color="#0D0D0D" />
+              <ActivityIndicator color={C.textInverse} />
             ) : (
               <>
                 <Text style={styles.continueBtnText}>Continue</Text>
-                <Ionicons name="arrow-forward" size={20} color="#0D0D0D" />
+                <Ionicons name="arrow-forward" size={20} color={C.textInverse} />
               </>
             )}
           </TouchableOpacity>
@@ -199,123 +209,170 @@ export default function SelectEmployeeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0D0D0D",
+    backgroundColor: C.pageBg,
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 24,
+    backgroundColor: C.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   headerIcon: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: C.primaryLight,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: C.primaryMuted,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+  },
+  adminLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  adminLinkText: {
+    color: C.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: C.textPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   headerSub: {
     fontSize: 15,
-    color: "#666",
+    color: C.textSecondary,
     fontWeight: "400",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    marginHorizontal: 24,
-    marginBottom: 16,
+    backgroundColor: C.cardBg,
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: C.border,
     paddingHorizontal: 14,
     height: 46,
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   searchIcon: { marginRight: 8 },
   searchInput: {
     flex: 1,
-    color: "#FFF",
+    color: C.textPrimary,
     fontSize: 15,
   },
   list: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
     paddingBottom: 120,
-    gap: 10,
+    gap: 8,
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#141414",
+    backgroundColor: C.cardBg,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: "#222",
+    borderColor: C.border,
     gap: 12,
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   cardSelected: {
-    borderColor: "#E8A020",
-    backgroundColor: "#1C1505",
+    borderColor: C.primary,
+    backgroundColor: C.primaryLight,
   },
   avatar: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#222",
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarSelected: {
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
+    borderColor: C.primaryDark,
   },
   avatarText: {
-    color: "#888",
+    color: C.textSecondary,
     fontSize: 16,
     fontWeight: "700",
   },
   avatarTextSelected: {
-    color: "#0D0D0D",
+    color: C.textInverse,
   },
   cardInfo: { flex: 1 },
   empName: {
-    color: "#DDD",
+    color: C.textPrimary,
     fontSize: 15,
     fontWeight: "600",
     marginBottom: 2,
   },
-  empNameSelected: { color: "#FFF" },
+  empNameSelected: { color: C.primaryDark },
   empDesg: {
-    color: "#555",
+    color: C.textMuted,
     fontSize: 13,
     marginBottom: 6,
   },
-  empDesgSelected: { color: "#999" },
+  empDesgSelected: { color: C.textSecondary },
   typeBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#1E1E1E",
+    backgroundColor: C.inputBg,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: C.border,
+  },
+  typeBadgeSelected: {
+    backgroundColor: C.primaryMuted,
+    borderColor: C.primary,
   },
   typeText: {
-    color: "#666",
+    color: C.textMuted,
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1,
   },
+  typeTextSelected: {
+    color: C.primary,
+  },
   emptyText: {
-    color: "#444",
+    color: C.textMuted,
     textAlign: "center",
     marginTop: 40,
     fontSize: 15,
@@ -325,20 +382,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#0D0D0D",
+    backgroundColor: C.cardBg,
     borderTopWidth: 1,
-    borderTopColor: "#1E1E1E",
+    borderTopColor: C.border,
     padding: 20,
     paddingBottom: 36,
     gap: 12,
+    shadowColor: C.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   selectedLabel: {
-    color: "#666",
+    color: C.textSecondary,
     fontSize: 13,
     textAlign: "center",
   },
   continueBtn: {
-    backgroundColor: "#E8A020",
+    backgroundColor: C.primary,
     borderRadius: 14,
     paddingVertical: 16,
     flexDirection: "row",
@@ -347,7 +409,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   continueBtnText: {
-    color: "#0D0D0D",
+    color: C.textInverse,
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: 0.3,

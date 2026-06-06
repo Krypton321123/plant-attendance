@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../util/prisma';
 import path from "path"
 
-
+const ADMIN_ID = "admin"
+const ADMIN_PASSWORD = "123"
 
 // GET /employees - List all employees (for selection screen)
 export const getAllEmployees = async (_req: Request, res: Response) => {
@@ -114,5 +115,82 @@ export const approveEmployee = async (req: Request, res: Response) => {
     res.json({ success: true, message: `Employee ${status === 'A' ? 'approved' : 'revoked'}`, data: updated });
   } catch {
     res.status(500).json({ success: false, message: 'Approval failed' });
+  }
+};
+
+// POST /employees/create - Supervisor creates a new employee record
+export const createEmployee = async (req: Request, res: Response) => {
+  try {
+    const { EMPNAME, EMPFNAME, EMPDESG, EMPTYPE } = req.body;
+
+    if (!EMPNAME?.trim()) {
+      return res.status(400).json({ success: false, message: 'First name is required' });
+    }
+    if (!EMPFNAME?.trim()) {
+      return res.status(400).json({ success: false, message: 'Last name is required' });
+    }
+    if (!EMPDESG?.trim()) {
+      return res.status(400).json({ success: false, message: 'Designation is required' });
+    }
+    if (!['INDIVIDUAL', 'SUPERVISOR'].includes(EMPTYPE)) {
+      return res.status(400).json({ success: false, message: 'EMPTYPE must be INDIVIDUAL or SUPERVISOR' });
+    }
+
+    const employee = await prisma.employee.create({
+      data: {
+        EMPNAME: EMPNAME.trim(),
+        EMPFNAME: EMPFNAME.trim(),
+        EMPDESG: EMPDESG.trim(),
+        EMPTYPE,
+        STATUS: 'NA',
+      },
+      select: {
+        EMP_ID: true,
+        EMPNAME: true,
+        EMPFNAME: true,
+        EMPDESG: true,
+        EMPTYPE: true,
+        STATUS: true,
+        CREATEDAT: true,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Employee created successfully',
+      data: employee,
+    });
+  } catch (error) {
+    console.log('create employee error', error);
+    res.status(500).json({ success: false, message: 'Failed to create employee' });
+  }
+};
+
+export const adminLogin = async (req: Request, res: Response) => {
+  try {
+    const { adminId, password } = req.body;
+ 
+    if (!adminId || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin ID and password are required',
+      });
+    }
+ 
+    if (adminId !== ADMIN_ID || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
+    }
+ 
+    return res.json({
+      success: true,
+      message: 'Admin authenticated successfully',
+      data: { role: 'ADMIN' },
+    });
+  } catch (error) {
+    console.error('Admin login error', error);
+    res.status(500).json({ success: false, message: 'Login failed' });
   }
 };
