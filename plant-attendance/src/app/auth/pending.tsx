@@ -30,7 +30,7 @@ export default function PendingScreen() {
       if (data.success && data.data.STATUS === "A") {
         const updated = { ...employee, ...data.data };
         await AsyncStorage.setItem(STORAGE_KEYS.EMPLOYEE, JSON.stringify(updated));
-        router.replace(updated.EMPTYPE === "SUPERVISOR" ? "/supervisor/home" : "/individual/home");
+        router.replace(updated.EMPTYPE === "SUPERVISOR" || updated.EMPTYPE === "PPSUPERVISOR" ? "/supervisor/home" : "/individual/home");
       } else {
         Alert.alert("Still Pending", "Your registration hasn't been approved yet. Please check back later.");
       }

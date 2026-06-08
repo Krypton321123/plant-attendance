@@ -194,3 +194,35 @@ export const adminLogin = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Login failed' });
   }
 };
+
+export const getTodayAttendanceByEmp = async (req: Request, res: Response) => {
+  try {
+    const { empId } = req.params;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const record = await prisma.attendance.findFirst({
+      where: {
+        EMP_ID: empId as string,
+        CREATEDAT: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: {
+        STATUS:    true,
+        CREATEDAT: true,
+        LOCATION:  true,
+      },
+    });
+
+    return res.json({ success: true, data: record ?? null });
+  } catch (err) {
+    console.error("getTodayAttendanceByEmp error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

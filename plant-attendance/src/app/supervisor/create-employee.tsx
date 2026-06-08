@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { API_URL } from "../../constants/config";
 import { C } from "../../constants/theme";
 
-type EmpType = "INDIVIDUAL" | "SUPERVISOR";
+type EmpType = "INDIVIDUAL" | "SUPERVISOR" | "PPSUPERVISOR" | "KPSUPERVISOR" | "OFFICE";
 
 type FormState = {
   EMPNAME: string;
@@ -38,6 +38,48 @@ const DESIGNATIONS = [
   "Foreman",
   "Helper",
 ];
+
+type EmpTypeConfig = {
+  value: EmpType;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  hint: string;
+};
+
+const EMP_TYPES: EmpTypeConfig[] = [
+  {
+    value: "INDIVIDUAL",
+    label: "Individual",
+    icon: "person-outline",
+    hint: "Can only mark their own attendance.",
+  },
+  {
+    value: "SUPERVISOR",
+    label: "Supervisor",
+    icon: "shield-checkmark-outline",
+    hint: "Can mark attendance for all employees and access reports.",
+  },
+  {
+    value: "PPSUPERVISOR",
+    label: "PP Supervisor",
+    icon: "construct-outline",
+    hint: "Manages PP section — can fill packaging entries and approve them.",
+  },
+  {
+    value: "KPSUPERVISOR",
+    label: "KP Supervisor",
+    icon: "layers-outline",
+    hint: "Manages KP section — can fill KP entries and approve them.",
+  },
+  {
+    value: "OFFICE",
+    label: "Office",
+    icon: "briefcase-outline",
+    hint: "Office staff — access to reports and dispatch management.",
+  },
+];
+
+const SUPERVISOR_TYPES: EmpType[] = ["SUPERVISOR", "PPSUPERVISOR", "KPSUPERVISOR"];
 
 export default function CreateEmployeeScreen() {
   const router = useRouter();
@@ -108,6 +150,9 @@ export default function CreateEmployeeScreen() {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
+  const selectedTypeConfig = EMP_TYPES.find((t) => t.value === form.EMPTYPE)!;
+  const isSupervisorType = SUPERVISOR_TYPES.includes(form.EMPTYPE);
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
@@ -153,18 +198,18 @@ export default function CreateEmployeeScreen() {
               <View
                 style={[
                   styles.previewTypePill,
-                  form.EMPTYPE === "SUPERVISOR" ? styles.pillSupervisor : styles.pillIndividual,
+                  isSupervisorType ? styles.pillSupervisor : styles.pillIndividual,
+                  form.EMPTYPE === "OFFICE" && styles.pillOffice,
                 ]}
               >
                 <Text
                   style={[
                     styles.previewTypeText,
-                    form.EMPTYPE === "SUPERVISOR"
-                      ? styles.pillTextSupervisor
-                      : styles.pillTextIndividual,
+                    isSupervisorType ? styles.pillTextSupervisor : styles.pillTextIndividual,
+                    form.EMPTYPE === "OFFICE" && styles.pillTextOffice,
                   ]}
                 >
-                  {form.EMPTYPE === "SUPERVISOR" ? "Supervisor" : "Individual"}
+                  {selectedTypeConfig.label}
                 </Text>
               </View>
             </View>
@@ -278,56 +323,33 @@ export default function CreateEmployeeScreen() {
             {/* Employee Type */}
             <View style={[styles.field, { borderBottomWidth: 0 }]}>
               <Text style={styles.fieldLabel}>Employee Type</Text>
-              <View style={styles.typeToggle}>
-                <TouchableOpacity
-                  style={[
-                    styles.typeBtn,
-                    form.EMPTYPE === "INDIVIDUAL" && styles.typeBtnActive,
-                  ]}
-                  onPress={() => setField("EMPTYPE", "INDIVIDUAL")}
-                >
-                  <Ionicons
-                    name="person-outline"
-                    size={18}
-                    color={form.EMPTYPE === "INDIVIDUAL" ? C.primary : C.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      form.EMPTYPE === "INDIVIDUAL" && styles.typeBtnTextActive,
-                    ]}
-                  >
-                    Individual
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.typeBtn,
-                    form.EMPTYPE === "SUPERVISOR" && styles.typeBtnActive,
-                  ]}
-                  onPress={() => setField("EMPTYPE", "SUPERVISOR")}
-                >
-                  <Ionicons
-                    name="shield-checkmark-outline"
-                    size={18}
-                    color={form.EMPTYPE === "SUPERVISOR" ? C.primary : C.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      form.EMPTYPE === "SUPERVISOR" && styles.typeBtnTextActive,
-                    ]}
-                  >
-                    Supervisor
-                  </Text>
-                </TouchableOpacity>
+              <View style={styles.typeGrid}>
+                {EMP_TYPES.map((t) => {
+                  const isActive = form.EMPTYPE === t.value;
+                  return (
+                    <TouchableOpacity
+                      key={t.value}
+                      style={[styles.typeBtn, isActive && styles.typeBtnActive]}
+                      onPress={() => setField("EMPTYPE", t.value)}
+                    >
+                      <Ionicons
+                        name={t.icon}
+                        size={18}
+                        color={isActive ? C.primary : C.textMuted}
+                      />
+                      <Text
+                        style={[
+                          styles.typeBtnText,
+                          isActive && styles.typeBtnTextActive,
+                        ]}
+                      >
+                        {t.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-              <Text style={styles.typeHint}>
-                {form.EMPTYPE === "SUPERVISOR"
-                  ? "Can mark attendance for all employees and access reports."
-                  : "Can only mark their own attendance."}
-              </Text>
+              <Text style={styles.typeHint}>{selectedTypeConfig.hint}</Text>
             </View>
           </View>
 
@@ -335,7 +357,8 @@ export default function CreateEmployeeScreen() {
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={18} color={C.primary} />
             <Text style={styles.infoText}>
-              After creation, the employee must open the app on their device and register using their name to link their device.
+              After creation, the employee must open the app on their device and register
+              using their name to link their device.
             </Text>
           </View>
 
@@ -373,194 +396,105 @@ const styles = StyleSheet.create({
     backgroundColor: C.cardBg,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.inputBg,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: C.border,
+    width: 40, height: 40, borderRadius: 12, backgroundColor: C.inputBg,
+    justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: C.border,
   },
   topBarTitle: { color: C.textPrimary, fontSize: 16, fontWeight: "800", textAlign: "center" },
-  topBarSub: { color: C.textMuted, fontSize: 12, textAlign: "center", marginTop: 1 },
+  topBarSub:   { color: C.textMuted,   fontSize: 12, textAlign: "center", marginTop: 1 },
 
   scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
 
   previewCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    backgroundColor: C.cardBg,
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 28,
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 2,
+    flexDirection: "row", alignItems: "center", gap: 16,
+    backgroundColor: C.cardBg, borderRadius: 18, padding: 18,
+    borderWidth: 1, borderColor: C.border, marginBottom: 28,
+    shadowColor: C.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 6, elevation: 2,
   },
   previewAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: C.primaryLight,
-    borderWidth: 1.5,
-    borderColor: C.primaryMuted,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 60, height: 60, borderRadius: 30, backgroundColor: C.primaryLight,
+    borderWidth: 1.5, borderColor: C.primaryMuted, justifyContent: "center", alignItems: "center",
   },
   previewAvatarText: { color: C.primary, fontSize: 20, fontWeight: "800" },
-  previewName: { color: C.textPrimary, fontSize: 17, fontWeight: "800", marginBottom: 3 },
-  previewDesg: { color: C.textMuted, fontSize: 13, marginBottom: 8 },
+  previewName:       { color: C.textPrimary, fontSize: 17, fontWeight: "800", marginBottom: 3 },
+  previewDesg:       { color: C.textMuted,   fontSize: 13, marginBottom: 8 },
   previewTypePill: {
-    alignSelf: "flex-start",
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderWidth: 1,
+    alignSelf: "flex-start", borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1,
   },
-  pillIndividual: { backgroundColor: C.inputBg, borderColor: C.border },
-  pillSupervisor: { backgroundColor: C.primaryLight, borderColor: C.primaryMuted },
-  previewTypeText: { fontSize: 11, fontWeight: "700" },
-  pillTextIndividual: { color: C.textMuted },
-  pillTextSupervisor: { color: C.primary },
+  pillIndividual:      { backgroundColor: C.inputBg,     borderColor: C.border        },
+  pillSupervisor:      { backgroundColor: C.primaryLight, borderColor: C.primaryMuted  },
+  pillOffice:          { backgroundColor: C.amberBg,      borderColor: C.amberLight    },
+  previewTypeText:     { fontSize: 11, fontWeight: "700" },
+  pillTextIndividual:  { color: C.textMuted },
+  pillTextSupervisor:  { color: C.primary   },
+  pillTextOffice:      { color: C.amber     },
 
   sectionLabel: {
-    color: C.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 10,
+    color: C.textMuted, fontSize: 11, fontWeight: "700",
+    letterSpacing: 1, textTransform: "uppercase", marginBottom: 10,
   },
   fieldGroup: {
-    backgroundColor: C.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 24,
-    overflow: "hidden",
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 3,
-    elevation: 1,
+    backgroundColor: C.cardBg, borderRadius: 16, borderWidth: 1, borderColor: C.border,
+    marginBottom: 24, overflow: "hidden",
+    shadowColor: C.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 1, shadowRadius: 3, elevation: 1,
   },
-  field: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
+  field: { padding: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   fieldLabel: {
-    color: C.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    textTransform: "uppercase",
+    color: C.textMuted, fontSize: 11, fontWeight: "700",
+    letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase",
   },
   input: {
-    backgroundColor: C.inputBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: C.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: C.textPrimary,
-    fontSize: 15,
+    backgroundColor: C.inputBg, borderRadius: 10, borderWidth: 1,
+    borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12,
+    color: C.textPrimary, fontSize: 15,
   },
-  inputError: { borderColor: C.red },
-  errorText: { color: C.red, fontSize: 12, marginTop: 6 },
-
-  selectInput: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  selectText: { color: C.textPrimary, fontSize: 15 },
+  inputError:   { borderColor: C.red },
+  errorText:    { color: C.red, fontSize: 12, marginTop: 6 },
+  selectInput:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  selectText:   { color: C.textPrimary, fontSize: 15 },
 
   picker: {
-    backgroundColor: C.inputBg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginTop: 8,
-    overflow: "hidden",
+    backgroundColor: C.inputBg, borderRadius: 10, borderWidth: 1,
+    borderColor: C.border, marginTop: 8, overflow: "hidden",
   },
   pickerItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  pickerItemActive: { backgroundColor: C.primaryLight },
-  pickerItemText: { color: C.textSecondary, fontSize: 14 },
+  pickerItemActive:     { backgroundColor: C.primaryLight },
+  pickerItemText:       { color: C.textSecondary, fontSize: 14 },
   pickerItemTextActive: { color: C.primary, fontWeight: "700" },
-  pickerCustomRow: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
+  pickerCustomRow:      { paddingHorizontal: 14, paddingVertical: 8 },
   pickerCustomInput: {
-    color: C.textPrimary,
-    fontSize: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    color: C.textPrimary, fontSize: 14, paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: C.border,
   },
 
-  typeToggle: {
-    flexDirection: "row",
-    gap: 10,
-  },
+  // 5-type grid: flexWrap gives a 3+2 layout naturally
+  typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   typeBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: C.inputBg,
-    borderRadius: 10,
-    paddingVertical: 12,
-    borderWidth: 1.5,
-    borderColor: C.border,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7,
+    backgroundColor: C.inputBg, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 10,
+    borderWidth: 1.5, borderColor: C.border,
+    // minWidth ensures ~3 per row then wraps to 2
+    minWidth: "30%", flexGrow: 1,
   },
-  typeBtnActive: {
-    backgroundColor: C.primaryLight,
-    borderColor: C.primary,
-  },
-  typeBtnText: { color: C.textMuted, fontSize: 14, fontWeight: "700" },
+  typeBtnActive: { backgroundColor: C.primaryLight, borderColor: C.primary },
+  typeBtnText:   { color: C.textMuted, fontSize: 13, fontWeight: "700" },
   typeBtnTextActive: { color: C.primary },
-  typeHint: { color: C.textMuted, fontSize: 12, marginTop: 10, lineHeight: 16 },
+  typeHint: { color: C.textMuted, fontSize: 12, marginTop: 12, lineHeight: 16 },
 
   infoBox: {
-    flexDirection: "row",
-    gap: 10,
-    backgroundColor: C.primaryLight,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: C.primaryMuted,
-    marginBottom: 24,
-    alignItems: "flex-start",
+    flexDirection: "row", gap: 10, backgroundColor: C.primaryLight,
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.primaryMuted,
+    marginBottom: 24, alignItems: "flex-start",
   },
   infoText: { color: C.textSecondary, fontSize: 13, lineHeight: 18, flex: 1 },
 
   submitBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: C.primary,
-    borderRadius: 16,
-    paddingVertical: 18,
-    gap: 10,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    backgroundColor: C.primary, borderRadius: 16, paddingVertical: 18, gap: 10,
   },
   submitBtnDisabled: { backgroundColor: C.primaryMuted },
-  submitBtnText: { color: C.textInverse, fontSize: 17, fontWeight: "800" },
+  submitBtnText:     { color: C.textInverse, fontSize: 17, fontWeight: "800" },
 });

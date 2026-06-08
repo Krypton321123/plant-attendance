@@ -6,6 +6,7 @@ import {
   approveEmployee,
   createEmployee,
   adminLogin,
+  getTodayAttendanceByEmp,
 } from './controllers/employee.controller';
 import {
   markAttendance,
@@ -52,4 +53,5 @@ router.get('/dispatch/sessions/:sessionId',                getSession);
 router.post('/dispatch/sessions',                          createDispatchSession);
 router.put('/dispatch/sessions/:sessionId',                updateDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/complete',     completeDispatchSession);
+router.get('/attendance/:empId/today', getTodayAttendanceByEmp);
 export default router;

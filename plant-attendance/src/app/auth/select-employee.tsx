@@ -98,16 +98,33 @@ export default function SelectEmployeeScreen() {
 
   const renderEmployee = ({ item }: { item: Employee }) => {
     const isSelected = selected?.EMP_ID === item.EMP_ID;
+    // Disabled: already approved AND already has a registered device
+    const isDisabled = item.STATUS === "A" && !!item.DEVICEID;
     const initials = `${item.EMPNAME[0]}${item.EMPFNAME[0]}`.toUpperCase();
 
     return (
       <TouchableOpacity
-        style={[styles.card, isSelected && styles.cardSelected]}
-        onPress={() => setSelected(item)}
-        activeOpacity={0.7}
+        style={[
+          styles.card,
+          isSelected && styles.cardSelected,
+          isDisabled && styles.cardDisabled,
+        ]}
+        onPress={() => !isDisabled && setSelected(item)}
+        activeOpacity={isDisabled ? 1 : 0.7}
       >
-        <View style={[styles.avatar, isSelected && styles.avatarSelected]}>
-          <Text style={[styles.avatarText, isSelected && styles.avatarTextSelected]}>
+        <View
+          style={[
+            styles.avatar,
+            isSelected && styles.avatarSelected,
+            isDisabled && styles.avatarDisabled,
+          ]}
+        >
+          <Text
+            style={[
+              styles.avatarText,
+              isSelected && styles.avatarTextSelected,
+            ]}
+          >
             {initials}
           </Text>
         </View>
@@ -118,10 +135,33 @@ export default function SelectEmployeeScreen() {
           <Text style={[styles.empDesg, isSelected && styles.empDesgSelected]}>
             {item.EMPDESG}
           </Text>
-          <View style={[styles.typeBadge, isSelected && styles.typeBadgeSelected]}>
-            <Text style={[styles.typeText, isSelected && styles.typeTextSelected]}>
-              {item.EMPTYPE}
-            </Text>
+          <View style={styles.badgeRow}>
+            <View
+              style={[
+                styles.typeBadge,
+                isSelected && styles.typeBadgeSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.typeText,
+                  isSelected && styles.typeTextSelected,
+                ]}
+              >
+                {item.EMPTYPE}
+              </Text>
+            </View>
+            {isDisabled && (
+              <View style={styles.registeredBadge}>
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={10}
+                  color={C.textMuted}
+                  style={{ marginRight: 3 }}
+                />
+                <Text style={styles.registeredBadgeText}>Registered</Text>
+              </View>
+            )}
           </View>
         </View>
         {isSelected && (
@@ -144,7 +184,11 @@ export default function SelectEmployeeScreen() {
             onPress={() => router.push("/auth/admin-login")}
             activeOpacity={0.7}
           >
-            <Ionicons name="shield-checkmark-outline" size={14} color={C.textMuted} />
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={14}
+              color={C.textMuted}
+            />
             <Text style={styles.adminLinkText}>Admin</Text>
           </TouchableOpacity>
         </View>
@@ -154,7 +198,12 @@ export default function SelectEmployeeScreen() {
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={18} color={C.textMuted} style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={18}
+          color={C.textMuted}
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or role..."
@@ -166,7 +215,11 @@ export default function SelectEmployeeScreen() {
 
       {/* List */}
       {loading ? (
-        <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator
+          size="large"
+          color={C.primary}
+          style={{ marginTop: 40 }}
+        />
       ) : (
         <FlatList
           data={filtered}
@@ -313,6 +366,9 @@ const styles = StyleSheet.create({
     borderColor: C.primary,
     backgroundColor: C.primaryLight,
   },
+  cardDisabled: {
+    opacity: 0.45,
+  },
   avatar: {
     width: 46,
     height: 46,
@@ -326,6 +382,9 @@ const styles = StyleSheet.create({
   avatarSelected: {
     backgroundColor: C.primary,
     borderColor: C.primaryDark,
+  },
+  avatarDisabled: {
+    backgroundColor: C.inputBg,
   },
   avatarText: {
     color: C.textSecondary,
@@ -349,6 +408,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   empDesgSelected: { color: C.textSecondary },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
   typeBadge: {
     alignSelf: "flex-start",
     backgroundColor: C.inputBg,
@@ -370,6 +435,22 @@ const styles = StyleSheet.create({
   },
   typeTextSelected: {
     color: C.primary,
+  },
+  registeredBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.inputBg,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  registeredBadgeText: {
+    color: C.textMuted,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   emptyText: {
     color: C.textMuted,

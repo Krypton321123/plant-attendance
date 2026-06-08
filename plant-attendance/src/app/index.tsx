@@ -13,6 +13,12 @@ export default function IndexScreen() {
 
   const checkSession = async () => {
     try {
+      const adminRaw = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN);
+      if (adminRaw) {
+        router.replace("/admin/home");
+        return;
+      }
+
       const raw = await AsyncStorage.getItem(STORAGE_KEYS.EMPLOYEE);
       if (!raw) {
         router.replace("/auth/select-employee");
@@ -20,7 +26,13 @@ export default function IndexScreen() {
       }
 
       const employee = JSON.parse(raw);
-      const deviceId = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
+      const deviceId = employee.DEVICEID; // ← read from employee, not separately
+
+      if (!deviceId) {
+        // Employee selected but never went through registration
+        router.replace("/auth/select-employee");
+        return;
+      }
 
       const res = await fetch(
         `${API_URL}/employees/${employee.EMP_ID}/status?deviceId=${deviceId}`,
@@ -44,7 +56,8 @@ export default function IndexScreen() {
         return;
       }
 
-      // Route based on EMPTYPE
+      console.log("updated", updated)
+
       switch (updated.EMPTYPE) {
         case "ADMIN":
           router.replace("/admin/home");
@@ -52,10 +65,10 @@ export default function IndexScreen() {
         case "SUPERVISOR":
           router.replace("/supervisor/home");
           break;
-        case "PPSUPERVISOR": 
+        case "PPSUPERVISOR":
           router.replace("/supervisor/home");
           break;
-          case "OFFICE": 
+        case "OFFICE":
           router.replace("/supervisor/home");
           break;
         default:
