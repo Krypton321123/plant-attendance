@@ -19,6 +19,10 @@ model Employee {
   DEVICEID            String?
   STATUS              String         @default("NA")
   EMPTYPE             String
+  SALARY              Int?
+  LEAVE_APPLICABLE    Boolean? 
+  LEAVE_DAYS          Int            @default(0)
+  DEPARTMENT          String?        @default("")
   CREATEDAT           DateTime       @default(now())
   attendances         Attendance[]
   fillingAsOperator   FillingEntry[] @relation("FillingOperator")
@@ -28,7 +32,6 @@ model Employee {
 
   @@map("employees")
 }
-
 model Attendance {
   EMP_ID    String
   CREATEDAT DateTime @default(now())

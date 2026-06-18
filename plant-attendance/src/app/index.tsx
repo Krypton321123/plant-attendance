@@ -68,6 +68,8 @@ export default function IndexScreen() {
         case "PPSUPERVISOR":
           router.replace("/supervisor/home");
           break;
+        case "KPSUPERVISOR": 
+          router.replace("/supervisor/home");
         case "OFFICE":
           router.replace("/supervisor/home");
           break;

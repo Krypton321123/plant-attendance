@@ -1020,6 +1020,10 @@ export const EmployeeScalarFieldEnum = {
   DEVICEID: 'DEVICEID',
   STATUS: 'STATUS',
   EMPTYPE: 'EMPTYPE',
+  SALARY: 'SALARY',
+  LEAVE_APPLICABLE: 'LEAVE_APPLICABLE',
+  LEAVE_DAYS: 'LEAVE_DAYS',
+  DEPARTMENT: 'DEPARTMENT',
   CREATEDAT: 'CREATEDAT'
 } as const
 
@@ -1181,6 +1185,20 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -1198,13 +1216,6 @@ export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'BigInt'
  */
 export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 

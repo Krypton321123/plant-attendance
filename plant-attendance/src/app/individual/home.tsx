@@ -2,8 +2,9 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { API_URL, STORAGE_KEYS } from "../../constants/config";
@@ -22,7 +23,11 @@ export default function IndividualHomeScreen() {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
-  useEffect(() => { loadData(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
     try {

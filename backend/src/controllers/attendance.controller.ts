@@ -75,11 +75,35 @@ export const markAttendance = async (req: Request, res: Response) => {
 };
 
 // GET /attendance/today - Get today's attendance for all employees (for supervisor screen)
-export const getTodayAttendance = async (_req: Request, res: Response) => {
+export const getTodayAttendance = async (req: Request, res: Response) => {
   try {
+    const { supervisorId } = req.query;
+
+    if (!supervisorId) {
+      return res.status(400).json({ success: false, message: 'supervisorId query param is required' });
+    }
+
+    // Fetch supervisor and their department
+    const supervisor = await prisma.employee.findUnique({
+      where: { EMP_ID: supervisorId as string },
+      select: { DEPARTMENT: true, EMPTYPE: true },
+    });
+
+    if (!supervisor) {
+      return res.status(404).json({ success: false, message: 'Supervisor not found' });
+    }
+
+    if (supervisor.EMPTYPE !== 'SUPERVISOR') {
+      return res.status(403).json({ success: false, message: 'Only supervisors can view attendance' });
+    }
+
     const { start, end } = getTodayRange();
 
     const employees = await prisma.employee.findMany({
+      where: {
+        DEPARTMENT: supervisor.DEPARTMENT,       // ← department filter
+        EMP_ID: { not: supervisorId as string }, // ← exclude the supervisor themselves
+      },
       select: {
         EMP_ID: true,
         EMPNAME: true,
