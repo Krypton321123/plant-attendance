@@ -93,10 +93,6 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Supervisor not found' });
     }
 
-    if (supervisor.EMPTYPE !== 'SUPERVISOR') {
-      return res.status(403).json({ success: false, message: 'Only supervisors can view attendance' });
-    }
-
     const { start, end } = getTodayRange();
 
     const employees = await prisma.employee.findMany({
