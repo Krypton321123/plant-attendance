@@ -29,6 +29,9 @@ export type AttendanceMinAggregateOutputType = {
   CREATEDAT: Date | null
   PHOTO: string | null
   LOCATION: string | null
+  SHIFT: string | null
+  LONG_VALUE: string | null
+  LAT_VALUE: string | null
   STATUS: string | null
   MARKED_BY: string | null
 }
@@ -38,6 +41,9 @@ export type AttendanceMaxAggregateOutputType = {
   CREATEDAT: Date | null
   PHOTO: string | null
   LOCATION: string | null
+  SHIFT: string | null
+  LONG_VALUE: string | null
+  LAT_VALUE: string | null
   STATUS: string | null
   MARKED_BY: string | null
 }
@@ -47,6 +53,9 @@ export type AttendanceCountAggregateOutputType = {
   CREATEDAT: number
   PHOTO: number
   LOCATION: number
+  SHIFT: number
+  LONG_VALUE: number
+  LAT_VALUE: number
   STATUS: number
   MARKED_BY: number
   _all: number
@@ -58,6 +67,9 @@ export type AttendanceMinAggregateInputType = {
   CREATEDAT?: true
   PHOTO?: true
   LOCATION?: true
+  SHIFT?: true
+  LONG_VALUE?: true
+  LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
 }
@@ -67,6 +79,9 @@ export type AttendanceMaxAggregateInputType = {
   CREATEDAT?: true
   PHOTO?: true
   LOCATION?: true
+  SHIFT?: true
+  LONG_VALUE?: true
+  LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
 }
@@ -76,6 +91,9 @@ export type AttendanceCountAggregateInputType = {
   CREATEDAT?: true
   PHOTO?: true
   LOCATION?: true
+  SHIFT?: true
+  LONG_VALUE?: true
+  LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
   _all?: true
@@ -158,6 +176,9 @@ export type AttendanceGroupByOutputType = {
   CREATEDAT: Date
   PHOTO: string | null
   LOCATION: string | null
+  SHIFT: string | null
+  LONG_VALUE: string | null
+  LAT_VALUE: string | null
   STATUS: string
   MARKED_BY: string | null
   _count: AttendanceCountAggregateOutputType | null
@@ -188,6 +209,9 @@ export type AttendanceWhereInput = {
   CREATEDAT?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   PHOTO?: Prisma.StringNullableFilter<"Attendance"> | string | null
   LOCATION?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  SHIFT?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LONG_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
@@ -198,6 +222,9 @@ export type AttendanceOrderByWithRelationInput = {
   CREATEDAT?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrderInput | Prisma.SortOrder
   LOCATION?: Prisma.SortOrderInput | Prisma.SortOrder
+  SHIFT?: Prisma.SortOrderInput | Prisma.SortOrder
+  LONG_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
+  LAT_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrderInput | Prisma.SortOrder
   employee?: Prisma.EmployeeOrderByWithRelationInput
@@ -212,6 +239,9 @@ export type AttendanceWhereUniqueInput = Prisma.AtLeast<{
   CREATEDAT?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   PHOTO?: Prisma.StringNullableFilter<"Attendance"> | string | null
   LOCATION?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  SHIFT?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LONG_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
@@ -222,6 +252,9 @@ export type AttendanceOrderByWithAggregationInput = {
   CREATEDAT?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrderInput | Prisma.SortOrder
   LOCATION?: Prisma.SortOrderInput | Prisma.SortOrder
+  SHIFT?: Prisma.SortOrderInput | Prisma.SortOrder
+  LONG_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
+  LAT_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AttendanceCountOrderByAggregateInput
@@ -237,6 +270,9 @@ export type AttendanceScalarWhereWithAggregatesInput = {
   CREATEDAT?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
   PHOTO?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   LOCATION?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  SHIFT?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  LONG_VALUE?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  LAT_VALUE?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
 }
@@ -245,6 +281,9 @@ export type AttendanceCreateInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
   employee: Prisma.EmployeeCreateNestedOneWithoutAttendancesInput
@@ -255,6 +294,9 @@ export type AttendanceUncheckedCreateInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
 }
@@ -263,6 +305,9 @@ export type AttendanceUpdateInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutAttendancesNestedInput
@@ -273,6 +318,9 @@ export type AttendanceUncheckedUpdateInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -282,6 +330,9 @@ export type AttendanceCreateManyInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
 }
@@ -290,6 +341,9 @@ export type AttendanceUpdateManyMutationInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -299,6 +353,9 @@ export type AttendanceUncheckedUpdateManyInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -323,6 +380,9 @@ export type AttendanceCountOrderByAggregateInput = {
   CREATEDAT?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   LOCATION?: Prisma.SortOrder
+  SHIFT?: Prisma.SortOrder
+  LONG_VALUE?: Prisma.SortOrder
+  LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
 }
@@ -332,6 +392,9 @@ export type AttendanceMaxOrderByAggregateInput = {
   CREATEDAT?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   LOCATION?: Prisma.SortOrder
+  SHIFT?: Prisma.SortOrder
+  LONG_VALUE?: Prisma.SortOrder
+  LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
 }
@@ -341,6 +404,9 @@ export type AttendanceMinOrderByAggregateInput = {
   CREATEDAT?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   LOCATION?: Prisma.SortOrder
+  SHIFT?: Prisma.SortOrder
+  LONG_VALUE?: Prisma.SortOrder
+  LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
 }
@@ -391,6 +457,9 @@ export type AttendanceCreateWithoutEmployeeInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
 }
@@ -399,6 +468,9 @@ export type AttendanceUncheckedCreateWithoutEmployeeInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
 }
@@ -436,6 +508,9 @@ export type AttendanceScalarWhereInput = {
   CREATEDAT?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   PHOTO?: Prisma.StringNullableFilter<"Attendance"> | string | null
   LOCATION?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  SHIFT?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LONG_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
 }
@@ -444,6 +519,9 @@ export type AttendanceCreateManyEmployeeInput = {
   CREATEDAT?: Date | string
   PHOTO?: string | null
   LOCATION?: string | null
+  SHIFT?: string | null
+  LONG_VALUE?: string | null
+  LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
 }
@@ -452,6 +530,9 @@ export type AttendanceUpdateWithoutEmployeeInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -460,6 +541,9 @@ export type AttendanceUncheckedUpdateWithoutEmployeeInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -468,6 +552,9 @@ export type AttendanceUncheckedUpdateManyWithoutEmployeeInput = {
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   LOCATION?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  SHIFT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LONG_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -479,6 +566,9 @@ export type AttendanceSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   CREATEDAT?: boolean
   PHOTO?: boolean
   LOCATION?: boolean
+  SHIFT?: boolean
+  LONG_VALUE?: boolean
+  LAT_VALUE?: boolean
   STATUS?: boolean
   MARKED_BY?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
@@ -491,11 +581,14 @@ export type AttendanceSelectScalar = {
   CREATEDAT?: boolean
   PHOTO?: boolean
   LOCATION?: boolean
+  SHIFT?: boolean
+  LONG_VALUE?: boolean
+  LAT_VALUE?: boolean
   STATUS?: boolean
   MARKED_BY?: boolean
 }
 
-export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"EMP_ID" | "CREATEDAT" | "PHOTO" | "LOCATION" | "STATUS" | "MARKED_BY", ExtArgs["result"]["attendance"]>
+export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"EMP_ID" | "CREATEDAT" | "PHOTO" | "LOCATION" | "SHIFT" | "LONG_VALUE" | "LAT_VALUE" | "STATUS" | "MARKED_BY", ExtArgs["result"]["attendance"]>
 export type AttendanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
@@ -510,6 +603,9 @@ export type $AttendancePayload<ExtArgs extends runtime.Types.Extensions.Internal
     CREATEDAT: Date
     PHOTO: string | null
     LOCATION: string | null
+    SHIFT: string | null
+    LONG_VALUE: string | null
+    LAT_VALUE: string | null
     STATUS: string
     MARKED_BY: string | null
   }, ExtArgs["result"]["attendance"]>
@@ -886,6 +982,9 @@ export interface AttendanceFieldRefs {
   readonly CREATEDAT: Prisma.FieldRef<"Attendance", 'DateTime'>
   readonly PHOTO: Prisma.FieldRef<"Attendance", 'String'>
   readonly LOCATION: Prisma.FieldRef<"Attendance", 'String'>
+  readonly SHIFT: Prisma.FieldRef<"Attendance", 'String'>
+  readonly LONG_VALUE: Prisma.FieldRef<"Attendance", 'String'>
+  readonly LAT_VALUE: Prisma.FieldRef<"Attendance", 'String'>
   readonly STATUS: Prisma.FieldRef<"Attendance", 'String'>
   readonly MARKED_BY: Prisma.FieldRef<"Attendance", 'String'>
 }

@@ -1035,6 +1035,9 @@ export const AttendanceScalarFieldEnum = {
   CREATEDAT: 'CREATEDAT',
   PHOTO: 'PHOTO',
   LOCATION: 'LOCATION',
+  SHIFT: 'SHIFT',
+  LONG_VALUE: 'LONG_VALUE',
+  LAT_VALUE: 'LAT_VALUE',
   STATUS: 'STATUS',
   MARKED_BY: 'MARKED_BY'
 } as const

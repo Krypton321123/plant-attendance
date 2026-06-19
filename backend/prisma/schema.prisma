@@ -37,6 +37,9 @@ model Attendance {
   CREATEDAT DateTime @default(now())
   PHOTO     String?
   LOCATION  String?
+  SHIFT     String?
+  LONG_VALUE String? 
+  LAT_VALUE String?
   STATUS    String
   MARKED_BY String?
   employee  Employee @relation(fields: [EMP_ID], references: [EMP_ID])
