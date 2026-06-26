@@ -34,6 +34,7 @@ export type AttendanceMinAggregateOutputType = {
   LAT_VALUE: string | null
   STATUS: string | null
   MARKED_BY: string | null
+  OT_STATUS: string | null
 }
 
 export type AttendanceMaxAggregateOutputType = {
@@ -46,6 +47,7 @@ export type AttendanceMaxAggregateOutputType = {
   LAT_VALUE: string | null
   STATUS: string | null
   MARKED_BY: string | null
+  OT_STATUS: string | null
 }
 
 export type AttendanceCountAggregateOutputType = {
@@ -58,6 +60,7 @@ export type AttendanceCountAggregateOutputType = {
   LAT_VALUE: number
   STATUS: number
   MARKED_BY: number
+  OT_STATUS: number
   _all: number
 }
 
@@ -72,6 +75,7 @@ export type AttendanceMinAggregateInputType = {
   LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
+  OT_STATUS?: true
 }
 
 export type AttendanceMaxAggregateInputType = {
@@ -84,6 +88,7 @@ export type AttendanceMaxAggregateInputType = {
   LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
+  OT_STATUS?: true
 }
 
 export type AttendanceCountAggregateInputType = {
@@ -96,6 +101,7 @@ export type AttendanceCountAggregateInputType = {
   LAT_VALUE?: true
   STATUS?: true
   MARKED_BY?: true
+  OT_STATUS?: true
   _all?: true
 }
 
@@ -181,6 +187,7 @@ export type AttendanceGroupByOutputType = {
   LAT_VALUE: string | null
   STATUS: string
   MARKED_BY: string | null
+  OT_STATUS: string | null
   _count: AttendanceCountAggregateOutputType | null
   _min: AttendanceMinAggregateOutputType | null
   _max: AttendanceMaxAggregateOutputType | null
@@ -214,6 +221,7 @@ export type AttendanceWhereInput = {
   LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  OT_STATUS?: Prisma.StringNullableFilter<"Attendance"> | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }
 
@@ -227,6 +235,7 @@ export type AttendanceOrderByWithRelationInput = {
   LAT_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrderInput | Prisma.SortOrder
+  OT_STATUS?: Prisma.SortOrderInput | Prisma.SortOrder
   employee?: Prisma.EmployeeOrderByWithRelationInput
 }
 
@@ -244,6 +253,7 @@ export type AttendanceWhereUniqueInput = Prisma.AtLeast<{
   LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  OT_STATUS?: Prisma.StringNullableFilter<"Attendance"> | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }, "EMP_ID_CREATEDAT">
 
@@ -257,6 +267,7 @@ export type AttendanceOrderByWithAggregationInput = {
   LAT_VALUE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrderInput | Prisma.SortOrder
+  OT_STATUS?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AttendanceCountOrderByAggregateInput
   _max?: Prisma.AttendanceMaxOrderByAggregateInput
   _min?: Prisma.AttendanceMinOrderByAggregateInput
@@ -275,6 +286,7 @@ export type AttendanceScalarWhereWithAggregatesInput = {
   LAT_VALUE?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  OT_STATUS?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
 }
 
 export type AttendanceCreateInput = {
@@ -286,6 +298,7 @@ export type AttendanceCreateInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
   employee: Prisma.EmployeeCreateNestedOneWithoutAttendancesInput
 }
 
@@ -299,6 +312,7 @@ export type AttendanceUncheckedCreateInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
 }
 
 export type AttendanceUpdateInput = {
@@ -310,6 +324,7 @@ export type AttendanceUpdateInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutAttendancesNestedInput
 }
 
@@ -323,6 +338,7 @@ export type AttendanceUncheckedUpdateInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AttendanceCreateManyInput = {
@@ -335,6 +351,7 @@ export type AttendanceCreateManyInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
 }
 
 export type AttendanceUpdateManyMutationInput = {
@@ -346,6 +363,7 @@ export type AttendanceUpdateManyMutationInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AttendanceUncheckedUpdateManyInput = {
@@ -358,6 +376,7 @@ export type AttendanceUncheckedUpdateManyInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AttendanceListRelationFilter = {
@@ -385,6 +404,7 @@ export type AttendanceCountOrderByAggregateInput = {
   LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
+  OT_STATUS?: Prisma.SortOrder
 }
 
 export type AttendanceMaxOrderByAggregateInput = {
@@ -397,6 +417,7 @@ export type AttendanceMaxOrderByAggregateInput = {
   LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
+  OT_STATUS?: Prisma.SortOrder
 }
 
 export type AttendanceMinOrderByAggregateInput = {
@@ -409,6 +430,7 @@ export type AttendanceMinOrderByAggregateInput = {
   LAT_VALUE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   MARKED_BY?: Prisma.SortOrder
+  OT_STATUS?: Prisma.SortOrder
 }
 
 export type AttendanceCreateNestedManyWithoutEmployeeInput = {
@@ -462,6 +484,7 @@ export type AttendanceCreateWithoutEmployeeInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
 }
 
 export type AttendanceUncheckedCreateWithoutEmployeeInput = {
@@ -473,6 +496,7 @@ export type AttendanceUncheckedCreateWithoutEmployeeInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
 }
 
 export type AttendanceCreateOrConnectWithoutEmployeeInput = {
@@ -513,6 +537,7 @@ export type AttendanceScalarWhereInput = {
   LAT_VALUE?: Prisma.StringNullableFilter<"Attendance"> | string | null
   STATUS?: Prisma.StringFilter<"Attendance"> | string
   MARKED_BY?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  OT_STATUS?: Prisma.StringNullableFilter<"Attendance"> | string | null
 }
 
 export type AttendanceCreateManyEmployeeInput = {
@@ -524,6 +549,7 @@ export type AttendanceCreateManyEmployeeInput = {
   LAT_VALUE?: string | null
   STATUS: string
   MARKED_BY?: string | null
+  OT_STATUS?: string | null
 }
 
 export type AttendanceUpdateWithoutEmployeeInput = {
@@ -535,6 +561,7 @@ export type AttendanceUpdateWithoutEmployeeInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AttendanceUncheckedUpdateWithoutEmployeeInput = {
@@ -546,6 +573,7 @@ export type AttendanceUncheckedUpdateWithoutEmployeeInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AttendanceUncheckedUpdateManyWithoutEmployeeInput = {
@@ -557,6 +585,7 @@ export type AttendanceUncheckedUpdateManyWithoutEmployeeInput = {
   LAT_VALUE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   MARKED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  OT_STATUS?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -571,6 +600,7 @@ export type AttendanceSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   LAT_VALUE?: boolean
   STATUS?: boolean
   MARKED_BY?: boolean
+  OT_STATUS?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
 
@@ -586,9 +616,10 @@ export type AttendanceSelectScalar = {
   LAT_VALUE?: boolean
   STATUS?: boolean
   MARKED_BY?: boolean
+  OT_STATUS?: boolean
 }
 
-export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"EMP_ID" | "CREATEDAT" | "PHOTO" | "LOCATION" | "SHIFT" | "LONG_VALUE" | "LAT_VALUE" | "STATUS" | "MARKED_BY", ExtArgs["result"]["attendance"]>
+export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"EMP_ID" | "CREATEDAT" | "PHOTO" | "LOCATION" | "SHIFT" | "LONG_VALUE" | "LAT_VALUE" | "STATUS" | "MARKED_BY" | "OT_STATUS", ExtArgs["result"]["attendance"]>
 export type AttendanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
@@ -608,6 +639,7 @@ export type $AttendancePayload<ExtArgs extends runtime.Types.Extensions.Internal
     LAT_VALUE: string | null
     STATUS: string
     MARKED_BY: string | null
+    OT_STATUS: string | null
   }, ExtArgs["result"]["attendance"]>
   composites: {}
 }
@@ -987,6 +1019,7 @@ export interface AttendanceFieldRefs {
   readonly LAT_VALUE: Prisma.FieldRef<"Attendance", 'String'>
   readonly STATUS: Prisma.FieldRef<"Attendance", 'String'>
   readonly MARKED_BY: Prisma.FieldRef<"Attendance", 'String'>
+  readonly OT_STATUS: Prisma.FieldRef<"Attendance", 'String'>
 }
     
 

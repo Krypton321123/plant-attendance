@@ -103,6 +103,7 @@ export const markAttendance = async (req: Request, res: Response) => {
         LAT_VALUE:  latValue  || null,
         LONG_VALUE: longValue || null,
         CREATEDAT:  new Date(),
+        OT_STATUS:  null,
       },
     });
 
@@ -117,13 +118,83 @@ export const markAttendance = async (req: Request, res: Response) => {
   }
 };
 
+// ─── PATCH /attendance/ot-status ─────────────────────────────────────────────
+// Body: { empId, shift, otStatus }
+// Sets OT_STATUS exactly once. Returns 409 if already set.
+
+export const setOtStatus = async (req: Request, res: Response) => {
+  try {
+    const { empId, shift, otStatus } = req.body;
+
+    if (!empId || !shift || !otStatus) {
+      return res.status(400).json({
+        success: false,
+        message: 'empId, shift, and otStatus are required',
+      });
+    }
+    if (!['OT', 'HALF_OT', 'NO_OT'].includes(otStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'otStatus must be OT, HALF_OT, or NO_OT',
+      });
+    }
+    if (!['DAY', 'NIGHT'].includes(shift)) {
+      return res.status(400).json({
+        success: false,
+        message: 'shift must be DAY or NIGHT',
+      });
+    }
+
+    const { start, end } = getTodayRange();
+
+    // Find today's attendance record for this employee + shift
+    const record = await prisma.attendance.findFirst({
+      where: {
+        EMP_ID:    empId,
+        SHIFT:     shift,
+        CREATEDAT: { gte: start, lte: end },
+      },
+    });
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found for today's shift",
+      });
+    }
+
+    // One-time write guard — reject if already set
+    if (record.OT_STATUS !== null) {
+      return res.status(409).json({
+        success: false,
+        message: 'OT status already set — cannot change',
+      });
+    }
+
+    const updated = await prisma.attendance.update({
+      where: {
+        EMP_ID_CREATEDAT: {
+          EMP_ID:    empId,
+          CREATEDAT: record.CREATEDAT,
+        },
+      },
+      data: { OT_STATUS: otStatus },
+    });
+
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('setOtStatus error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to set OT status' });
+  }
+};
+
 // ─── GET /attendance/today?supervisorId=… ────────────────────────────────────
 // Returns employees in the supervisor's department + supervisor's own attendance.
 
 export const getTodayAttendance = async (req: Request, res: Response) => {
   try {
     const { supervisorId } = req.query;
-    console.log("supervisorId", supervisorId)
+    console.log('supervisorId', supervisorId);
 
     if (!supervisorId) {
       return res.status(400).json({ success: false, message: 'supervisorId query param is required' });
@@ -165,6 +236,7 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
             SHIFT:      true,
             LAT_VALUE:  true,
             LONG_VALUE: true,
+            OT_STATUS:  true,   // ← included
           },
           take:    2,
           orderBy: { CREATEDAT: 'asc' },
@@ -203,6 +275,7 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
         SHIFT:      true,
         LAT_VALUE:  true,
         LONG_VALUE: true,
+        OT_STATUS:  true,   // ← included
       },
       orderBy: { CREATEDAT: 'asc' },
     });
@@ -246,6 +319,7 @@ export const getTodayAttendanceByEmp = async (req: Request, res: Response) => {
         SHIFT:      true,
         LAT_VALUE:  true,
         LONG_VALUE: true,
+        OT_STATUS:  true,   // ← included
       },
       orderBy: { CREATEDAT: 'asc' },
     });
@@ -289,5 +363,49 @@ export const getMyAttendance = async (req: Request, res: Response) => {
     res.json({ success: true, data: records });
   } catch {
     res.status(500).json({ success: false, message: 'Failed to fetch attendance' });
+  }
+};
+
+// ─── GET /attendance/month ────────────────────────────────────────────────────
+
+export const getMonthlyAttendance = async (req: Request, res: Response) => {
+  const { month, year } = req.query;
+
+  if (month === undefined || year === undefined) {
+    return res.status(400).json({ message: 'month and year query params are required' });
+  }
+
+  const monthIdx = Number(month); // 0-11
+  const yearNum  = Number(year);
+
+  if (isNaN(monthIdx) || isNaN(yearNum) || monthIdx < 0 || monthIdx > 11) {
+    return res.status(400).json({ message: 'Invalid month or year' });
+  }
+
+  const startDate = new Date(yearNum, monthIdx, 1, 0, 0, 0, 0);
+  const endDate   = new Date(yearNum, monthIdx + 1, 0, 23, 59, 59, 999);
+
+  try {
+    const records = await prisma.attendance.findMany({
+      where: {
+        CREATEDAT: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        EMP_ID:    true,
+        CREATEDAT: true,
+        STATUS:    true,
+        SHIFT:     true,
+        MARKED_BY: true,
+        OT_STATUS: true,   // ← included
+      },
+      orderBy: { CREATEDAT: 'asc' },
+    });
+
+    return res.status(200).json({ data: records });
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message ?? 'Unknown error' });
   }
 };

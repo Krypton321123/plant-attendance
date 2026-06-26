@@ -20,7 +20,7 @@ model Employee {
   STATUS              String         @default("NA")
   EMPTYPE             String
   SALARY              Int?
-  LEAVE_APPLICABLE    Boolean? 
+  LEAVE_APPLICABLE    Boolean?
   LEAVE_DAYS          Int            @default(0)
   DEPARTMENT          String?        @default("")
   CREATEDAT           DateTime       @default(now())
@@ -32,17 +32,19 @@ model Employee {
 
   @@map("employees")
 }
+
 model Attendance {
-  EMP_ID    String
-  CREATEDAT DateTime @default(now())
-  PHOTO     String?
-  LOCATION  String?
-  SHIFT     String?
-  LONG_VALUE String? 
-  LAT_VALUE String?
-  STATUS    String
-  MARKED_BY String?
-  employee  Employee @relation(fields: [EMP_ID], references: [EMP_ID])
+  EMP_ID     String
+  CREATEDAT  DateTime @default(now())
+  PHOTO      String?
+  LOCATION   String?
+  SHIFT      String?
+  LONG_VALUE String?
+  LAT_VALUE  String?
+  STATUS     String
+  MARKED_BY  String?
+  OT_STATUS  String?  // "OT" | "HALF_OT" | "NO_OT" — set once by supervisor, nullable until chosen
+  employee   Employee @relation(fields: [EMP_ID], references: [EMP_ID])
 
   @@id([EMP_ID, CREATEDAT])
   @@map("attendance")
@@ -74,7 +76,7 @@ model WastageEntry {
   ITMSUBCAT      String?  @db.VarChar(50)
   CARTON_WASTAGE Decimal  @db.Decimal(18, 3)
   PCS_WASTAGE    Decimal  @db.Decimal(18, 3)
-  LOOSE_OIL      Decimal? @db.Decimal(18, 3) // nullable — only filled when received
+  LOOSE_OIL      Decimal? @db.Decimal(18, 3)
   DONE_BY        String
   CREATEDAT      DateTime @default(now())
   doneBy         Employee @relation("WastageDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
@@ -83,45 +85,45 @@ model WastageEntry {
 }
 
 model DispatchSession {
-  SESSION_ID    String          @id @default(cuid())
-  DISPATCH_TO   String          @db.VarChar(10)   // "DEPO" | "PARTY"
-  PARTY_CD      String          @db.VarChar(250)  // ledcd for party, untcd for depo
-  PARTY_NM      String          @db.VarChar(250)
-  VEHICLE_NO    String?         @db.VarChar(100)
-  TRANSPORTER   String?         @db.VarChar(250)
-  DRIVER_NAME   String?         @db.VarChar(250)
-  DRIVER_NO     String?         @db.VarChar(50)
-  KAANTA_WT     String?         @db.VarChar(100)
-  GRR_NO        String?         @db.VarChar(100)
-  STATUS        String          @default("DRAFT") // "DRAFT" | "COMPLETED"
-  DONE_BY       String
-  CREATEDAT     DateTime        @default(now())
-  doneBy        Employee        @relation("DispatchDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
-  items         DispatchItem[]
-  emptyItems    DispatchEmptyItem[]
+  SESSION_ID  String   @id @default(cuid())
+  DISPATCH_TO String   @db.VarChar(10)
+  PARTY_CD    String   @db.VarChar(250)
+  PARTY_NM    String   @db.VarChar(250)
+  VEHICLE_NO  String?  @db.VarChar(100)
+  TRANSPORTER String?  @db.VarChar(250)
+  DRIVER_NAME String?  @db.VarChar(250)
+  DRIVER_NO   String?  @db.VarChar(50)
+  KAANTA_WT   String?  @db.VarChar(100)
+  GRR_NO      String?  @db.VarChar(100)
+  STATUS      String   @default("DRAFT")
+  DONE_BY     String
+  CREATEDAT   DateTime @default(now())
+  doneBy      Employee @relation("DispatchDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  items       DispatchItem[]
+  emptyItems  DispatchEmptyItem[]
 
   @@map("dispatch_sessions")
 }
 
 model DispatchItem {
-  ITEM_ID       String          @id @default(cuid())
-  SESSION_ID    String
-  ITMCD         String          @db.VarChar(50)
-  ITMNM         String          @db.VarChar(250)
-  QTY           Decimal         @db.Decimal(18, 3)
-  FULL_BOX_WT   Decimal?        @db.Decimal(18, 3)  // filled by PPSUPERVISOR
-  session       DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  ITEM_ID     String          @id @default(cuid())
+  SESSION_ID  String
+  ITMCD       String          @db.VarChar(50)
+  ITMNM       String          @db.VarChar(250)
+  QTY         Decimal         @db.Decimal(18, 3)
+  FULL_BOX_WT Decimal?        @db.Decimal(18, 3)
+  session     DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("dispatch_items")
 }
 
 model DispatchEmptyItem {
-  ITEM_ID       String          @id @default(cuid())
-  SESSION_ID    String
-  ITMCD         String          @db.VarChar(50)
-  ITMNM         String          @db.VarChar(250)
-  QTY           Decimal         @db.Decimal(18, 3)
-  session       DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  ITEM_ID    String          @id @default(cuid())
+  SESSION_ID String
+  ITMCD      String          @db.VarChar(50)
+  ITMNM      String          @db.VarChar(250)
+  QTY        Decimal         @db.Decimal(18, 3)
+  session    DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("dispatch_empty_items")
 }

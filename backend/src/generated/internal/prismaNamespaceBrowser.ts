@@ -106,7 +106,8 @@ export const AttendanceScalarFieldEnum = {
   LONG_VALUE: 'LONG_VALUE',
   LAT_VALUE: 'LAT_VALUE',
   STATUS: 'STATUS',
-  MARKED_BY: 'MARKED_BY'
+  MARKED_BY: 'MARKED_BY',
+  OT_STATUS: 'OT_STATUS'
 } as const
 
 export type AttendanceScalarFieldEnum = (typeof AttendanceScalarFieldEnum)[keyof typeof AttendanceScalarFieldEnum]
