@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sun, Moon, Search, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, CalendarDays,
-  CheckCircle2, XCircle, CircleDashed, Wifi, WifiOff, Users, ShieldCheck,
+  CheckCircle2, XCircle, CircleDashed, Users, ShieldCheck,
   AlertTriangle, ExternalLink, MapPin, Building2, Zap,
 } from 'lucide-react';
 
