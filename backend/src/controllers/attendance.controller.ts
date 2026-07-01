@@ -225,6 +225,7 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
         EMPDESG:         true,
         EMPTYPE:         true,
         EMPPROFILEPHOTO: true,
+        SALARY:          true,   // ← added: so the payroll-by-designation view works for department-scoped (supervisorId) loads too, not just the full-roster /employees path
         attendances: {
           where:   { CREATEDAT: { gte: start, lte: end } },
           select:  {
@@ -255,6 +256,7 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
         EMPDESG:            emp.EMPDESG,
         EMPTYPE:            emp.EMPTYPE,
         EMPPROFILEPHOTO:    emp.EMPPROFILEPHOTO,
+        SALARY:             emp.SALARY,   // ← added
         dayAttendance:      dayRecord,
         nightAttendance:    nightRecord,
         currentShiftMarked: currentShift === 'DAY' ? !!dayRecord : !!nightRecord,
