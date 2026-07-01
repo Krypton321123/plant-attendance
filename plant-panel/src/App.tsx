@@ -34,7 +34,7 @@ import LoginPage from './Login';
  */
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/plant">
       <AuthProvider>
         <Routes>
           {/* Public — no auth required to view the login screen itself */}
