@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sun, Moon, RefreshCw, CalendarDays,
-  Users, AlertTriangle, IndianRupee, ArrowUpDown, ServerCrash,
+  Users, AlertTriangle, IndianRupee, ServerCrash,
 } from 'lucide-react';
 
 // ════════════════════════════════════════════════════════════════════════
@@ -624,11 +624,41 @@ function EmployeeSalaryRow({
   );
 }
 
+/** A sticky-left group header row spanning the full table width, marking
+ *  the start of one designation's block of rows. Shows the designation
+ *  label, member count, and that group's pay subtotal for the current
+ *  range — the day columns are left blank (a per-day breakdown at the
+ *  group level would just repeat what's already visible per-employee
+ *  below it). */
+function DesignationGroupHeader({
+  designation, memberCount, subtotal, dayCount,
+}: {
+  designation: string;
+  memberCount: number;
+  subtotal: number;
+  dayCount: number;
+}) {
+  return (
+    <tr className="border-b border-zinc-100 bg-zinc-100/70">
+      <td className="sticky left-0 z-[1] bg-zinc-100/70 px-5 py-2 align-middle">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">{designation}</span>
+        <span className="ml-2 text-[11px] font-normal text-zinc-400">
+          {memberCount} {memberCount === 1 ? 'employee' : 'employees'}
+        </span>
+      </td>
+      <td colSpan={dayCount} className="bg-zinc-100/70" />
+      <td className="sticky right-0 z-[1] bg-zinc-100/70 px-4 py-2 align-middle">
+        <span className="whitespace-nowrap font-mono text-[13px] font-semibold text-zinc-600">
+          {formatINR(Math.round(subtotal))}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Main component
 // ════════════════════════════════════════════════════════════════════════
-
-type SortMode = 'name' | 'total-desc';
 
 export default function SalaryChart() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(hasApiBaseUrl() ? 'connecting' : 'unconfigured');
@@ -636,7 +666,6 @@ export default function SalaryChart() {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [sortMode, setSortMode] = useState<SortMode>('name');
 
   const initialBounds = monthBoundsOf(getTodayISTKey());
   const [fromKey, setFromKey] = useState(initialBounds.from);
@@ -712,26 +741,54 @@ export default function SalaryChart() {
     return map;
   }, [employees, days, attendanceByEmpByDay]);
 
-  const sortedEmployees = useMemo(() => {
-    const list = [...employees];
-    if (sortMode === 'name') {
-      return list.sort((a, b) => a.EMPNAME.localeCompare(b.EMPNAME));
-    }
-    // total-desc: employees with no salary on file sort last, not first —
-    // "no data" is not the same as "zero," and shouldn't outrank real pay.
-    // `?? null` below only guards against a missing map entry, which
-    // shouldn't happen since employeeTotals is built from this same
-    // `employees` array — but if it ever did, treat it the same as
-    // "no salary on file" rather than crashing the sort.
-    return list.sort((a, b) => {
-      const ta = employeeTotals.get(a.EMP_ID) ?? null;
-      const tb = employeeTotals.get(b.EMP_ID) ?? null;
-      if (ta === null && tb === null) return a.EMPNAME.localeCompare(b.EMPNAME);
-      if (ta === null) return 1;
-      if (tb === null) return -1;
-      return tb - ta;
+  // Employees are always grouped by designation (EMPDESG) — there's no
+  // toggle for this, it's the only mode. Within each group, employees sort
+  // by name; groups themselves sort alphabetically by designation label.
+  // An empty/missing EMPDESG (shouldn't normally happen, but the field
+  // isn't guaranteed non-empty by the type) is bucketed under
+  // "Unspecified" rather than silently merged into another group or
+  // dropped, and that bucket always sorts last regardless of where
+  // "Unspecified" would fall alphabetically.
+  const UNSPECIFIED_DESG = 'Unspecified';
+
+  const groupedEmployees = useMemo(() => {
+    const groups = new Map<string, Employee[]>();
+    employees.forEach((emp) => {
+      const desg = emp.EMPDESG?.trim() || UNSPECIFIED_DESG;
+      if (!groups.has(desg)) groups.set(desg, []);
+      groups.get(desg)!.push(emp);
     });
-  }, [employees, sortMode, employeeTotals]);
+    groups.forEach((list) => list.sort((a, b) => a.EMPNAME.localeCompare(b.EMPNAME)));
+    const designations = Array.from(groups.keys()).sort((a, b) => {
+      if (a === UNSPECIFIED_DESG && b === UNSPECIFIED_DESG) return 0;
+      if (a === UNSPECIFIED_DESG) return 1;
+      if (b === UNSPECIFIED_DESG) return -1;
+      return a.localeCompare(b);
+    });
+    return designations.map((designation) => ({ designation, members: groups.get(designation)! }));
+  }, [employees]);
+
+  // Flat list in group order — used for the empty-state check and anywhere
+  // that just needs "all employees, grouped order" without caring about
+  // the group boundaries themselves.
+  const sortedEmployees = useMemo(
+    () => groupedEmployees.flatMap((g) => g.members),
+    [groupedEmployees]
+  );
+
+  // Per-designation subtotal, reusing the same employeeTotals map so a
+  // group's subtotal and its members' individual totals can never drift
+  // apart. Employees with no salary on file are excluded from the sum
+  // (same "no data isn't zero" rule as grandTotal), but still counted
+  // toward the group's headcount.
+  const groupSubtotals = useMemo(() => {
+    const map = new Map<string, number>();
+    groupedEmployees.forEach(({ designation, members }) => {
+      const sum = members.reduce((acc, emp) => acc + (employeeTotals.get(emp.EMP_ID) ?? 0), 0);
+      map.set(designation, sum);
+    });
+    return map;
+  }, [groupedEmployees, employeeTotals]);
 
   const grandTotal = useMemo(() => {
     let sum = 0;
@@ -852,14 +909,7 @@ export default function SalaryChart() {
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-20 min-w-[220px] whitespace-nowrap border-b border-zinc-100 bg-zinc-50 px-5 py-4 text-left text-[11px] font-medium uppercase tracking-widest text-zinc-400">
-                <button
-                  onClick={() => setSortMode((m) => (m === 'name' ? 'total-desc' : 'name'))}
-                  className="inline-flex items-center gap-1.5 uppercase tracking-widest text-zinc-400 transition-colors hover:text-zinc-600"
-                  title={sortMode === 'name' ? 'Sorted A–Z — click to sort by total pay' : 'Sorted by total pay — click to sort A–Z'}
-                >
-                  Employee
-                  <ArrowUpDown size={11} className={sortMode === 'total-desc' ? 'text-amber-500' : 'text-zinc-300'} />
-                </button>
+                Employee
               </th>
               {days.map((day) => {
                 const count = dayWiseCounts.get(day) ?? 0;
@@ -887,9 +937,18 @@ export default function SalaryChart() {
               {isLoadingTable ? (
                 <SkeletonRows key="sk" dayCount={days.length} />
               ) : showTableContent ? (
-                sortedEmployees.map((emp, i) => (
-                  <EmployeeSalaryRow key={emp.EMP_ID} emp={emp} index={i} days={days} attendanceByEmpByDay={attendanceByEmpByDay} />
-                ))
+                groupedEmployees.flatMap(({ designation, members }) => [
+                  <DesignationGroupHeader
+                    key={`group-${designation}`}
+                    designation={designation}
+                    memberCount={members.length}
+                    subtotal={groupSubtotals.get(designation) ?? 0}
+                    dayCount={days.length}
+                  />,
+                  ...members.map((emp, i) => (
+                    <EmployeeSalaryRow key={emp.EMP_ID} emp={emp} index={i} days={days} attendanceByEmpByDay={attendanceByEmpByDay} />
+                  )),
+                ])
               ) : null}
             </AnimatePresence>
           </tbody>
