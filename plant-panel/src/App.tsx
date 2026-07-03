@@ -5,6 +5,7 @@ import PlaceholderPage from './PlaceholderPage';
 import { AuthProvider } from './Auth/AuthContext';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import LoginPage from './Login';
+import SalaryChart from './SalaryChart';
 
 /**
  * App.tsx — React Router v6 root.
@@ -60,10 +61,7 @@ export default function App() {
               <Route
                 path="/payroll"
                 element={
-                  <PlaceholderPage
-                    title="Payroll"
-                    description="Salary by designation. Wire up your PayrollView component here."
-                  />
+                 <SalaryChart /> 
                 }
               />
               <Route
