@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './Layout';
-import AttendancePage from './AttendancePage';
+import AttendancePage from './DashboardPage';
 import PlaceholderPage from './PlaceholderPage';
 import { AuthProvider } from './Auth/AuthContext';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import LoginPage from './Login';
 import SalaryChart from './SalaryChart';
+import Attendance from './Attendance';
 
 /**
  * App.tsx — React Router v6 root.
@@ -54,9 +55,10 @@ export default function App() {
               }
             >
               {/* Default redirect */}
-              <Route index element={<Navigate to="/attendance" replace />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
               {/* Live pages */}
-              <Route path="/attendance" element={<AttendancePage />} />
+              <Route path="/dashboard" element={<AttendancePage />} />
+              <Route path="/attendance" element={<Attendance />} />
               {/* Placeholders — replace one by one as you build each page */}
               <Route
                 path="/payroll"

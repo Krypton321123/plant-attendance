@@ -26,6 +26,7 @@ const NAV_GROUPS: { group: string; items: NavItem[] }[] = [
   {
     group: 'Operations',
     items: [
+        { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
       { key: 'attendance', label: 'Attendance', path: '/attendance', icon: LayoutDashboard },
       { key: 'payroll',    label: 'Payroll',    path: '/payroll',    icon: Wallet },
     ],

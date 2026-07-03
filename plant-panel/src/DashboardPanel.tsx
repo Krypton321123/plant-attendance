@@ -1046,7 +1046,7 @@ interface AttendanceDashboardProps {
   supervisorId?: string;
 }
 
-export default function AttendanceDashboard({ supervisorId }: AttendanceDashboardProps) {
+export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(hasApiBaseUrl() ? 'connecting' : 'demo');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -1218,12 +1218,12 @@ export default function AttendanceDashboard({ supervisorId }: AttendanceDashboar
         className="mb-7"
       >
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-mono tracking-widest uppercase text-zinc-400">Attendance Register</span>
+          <span className="text-[10px] font-mono tracking-widest uppercase text-zinc-400">Dashboard</span>
           <span className="h-px w-8 bg-zinc-300 block" />
           <span className="text-[10px] font-mono text-zinc-400">{formatISTDateLong(selectedDateKey)}</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Plant Attendance</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Plant Dashboard</h1>
           <div className="flex items-center gap-2">
             <ConnectionBadge status={connectionStatus} />
             <button

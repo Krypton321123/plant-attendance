@@ -402,6 +402,7 @@ export const getMonthlyAttendance = async (req: Request, res: Response) => {
         SHIFT:     true,
         MARKED_BY: true,
         OT_STATUS: true,   // ← included
+        PHOTO: true,
       },
       orderBy: { CREATEDAT: 'asc' },
     });

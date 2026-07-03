@@ -1,4 +1,4 @@
-import AttendanceDashboard from './AttendancePanel';
+import AttendanceDashboard from './DashboardPanel';
 
 /**
  * Route: /attendance
