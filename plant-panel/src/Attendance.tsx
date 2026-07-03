@@ -60,9 +60,9 @@ function getISTDateKey(input: string | Date): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: IST_TZ }).format(d);
 }
 
-function getTodayISTKey(): string {
-  return getISTDateKey(new Date());
-}
+// function getTodayISTKey(): string {
+//   return getISTDateKey(new Date());
+// }
 
 function formatISTTime(input: string | Date | null | undefined): string {
   if (!input) return '—';
@@ -620,7 +620,7 @@ export default function Attendance() {
           onChange={(e) => setSelectedMonthIdx(MONTHS.findIndex((m) => m.name === e.target.value))}
           width="w-36"
         >
-          {MONTHS.map((m, idx) => <option key={m.name} value={m.name}>{m.name}</option>)}
+          {MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
         </SelectField>
 
         <SelectField
