@@ -15,6 +15,7 @@ type ApprovalStatus = 'A' | 'NA';
 type AttendanceStatus = 'P' | 'A';
 type Shift = 'DAY' | 'NIGHT';
 type OtStatus = 'OT' | 'HALF_OT' | 'NO_OT';
+type AttendanceFilterValue = 'ALL' | 'PRESENT' | 'ABSENT';
 
 interface Employee {
   EMP_ID: string;
@@ -186,6 +187,26 @@ function formatINR(amount: number | null | undefined): string {
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Overall attendance status (combined day + night, for the Status filter)
+// ════════════════════════════════════════════════════════════════════════
+//
+// Day and night shifts are tracked as separate records, but the "Present /
+// Absent / All" filter needs one verdict per employee per date. Most staff
+// work a single shift a day, so the rule is: Present if EITHER shift was
+// marked Present that date; otherwise Absent if either shift was explicitly
+// marked Absent; otherwise NOT_MARKED (no record for either shift yet).
+// NOT_MARKED employees aren't Present or Absent, so they only show up under
+// "All" — the filter has no separate option for them.
+
+type OverallAttendanceStatus = 'PRESENT' | 'ABSENT' | 'NOT_MARKED';
+
+function overallAttendanceStatus(bucket: ShiftBucket): OverallAttendanceStatus {
+  if (bucket.day?.STATUS === 'P' || bucket.night?.STATUS === 'P') return 'PRESENT';
+  if (bucket.day?.STATUS === 'A' || bucket.night?.STATUS === 'A') return 'ABSENT';
+  return 'NOT_MARKED';
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -780,6 +801,8 @@ interface FiltersBarProps {
   onSearch:                  (v: string) => void;
   typeFilter:                EmpType | 'ALL';
   onTypeFilter:              (v: EmpType | 'ALL') => void;
+  attendanceFilter:          AttendanceFilterValue;
+  onAttendanceFilter:        (v: AttendanceFilterValue) => void;
   onlyPending?:              boolean;
   onTogglePending?:          () => void;
   groupByDesignation?:       boolean;
@@ -788,6 +811,7 @@ interface FiltersBarProps {
 
 function FiltersBar({
   search, onSearch, typeFilter, onTypeFilter,
+  attendanceFilter, onAttendanceFilter,
   onlyPending, onTogglePending,
   groupByDesignation, onToggleGroupByDesignation,
 }: FiltersBarProps) {
@@ -816,6 +840,23 @@ function FiltersBar({
             <option value="ALL">All roles</option>
             <option value="INDIVIDUAL">Individual</option>
             <option value="SUPERVISOR">Supervisor</option>
+          </select>
+          <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">Status</span>
+        <div className="relative w-32">
+          <select
+            value={attendanceFilter}
+            onChange={(e) => onAttendanceFilter(e.target.value as AttendanceFilterValue)}
+            className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2 pr-8 font-mono text-sm text-zinc-800 outline-none transition-all hover:border-zinc-400 focus:border-transparent focus:ring-2 focus:ring-zinc-900"
+          >
+            <option value="ALL">All</option>
+            <option value="PRESENT">Present</option>
+            <option value="ABSENT">Absent</option>
           </select>
           <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="6 9 12 15 18 9" />
@@ -1058,6 +1099,7 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
 
   const [search,                  setSearch]                  = useState('');
   const [typeFilter,              setTypeFilter]              = useState<EmpType | 'ALL'>('ALL');
+  const [attendanceFilter,        setAttendanceFilter]        = useState<AttendanceFilterValue>('ALL');
   const [onlyPending,             setOnlyPending]             = useState(false);
   const [expandedId,              setExpandedId]              = useState<string | null>(null);
   const [groupByDesignation,      setGroupByDesignation]      = useState(false);
@@ -1190,9 +1232,12 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
         const a = attendanceByEmp[e.EMP_ID] || {};
         if (currentShift === 'DAY' ? a.day : a.night) return false;
       }
+      if (attendanceFilter !== 'ALL') {
+        if (overallAttendanceStatus(attendanceByEmp[e.EMP_ID] || {}) !== attendanceFilter) return false;
+      }
       return true;
     });
-  }, [employees, typeFilter, search, onlyPending, attendanceByEmp, currentShift]);
+  }, [employees, typeFilter, search, onlyPending, attendanceByEmp, currentShift, attendanceFilter]);
 
   const groupedFilteredEmployees = useMemo<AttendanceDesignationGroup[]>(() => {
     const byDesg = new Map<string, Employee[]>();
@@ -1326,6 +1371,8 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
           onSearch={setSearch}
           typeFilter={typeFilter}
           onTypeFilter={setTypeFilter}
+          attendanceFilter={attendanceFilter}
+          onAttendanceFilter={setAttendanceFilter}
           onlyPending={onlyPending}
           onTogglePending={() => setOnlyPending((v) => !v)}
           groupByDesignation={groupByDesignation}
@@ -1406,7 +1453,7 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
           </tbody>
         </table>
         {!isLoadingTable && filteredEmployees.length === 0 && (
-          <EmptyState label="Try adjusting search, role, or the pending toggle" />
+          <EmptyState label="Try adjusting search, role, status, or the pending toggle" />
         )}
       </div>
 
