@@ -34,11 +34,19 @@ export const getDepos = async (_req: Request, res: Response) => {
 };
 
 // ─── GET /dispatch/items ──────────────────────────────────────────────────────
-// Returns mstitm for item picker
+// Returns mstitm for item picker. wgtconv (weight per box) is included so the
+// supervisor's loading table can compute item weight client-side as
+// totalBoxes * wgtconv.
 export const getDispatchItems = async (_req: Request, res: Response) => {
   try {
     const items = await prisma.mstitm.findMany({
-      select: { itmcd: true, itmnm: true, itmsubcat: true, pcksz: true },
+      select: {
+        itmcd: true,
+        itmnm: true,
+        itmsubcat: true,
+        pcksz: true,
+        wgtconv: true,
+      },
       orderBy: [{ itmsubcat: "asc" }, { itmnm: "asc" }],
     });
     res.json({ success: true, data: items });
@@ -240,7 +248,7 @@ export const getTodaySessions = async (req: Request, res: Response) => {
     const sessions = await prisma.dispatchSession.findMany({
       where,
       include: {
-        items: true,
+        items: { include: { loadingEntries: true } },
         emptyItems: true,
         doneBy: { select: { EMPNAME: true, EMPFNAME: true } },
       },
@@ -263,7 +271,7 @@ export const getSession = async (req: Request, res: Response) => {
     const session = await prisma.dispatchSession.findUnique({
       where: { SESSION_ID: sessionId as string },
       include: {
-        items: true,
+        items: { include: { loadingEntries: true } },
         emptyItems: true,
         doneBy: { select: { EMPNAME: true, EMPFNAME: true } },
       },
@@ -282,9 +290,15 @@ export const getSession = async (req: Request, res: Response) => {
 };
 
 // ─── PATCH /dispatch/sessions/:sessionId/complete ────────────────────────────
-// PPSUPERVISOR fills in FULL_BOX_WT for each item and marks session COMPLETED
-// Body: { doneBy, items: [{ itemId, qty, fullBoxWt }], vehicleNo, transporter,
-//         driverName, driverNo, kaantaWt, grrNo }
+// PPSUPERVISOR records loading entries (length/width/height/extra) for each
+// item and marks the session COMPLETED.
+// Body: { doneBy, items: [{ itemId, qty, loadingEntries: [{ length, width,
+//         height, extra }] }], vehicleNo, transporter, driverName, driverNo,
+//         kaantaWt, grrNo }
+// Note: vehicleNo/transporter/driverName/driverNo/kaantaWt/grrNo are accepted
+// for backward compatibility (existing sessions may still carry them from the
+// OFFICE-side create step) but are no longer editable from the supervisor's
+// form; if omitted, the session's existing values are left untouched.
 export const completeDispatchSession = async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
@@ -333,24 +347,38 @@ export const completeDispatchSession = async (req: Request, res: Response) => {
           GRR_NO: grrNo ?? existing.GRR_NO,
         },
       }),
-      // Update each item's qty and full box weight
-      ...items.map((i: any) =>
-        prisma.dispatchItem.update({
-          where: { ITEM_ID: i.itemId },
-          data: {
-            QTY: Number(i.qty),
-            FULL_BOX_WT:
-              i.fullBoxWt !== "" && i.fullBoxWt != null
-                ? Number(i.fullBoxWt)
-                : null,
-          },
-        }),
-      ),
+      // For each item: update qty, then fully replace its loading entries
+      ...items.flatMap((i: any) => {
+        const entries = i.loadingEntries ?? [];
+        return [
+          prisma.dispatchItem.update({
+            where: { ITEM_ID: i.itemId },
+            data: { QTY: Number(i.qty) },
+          }),
+          prisma.dispatchLoadingEntry.deleteMany({
+            where: { ITEM_ID: i.itemId },
+          }),
+          ...entries.map((e: any) =>
+            prisma.dispatchLoadingEntry.create({
+              data: {
+                ITEM_ID: i.itemId,
+                LENGTH: Number(e.length),
+                WIDTH: Number(e.width),
+                HEIGHT: Number(e.height),
+                EXTRA: e.extra !== "" && e.extra != null ? Number(e.extra) : 0,
+              },
+            }),
+          ),
+        ];
+      }),
     ]);
 
     const updated = await prisma.dispatchSession.findUnique({
       where: { SESSION_ID: sessionId as string },
-      include: { items: true, emptyItems: true },
+      include: {
+        items: { include: { loadingEntries: true } },
+        emptyItems: true,
+      },
     });
 
     res.json({ success: true, data: updated });

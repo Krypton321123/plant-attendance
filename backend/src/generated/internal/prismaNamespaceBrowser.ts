@@ -56,6 +56,7 @@ export const ModelName = {
   DispatchSession: 'DispatchSession',
   DispatchItem: 'DispatchItem',
   DispatchEmptyItem: 'DispatchEmptyItem',
+  DispatchLoadingEntry: 'DispatchLoadingEntry',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
   mstunit: 'mstunit'
@@ -91,7 +92,9 @@ export const EmployeeScalarFieldEnum = {
   LEAVE_APPLICABLE: 'LEAVE_APPLICABLE',
   LEAVE_DAYS: 'LEAVE_DAYS',
   DEPARTMENT: 'DEPARTMENT',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  MPIN: 'MPIN',
+  MOBILE: 'MOBILE'
 } as const
 
 export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
@@ -185,6 +188,19 @@ export const DispatchEmptyItemScalarFieldEnum = {
 } as const
 
 export type DispatchEmptyItemScalarFieldEnum = (typeof DispatchEmptyItemScalarFieldEnum)[keyof typeof DispatchEmptyItemScalarFieldEnum]
+
+
+export const DispatchLoadingEntryScalarFieldEnum = {
+  ENTRY_ID: 'ENTRY_ID',
+  ITEM_ID: 'ITEM_ID',
+  LENGTH: 'LENGTH',
+  WIDTH: 'WIDTH',
+  HEIGHT: 'HEIGHT',
+  EXTRA: 'EXTRA',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type DispatchLoadingEntryScalarFieldEnum = (typeof DispatchLoadingEntryScalarFieldEnum)[keyof typeof DispatchLoadingEntryScalarFieldEnum]
 
 
 export const MstitmScalarFieldEnum = {

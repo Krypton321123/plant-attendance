@@ -82,6 +82,11 @@ export type DispatchItem = Prisma.DispatchItemModel
  */
 export type DispatchEmptyItem = Prisma.DispatchEmptyItemModel
 /**
+ * Model DispatchLoadingEntry
+ * 
+ */
+export type DispatchLoadingEntry = Prisma.DispatchLoadingEntryModel
+/**
  * Model mstitm
  * 
  */

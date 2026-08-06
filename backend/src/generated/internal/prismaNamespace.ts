@@ -397,6 +397,7 @@ export const ModelName = {
   DispatchSession: 'DispatchSession',
   DispatchItem: 'DispatchItem',
   DispatchEmptyItem: 'DispatchEmptyItem',
+  DispatchLoadingEntry: 'DispatchLoadingEntry',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
   mstunit: 'mstunit'
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "mstitm" | "mstparty" | "mstunit"
+    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "dispatchLoadingEntry" | "mstitm" | "mstparty" | "mstunit"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -881,6 +882,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DispatchLoadingEntry: {
+      payload: Prisma.$DispatchLoadingEntryPayload<ExtArgs>
+      fields: Prisma.DispatchLoadingEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DispatchLoadingEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DispatchLoadingEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.DispatchLoadingEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DispatchLoadingEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        findMany: {
+          args: Prisma.DispatchLoadingEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>[]
+        }
+        create: {
+          args: Prisma.DispatchLoadingEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        createMany: {
+          args: Prisma.DispatchLoadingEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.DispatchLoadingEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        update: {
+          args: Prisma.DispatchLoadingEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.DispatchLoadingEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DispatchLoadingEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.DispatchLoadingEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DispatchLoadingEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.DispatchLoadingEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDispatchLoadingEntry>
+        }
+        groupBy: {
+          args: Prisma.DispatchLoadingEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DispatchLoadingEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DispatchLoadingEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DispatchLoadingEntryCountAggregateOutputType> | number
+        }
+      }
+    }
     mstitm: {
       payload: Prisma.$mstitmPayload<ExtArgs>
       fields: Prisma.mstitmFieldRefs
@@ -1024,7 +1091,9 @@ export const EmployeeScalarFieldEnum = {
   LEAVE_APPLICABLE: 'LEAVE_APPLICABLE',
   LEAVE_DAYS: 'LEAVE_DAYS',
   DEPARTMENT: 'DEPARTMENT',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  MPIN: 'MPIN',
+  MOBILE: 'MOBILE'
 } as const
 
 export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
@@ -1118,6 +1187,19 @@ export const DispatchEmptyItemScalarFieldEnum = {
 } as const
 
 export type DispatchEmptyItemScalarFieldEnum = (typeof DispatchEmptyItemScalarFieldEnum)[keyof typeof DispatchEmptyItemScalarFieldEnum]
+
+
+export const DispatchLoadingEntryScalarFieldEnum = {
+  ENTRY_ID: 'ENTRY_ID',
+  ITEM_ID: 'ITEM_ID',
+  LENGTH: 'LENGTH',
+  WIDTH: 'WIDTH',
+  HEIGHT: 'HEIGHT',
+  EXTRA: 'EXTRA',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type DispatchLoadingEntryScalarFieldEnum = (typeof DispatchLoadingEntryScalarFieldEnum)[keyof typeof DispatchLoadingEntryScalarFieldEnum]
 
 
 export const MstitmScalarFieldEnum = {
@@ -1323,6 +1405,7 @@ export type GlobalOmitConfig = {
   dispatchSession?: Prisma.DispatchSessionOmit
   dispatchItem?: Prisma.DispatchItemOmit
   dispatchEmptyItem?: Prisma.DispatchEmptyItemOmit
+  dispatchLoadingEntry?: Prisma.DispatchLoadingEntryOmit
   mstitm?: Prisma.mstitmOmit
   mstparty?: Prisma.mstpartyOmit
   mstunit?: Prisma.mstunitOmit

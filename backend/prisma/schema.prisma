@@ -12,26 +12,29 @@ datasource db {
 
 model Employee {
   EMP_ID              String         @id @default(cuid())
-  EMPNAME             String
-  EMPFNAME            String
-  EMPPROFILEPHOTO     String?
-  EMPDESG             String
-  DEVICEID            String?
-  STATUS              String         @default("NA")
-  EMPTYPE             String
-  SALARY              Int?
-  LEAVE_APPLICABLE    Boolean?
-  LEAVE_DAYS          Int            @default(0)
-  DEPARTMENT          String?        @default("")
-  CREATEDAT           DateTime       @default(now())
-  attendances         Attendance[]
-  fillingAsOperator   FillingEntry[] @relation("FillingOperator")
-  fillingAsSupervisor FillingEntry[] @relation("FillingDoneBy")
-  wastageEntries      WastageEntry[] @relation("WastageDoneBy")
-  dispatchSession     DispatchSession[] @relation("DispatchDoneBy")
+  EMPNAME              String
+  EMPFNAME             String
+  EMPPROFILEPHOTO      String?
+  EMPDESG              String
+  DEVICEID             String?           
+  STATUS               String         @default("NA")
+  EMPTYPE              String
+  SALARY               Int?
+  LEAVE_APPLICABLE     Boolean?
+  LEAVE_DAYS           Int            @default(0)
+  DEPARTMENT           String?        @default("")
+  CREATEDAT            DateTime       @default(now())
+  MPIN                 String?           
+  MOBILE               String?                  
+  attendances          Attendance[]
+  fillingAsOperator    FillingEntry[] @relation("FillingOperator")
+  fillingAsSupervisor  FillingEntry[] @relation("FillingDoneBy")
+  wastageEntries       WastageEntry[] @relation("WastageDoneBy")
+  dispatchSession      DispatchSession[] @relation("DispatchDoneBy")
 
   @@map("employees")
 }
+
 
 model Attendance {
   EMP_ID     String
@@ -106,13 +109,14 @@ model DispatchSession {
 }
 
 model DispatchItem {
-  ITEM_ID     String          @id @default(cuid())
-  SESSION_ID  String
-  ITMCD       String          @db.VarChar(50)
-  ITMNM       String          @db.VarChar(250)
-  QTY         Decimal         @db.Decimal(18, 3)
-  FULL_BOX_WT Decimal?        @db.Decimal(18, 3)
-  session     DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  ITEM_ID        String                 @id @default(cuid())
+  SESSION_ID     String
+  ITMCD          String                 @db.VarChar(50)
+  ITMNM          String                 @db.VarChar(250)
+  QTY            Decimal                @db.Decimal(18, 3)
+  FULL_BOX_WT    Decimal?               @db.Decimal(18, 3)
+  session        DispatchSession        @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  loadingEntries DispatchLoadingEntry[]
 
   @@map("dispatch_items")
 }
@@ -126,6 +130,24 @@ model DispatchEmptyItem {
   session    DispatchSession @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("dispatch_empty_items")
+}
+
+// One row per "stack arrangement" a supervisor records for a dispatch item.
+// Box count for the row = LENGTH * WIDTH * HEIGHT + EXTRA (EXTRA may be negative,
+// e.g. a stack that came up short of a full grid). An item's total box count is
+// the sum of this expression across all of its loading entries; total weight is
+// that box count multiplied by mstitm.wgtconv for the item.
+model DispatchLoadingEntry {
+  ENTRY_ID  String       @id @default(cuid())
+  ITEM_ID   String
+  LENGTH    Int
+  WIDTH     Int
+  HEIGHT    Int
+  EXTRA     Int          @default(0)
+  CREATEDAT DateTime     @default(now())
+  item      DispatchItem @relation(fields: [ITEM_ID], references: [ITEM_ID], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("dispatch_loading_entries")
 }
 
 view mstitm {

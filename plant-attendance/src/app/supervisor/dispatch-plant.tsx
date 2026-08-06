@@ -28,9 +28,24 @@ import { C } from "../../constants/theme";
 
 type EmpType = "OFFICE" | "PPSUPERVISOR";
 
-type MstItem = { itmcd: string; itmnm: string; itmsubcat: string | null };
+type MstItem = {
+  itmcd: string;
+  itmnm: string;
+  itmsubcat: string | null;
+  wgtconv: string | null;
+};
 type Party = { ledcd: string; lednm: string | null; areanm: string | null };
 type Depo = { untcd: string; untnm: string; untshnm: string | null };
+
+// One length/width/height/extra arrangement for an item's loading table.
+type LoadingEntryRow = {
+  key: string;
+  entryId?: string;
+  length: string;
+  width: string;
+  height: string;
+  extra: string;
+};
 
 type DispatchItemRow = {
   key: string;
@@ -38,7 +53,8 @@ type DispatchItemRow = {
   itmcd: string;
   itmnm: string;
   qty: string;
-  fullBoxWt: string;
+  wgtconv: string; // weight per box, from mstitm — carried alongside the row so the loading table can compute weight without a second lookup
+  loadingEntries: LoadingEntryRow[];
 };
 
 type EmptyItemRow = {
@@ -68,39 +84,116 @@ type Session = {
     ITMNM: string;
     QTY: string;
     FULL_BOX_WT: string | null;
+    loadingEntries?: {
+      ENTRY_ID: string;
+      LENGTH: number;
+      WIDTH: number;
+      HEIGHT: number;
+      EXTRA: number;
+    }[];
   }[];
   emptyItems: { ITEM_ID: string; ITMCD: string; ITMNM: string; QTY: string }[];
+};
+
+type PDFItemData = {
+  itmnm: string;
+  qty: string;
+  totalBoxes: number;
+  weight: number;
+  entries: LoadingEntryRow[];
 };
 
 type PDFData = {
   dispatchTo: string;
   partyNm: string;
+  createdAt: string;
   vehicleNo: string;
   transporter: string;
   driverName: string;
   driverNo: string;
   kaantaWt: string;
   grrNo: string;
-  items: DispatchItemRow[];
+  items: PDFItemData[];
   emptyItems: EmptyItemRow[];
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+
+const blankLoadingEntry = (): LoadingEntryRow => ({
+  key: uid(),
+  length: "",
+  width: "",
+  height: "",
+  extra: "",
+});
+
 const blankRow = (): DispatchItemRow => ({
   key: uid(),
   itmcd: "",
   itmnm: "",
   qty: "",
-  fullBoxWt: "",
+  wgtconv: "",
+  loadingEntries: [],
 });
+
 const blankEmpty = (): EmptyItemRow => ({
   key: uid(),
   itmcd: "",
   itmnm: "",
   qty: "",
 });
+
+// Box count for one loading entry. Any of length/width/height that is not
+// strictly greater than 0 (blank, or a typed 0) is dropped from the
+// multiplication rather than zeroing the whole row — only positive dimensions
+// participate. Extra is added on top and may be negative or blank (= 0).
+const computeEntrySubtotal = (entry: LoadingEntryRow): number => {
+  const factors = [entry.length, entry.width, entry.height]
+    .map((v) => Number(v))
+    .filter((v) => Number.isFinite(v) && v > 0);
+  const product = factors.length
+    ? factors.reduce((a, b) => a * b, 1)
+    : 0;
+  const extra = entry.extra.trim() === "" ? 0 : Number(entry.extra) || 0;
+  return product + extra;
+};
+
+// Sum of all loading-entry subtotals for an item = total box count.
+const computeItemTotalBoxes = (entries: LoadingEntryRow[]): number =>
+  entries.reduce((sum, e) => sum + computeEntrySubtotal(e), 0);
+
+// Item weight = total boxes * weight-per-box (mstitm.wgtconv).
+const computeItemWeight = (
+  entries: LoadingEntryRow[],
+  wgtconv: string,
+): number => {
+  const perBox = Number(wgtconv) || 0;
+  return computeItemTotalBoxes(entries) * perBox;
+};
+
+const fmtNum = (n: number): string => {
+  if (!Number.isFinite(n)) return "0";
+  // Trim to at most 3 decimals, drop trailing zeros — matches Decimal(18,3) precision.
+  return (Math.round(n * 1000) / 1000).toString();
+};
+
+const fmtDateTime = (iso?: string): string => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const date = d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${date} · ${time}`;
+};
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
@@ -116,18 +209,52 @@ const generateAndSharePDF = async (data: PDFData) => {
     minute: "2-digit",
   });
 
-  const itemRows = data.items
-    .filter((r) => r.itmcd)
-    .map(
-      (r, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${r.itmnm}</td>
-        <td class="center">${r.qty}</td>
-        <td class="center">${r.fullBoxWt || "—"}</td>
-      </tr>`,
-    )
+  const itemBlocks = data.items
+    .filter((it) => it.itmnm)
+    .map((it) => {
+      const entryRows = it.entries
+        .map((e) => {
+          const sub = computeEntrySubtotal(e);
+          return `
+          <tr>
+            <td class="center">${e.length || "—"}</td>
+            <td class="center">${e.width || "—"}</td>
+            <td class="center">${e.height || "—"}</td>
+            <td class="center">${e.extra || "0"}</td>
+            <td class="center"><strong>${fmtNum(sub)}</strong></td>
+          </tr>`;
+        })
+        .join("");
+
+      return `
+      <div class="item-block">
+        <div class="item-block-title">${it.itmnm} <span class="item-qty">(${it.qty})</span></div>
+        ${
+          entryRows
+            ? `<table class="loading-table">
+                 <thead>
+                   <tr>
+                     <th class="center">L</th>
+                     <th class="center">W</th>
+                     <th class="center">H</th>
+                     <th class="center">Extra</th>
+                     <th class="center">Boxes</th>
+                   </tr>
+                 </thead>
+                 <tbody>${entryRows}</tbody>
+               </table>`
+            : `<div class="no-data">No loading entries recorded</div>`
+        }
+        <div class="item-totals">
+          <span>Total Boxes: <strong>${fmtNum(it.totalBoxes)}</strong></span>
+          <span>Weight: <strong>${fmtNum(it.weight)} kg</strong></span>
+        </div>
+      </div>`;
+    })
     .join("");
+
+  const grandTotalWeight = data.items.reduce((s, it) => s + it.weight, 0);
+  const grandTotalBoxes = data.items.reduce((s, it) => s + it.totalBoxes, 0);
 
   const emptyRows = data.emptyItems
     .filter((r) => r.itmcd)
@@ -208,6 +335,12 @@ const generateAndSharePDF = async (data: PDFData) => {
           font-size: 20px;
           font-weight: 800;
           color: #0f172a;
+          margin-bottom: 2px;
+        }
+        .party-created {
+          font-size: 11px;
+          color: #94a3b8;
+          font-weight: 600;
           margin-bottom: 18px;
         }
         table {
@@ -234,6 +367,39 @@ const generateAndSharePDF = async (data: PDFData) => {
         tr:last-child td { border-bottom: none; }
         tr:nth-child(even) td { background: #f8fafc; }
         .center { text-align: center; }
+        .item-block {
+          margin-bottom: 16px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .item-block:last-child { border-bottom: none; margin-bottom: 0; }
+        .item-block-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 8px;
+        }
+        .item-qty { color: #64748b; font-weight: 600; }
+        .loading-table th, .loading-table td { padding: 6px 10px; }
+        .item-totals {
+          display: flex;
+          gap: 24px;
+          margin-top: 8px;
+          font-size: 12px;
+          color: #475569;
+        }
+        .item-totals strong { color: #1e293b; }
+        .grand-totals {
+          display: flex;
+          justify-content: flex-end;
+          gap: 32px;
+          margin-top: 14px;
+          padding-top: 12px;
+          border-top: 2px solid #cbd5e1;
+          font-size: 13px;
+          color: #334155;
+        }
+        .grand-totals strong { color: #0f172a; font-size: 15px; }
         .info-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -304,19 +470,12 @@ const generateAndSharePDF = async (data: PDFData) => {
       <div class="section">
         <div class="section-title">A. Dispatch Details</div>
         <div class="party-name">${data.partyNm || "—"}</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width:36px">#</th>
-              <th>Item Name</th>
-              <th class="center" style="width:80px">Qty</th>
-              <th class="center" style="width:100px">Full Box Wt</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemRows || `<tr><td colspan="4" class="no-data">No items added</td></tr>`}
-          </tbody>
-        </table>
+        <div class="party-created">Created: ${data.createdAt}</div>
+        ${itemBlocks || `<div class="no-data">No items added</div>`}
+        <div class="grand-totals">
+          <span>Total Boxes: <strong>${fmtNum(grandTotalBoxes)}</strong></span>
+          <span>Total Weight: <strong>${fmtNum(grandTotalWeight)} kg</strong></span>
+        </div>
       </div>
 
       <!-- Transport Details -->
@@ -654,9 +813,135 @@ function SessionCard({
         {session.VEHICLE_NO ? `  ·  ${session.VEHICLE_NO}` : ""}
       </Text>
       <View style={sesStyles.cardFooter}>
-        <Text style={sesStyles.fillHint}>Tap to fill box weights →</Text>
+        <Text style={sesStyles.fillHint}>Tap to fill loading details →</Text>
       </View>
     </TouchableOpacity>
+  );
+}
+
+// ─── Loading Entries Table (per dispatch item, supervisor-only) ──────────────
+
+function LoadingEntriesTable({
+  entries,
+  wgtconv,
+  editable,
+  onAddEntry,
+  onUpdateEntry,
+  onRemoveEntry,
+}: {
+  entries: LoadingEntryRow[];
+  wgtconv: string;
+  editable: boolean;
+  onAddEntry: () => void;
+  onUpdateEntry: (idx: number, field: keyof LoadingEntryRow, value: string) => void;
+  onRemoveEntry: (idx: number) => void;
+}) {
+  const totalBoxes = computeItemTotalBoxes(entries);
+  const weight = computeItemWeight(entries, wgtconv);
+
+  return (
+    <View style={loadStyles.wrap}>
+      <View style={loadStyles.headerRow}>
+        <Text style={[loadStyles.headCell, loadStyles.colDim]}>L</Text>
+        <Text style={[loadStyles.headCell, loadStyles.colDim]}>W</Text>
+        <Text style={[loadStyles.headCell, loadStyles.colDim]}>H</Text>
+        <Text style={[loadStyles.headCell, loadStyles.colDim]}>Extra</Text>
+        <Text style={[loadStyles.headCell, loadStyles.colSub]}>Boxes</Text>
+        {editable && <View style={loadStyles.colAction} />}
+      </View>
+
+      {entries.length === 0 ? (
+        <Text style={loadStyles.emptyText}>No loading entries yet</Text>
+      ) : (
+        entries.map((entry, idx) => {
+          const subtotal = computeEntrySubtotal(entry);
+          return (
+            <View key={entry.key} style={loadStyles.row}>
+              <View style={loadStyles.colDim}>
+                <TextInput
+                  style={[loadStyles.dimInput, entry.length ? loadStyles.dimInputFilled : null]}
+                  value={entry.length}
+                  onChangeText={(v) => onUpdateEntry(idx, "length", v)}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={C.textMuted}
+                  editable={editable}
+                />
+              </View>
+              <View style={loadStyles.colDim}>
+                <TextInput
+                  style={[loadStyles.dimInput, entry.width ? loadStyles.dimInputFilled : null]}
+                  value={entry.width}
+                  onChangeText={(v) => onUpdateEntry(idx, "width", v)}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={C.textMuted}
+                  editable={editable}
+                />
+              </View>
+              <View style={loadStyles.colDim}>
+                <TextInput
+                  style={[loadStyles.dimInput, entry.height ? loadStyles.dimInputFilled : null]}
+                  value={entry.height}
+                  onChangeText={(v) => onUpdateEntry(idx, "height", v)}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={C.textMuted}
+                  editable={editable}
+                />
+              </View>
+              <View style={loadStyles.colDim}>
+                <TextInput
+                  style={[loadStyles.dimInput, entry.extra ? loadStyles.dimInputFilled : null]}
+                  value={entry.extra}
+                  onChangeText={(v) => onUpdateEntry(idx, "extra", v)}
+                  keyboardType="numbers-and-punctuation"
+                  placeholder="0"
+                  placeholderTextColor={C.textMuted}
+                  editable={editable}
+                />
+              </View>
+              <View style={loadStyles.colSub}>
+                <Text style={loadStyles.subtotalText}>{fmtNum(subtotal)}</Text>
+              </View>
+              {editable && (
+                <View style={loadStyles.colAction}>
+                  <TouchableOpacity
+                    onPress={() => onRemoveEntry(idx)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="remove-circle-outline" size={18} color={C.red} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          );
+        })
+      )}
+
+      {editable && (
+        <TouchableOpacity style={loadStyles.addEntryBtn} onPress={onAddEntry}>
+          <Ionicons name="add" size={14} color={C.primary} />
+          <Text style={loadStyles.addEntryBtnText}>Add Entry</Text>
+        </TouchableOpacity>
+      )}
+
+      {entries.length > 1 && (
+        <View style={loadStyles.totalsRow}>
+          <Text style={loadStyles.totalsLabel}>Item Total</Text>
+          <Text style={loadStyles.totalsValue}>
+            {fmtNum(totalBoxes)} boxes
+          </Text>
+        </View>
+      )}
+
+      {entries.length > 0 && (
+        <View style={loadStyles.weightRow}>
+          <Text style={loadStyles.weightLabel}>Weight</Text>
+          <Text style={loadStyles.weightValue}>{fmtNum(weight)} kg</Text>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -748,6 +1033,14 @@ export default function DispatchPlantScreen() {
         if (partiesData.success) setParties(partiesData.data);
         if (deposData.success) setDepos(deposData.data);
       } else {
+        // PPSUPERVISOR still needs item master data (for wgtconv, since the
+        // weight calc needs weight-per-box even though the item picker itself
+        // is locked for this role).
+        const [itemsRes] = await Promise.all([
+          fetch(`${API_URL}/dispatch/items`),
+        ]);
+        const itemsData = await itemsRes.json();
+        if (itemsData.success) setAllItems(itemsData.data);
         await loadDraftSessions();
       }
     } catch {
@@ -769,6 +1062,15 @@ export default function DispatchPlantScreen() {
     }
   };
 
+  // Look up weight-per-box for an item code from the loaded master list.
+  const wgtconvFor = useCallback(
+    (itmcd: string): string => {
+      const found = allItems.find((i) => i.itmcd === itmcd);
+      return found?.wgtconv ?? "";
+    },
+    [allItems],
+  );
+
   // ── Item row helpers ──────────────────────────────────────────────────────
 
   const openItemPicker = (table: "dispatch" | "empty", idx: number) => {
@@ -782,7 +1084,14 @@ export default function DispatchPlantScreen() {
     if (table === "dispatch") {
       setDispItems((prev) =>
         prev.map((r, i) =>
-          i === idx ? { ...r, itmcd: item.itmcd, itmnm: item.itmnm } : r,
+          i === idx
+            ? {
+                ...r,
+                itmcd: item.itmcd,
+                itmnm: item.itmnm,
+                wgtconv: item.wgtconv ?? "",
+              }
+            : r,
         ),
       );
     } else {
@@ -796,7 +1105,7 @@ export default function DispatchPlantScreen() {
   };
 
   const updateDispRow = useCallback(
-    (idx: number, field: keyof DispatchItemRow, value: string) => {
+    (idx: number, field: "qty", value: string) => {
       setDispItems((prev) =>
         prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)),
       );
@@ -817,6 +1126,51 @@ export default function DispatchPlantScreen() {
     setDispItems((prev) => prev.filter((_, i) => i !== idx));
   const removeEmptyRow = (idx: number) =>
     setEmptyItems((prev) => prev.filter((_, i) => i !== idx));
+
+  // ── Loading entry helpers (supervisor's per-item table) ──────────────────
+
+  const addLoadingEntry = (itemIdx: number) => {
+    setDispItems((prev) =>
+      prev.map((r, i) =>
+        i === itemIdx
+          ? { ...r, loadingEntries: [...r.loadingEntries, blankLoadingEntry()] }
+          : r,
+      ),
+    );
+  };
+
+  const updateLoadingEntry = (
+    itemIdx: number,
+    entryIdx: number,
+    field: keyof LoadingEntryRow,
+    value: string,
+  ) => {
+    setDispItems((prev) =>
+      prev.map((r, i) =>
+        i === itemIdx
+          ? {
+              ...r,
+              loadingEntries: r.loadingEntries.map((e, j) =>
+                j === entryIdx ? { ...e, [field]: value } : e,
+              ),
+            }
+          : r,
+      ),
+    );
+  };
+
+  const removeLoadingEntry = (itemIdx: number, entryIdx: number) => {
+    setDispItems((prev) =>
+      prev.map((r, i) =>
+        i === itemIdx
+          ? {
+              ...r,
+              loadingEntries: r.loadingEntries.filter((_, j) => j !== entryIdx),
+            }
+          : r,
+      ),
+    );
+  };
 
   const resetForm = () => {
     setPartyCd("");
@@ -878,17 +1232,26 @@ export default function DispatchPlantScreen() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        // Generate & share PDF immediately
+        // Generate & share PDF immediately. Office hasn't recorded loading
+        // entries yet (that's the supervisor's job), so each item's entries
+        // list is empty here — the PDF will show "No loading entries recorded".
         await generateAndSharePDF({
           dispatchTo,
           partyNm,
+          createdAt: fmtDateTime(data.data?.CREATEDAT ?? new Date().toISOString()),
           vehicleNo,
           transporter,
           driverName,
           driverNo,
           kaantaWt,
           grrNo,
-          items: validDisp,
+          items: validDisp.map((r) => ({
+            itmnm: r.itmnm,
+            qty: r.qty,
+            totalBoxes: 0,
+            weight: 0,
+            entries: [],
+          })),
           emptyItems: validEmpty,
         });
         Alert.alert("Saved", "Dispatch session created.");
@@ -923,7 +1286,15 @@ export default function DispatchPlantScreen() {
         itmcd: i.ITMCD,
         itmnm: i.ITMNM,
         qty: String(i.QTY),
-        fullBoxWt: i.FULL_BOX_WT != null ? String(i.FULL_BOX_WT) : "",
+        wgtconv: wgtconvFor(i.ITMCD),
+        loadingEntries: (i.loadingEntries ?? []).map((e) => ({
+          key: e.ENTRY_ID,
+          entryId: e.ENTRY_ID,
+          length: String(e.LENGTH),
+          width: String(e.WIDTH),
+          height: String(e.HEIGHT),
+          extra: String(e.EXTRA),
+        })),
       })),
     );
     setEmptyItems(
@@ -950,16 +1321,19 @@ export default function DispatchPlantScreen() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             doneBy: empId,
-            vehicleNo,
-            transporter,
-            driverName,
-            driverNo,
-            kaantaWt,
-            grrNo,
             items: dispItems.map((r) => ({
               itemId: r.itemId,
               qty: r.qty,
-              fullBoxWt: r.fullBoxWt,
+              loadingEntries: r.loadingEntries
+                .filter(
+                  (e) => e.length || e.width || e.height || e.extra,
+                )
+                .map((e) => ({
+                  length: e.length || "0",
+                  width: e.width || "0",
+                  height: e.height || "0",
+                  extra: e.extra || "0",
+                })),
             })),
           }),
         },
@@ -970,13 +1344,20 @@ export default function DispatchPlantScreen() {
         await generateAndSharePDF({
           dispatchTo,
           partyNm,
+          createdAt: fmtDateTime(activeSession.CREATEDAT),
           vehicleNo,
           transporter,
           driverName,
           driverNo,
           kaantaWt,
           grrNo,
-          items: dispItems,
+          items: dispItems.map((r) => ({
+            itmnm: r.itmnm,
+            qty: r.qty,
+            totalBoxes: computeItemTotalBoxes(r.loadingEntries),
+            weight: computeItemWeight(r.loadingEntries, r.wgtconv),
+            entries: r.loadingEntries,
+          })),
           emptyItems: emptyItems,
         });
         Alert.alert("Completed", "Dispatch session completed.");
@@ -1218,9 +1599,20 @@ export default function DispatchPlantScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Created date/time — only meaningful once a session actually
+                exists in the DB, i.e. the supervisor is editing one. */}
+            {activeSession && (
+              <View style={styles.createdRow}>
+                <Ionicons name="time-outline" size={13} color={C.textMuted} />
+                <Text style={styles.createdText}>
+                  Created {fmtDateTime(activeSession.CREATEDAT)}
+                </Text>
+              </View>
+            )}
           </View>
 
-          {/* ── Items Table ── */}
+          {/* ── Items ── */}
           <View style={styles.card}>
             <View style={styles.tableTitleRow}>
               <Text style={styles.tableTitle}>Item Details</Text>
@@ -1235,170 +1627,93 @@ export default function DispatchPlantScreen() {
               )}
             </View>
 
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderCell, styles.colItemWide]}>
-                Item Name
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
-              {!isOffice && (
-                <Text style={[styles.tableHeaderCell, styles.colWt]}>
-                  Full Box Wt
-                </Text>
-              )}
-              {isOffice && <View style={styles.colAction} />}
-            </View>
-
             {dispItems.map((row, idx) => (
               <View
                 key={row.key}
                 style={[
-                  styles.tableRow,
-                  idx < dispItems.length - 1 && styles.tableRowBorder,
+                  styles.itemBlock,
+                  idx < dispItems.length - 1 && styles.itemBlockBorder,
                 ]}
               >
-                <View style={styles.colItemWide}>
-                  {isOffice ? (
-                    <TouchableOpacity
-                      style={[
-                        styles.itemSelector,
-                        row.itmcd ? styles.itemSelectorFilled : null,
-                      ]}
-                      onPress={() => openItemPicker("dispatch", idx)}
-                    >
-                      <Text
-                        style={
-                          row.itmcd
-                            ? styles.itemSelectorFilledText
-                            : styles.itemSelectorPlaceholder
-                        }
-                        numberOfLines={2}
+                <View style={styles.itemBlockHeader}>
+                  <View style={{ flex: 1 }}>
+                    {isOffice ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.itemSelector,
+                          row.itmcd ? styles.itemSelectorFilled : null,
+                        ]}
+                        onPress={() => openItemPicker("dispatch", idx)}
                       >
-                        {row.itmnm || "Select item…"}
+                        <Text
+                          style={
+                            row.itmcd
+                              ? styles.itemSelectorFilledText
+                              : styles.itemSelectorPlaceholder
+                          }
+                          numberOfLines={2}
+                        >
+                          {row.itmnm || "Select item…"}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={styles.itemNameReadOnly}>
+                        {row.itmnm}
+                        {row.qty ? (
+                          <Text style={styles.itemQtyBracket}> ({row.qty})</Text>
+                        ) : null}
                       </Text>
+                    )}
+                  </View>
+
+                  {isOffice ? (
+                    <View style={styles.qtyInputWrap}>
+                      <TextInput
+                        style={[
+                          styles.numInput,
+                          row.qty ? styles.numInputFilled : null,
+                        ]}
+                        value={row.qty}
+                        onChangeText={(v) => updateDispRow(idx, "qty", v)}
+                        keyboardType="decimal-pad"
+                        placeholder="Qty"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                  ) : null}
+
+                  {isOffice && dispItems.length > 1 && (
+                    <TouchableOpacity
+                      onPress={() => removeDispRow(idx)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{ marginLeft: 8 }}
+                    >
+                      <Ionicons
+                        name="remove-circle-outline"
+                        size={20}
+                        color={C.red}
+                      />
                     </TouchableOpacity>
-                  ) : (
-                    <Text style={styles.itemNameReadOnly}>{row.itmnm}</Text>
                   )}
                 </View>
 
-                <View style={styles.colQty}>
-                  <TextInput
-                    style={[
-                      styles.numInput,
-                      row.qty ? styles.numInputFilled : null,
-                    ]}
-                    value={row.qty}
-                    onChangeText={(v) => updateDispRow(idx, "qty", v)}
-                    keyboardType="decimal-pad"
-                    placeholder="0"
-                    placeholderTextColor={C.textMuted}
+                {/* Loading table only makes sense once an item is chosen, and
+                    is the supervisor's job to fill in — office just picks
+                    items/qty and never sees this table. */}
+                {!isOffice && row.itmcd && (
+                  <LoadingEntriesTable
+                    entries={row.loadingEntries}
+                    wgtconv={row.wgtconv}
+                    editable={!isOffice}
+                    onAddEntry={() => addLoadingEntry(idx)}
+                    onUpdateEntry={(entryIdx, field, value) =>
+                      updateLoadingEntry(idx, entryIdx, field, value)
+                    }
+                    onRemoveEntry={(entryIdx) => removeLoadingEntry(idx, entryIdx)}
                   />
-                </View>
-
-                {!isOffice && (
-                  <View style={styles.colWt}>
-                    <TextInput
-                      style={[
-                        styles.numInput,
-                        row.fullBoxWt ? styles.numInputFilledWt : null,
-                      ]}
-                      value={row.fullBoxWt}
-                      onChangeText={(v) => updateDispRow(idx, "fullBoxWt", v)}
-                      keyboardType="decimal-pad"
-                      placeholder="0"
-                      placeholderTextColor={C.textMuted}
-                    />
-                  </View>
-                )}
-
-                {isOffice && (
-                  <View style={styles.colAction}>
-                    {dispItems.length > 1 && (
-                      <TouchableOpacity
-                        onPress={() => removeDispRow(idx)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Ionicons
-                          name="remove-circle-outline"
-                          size={20}
-                          color={C.red}
-                        />
-                      </TouchableOpacity>
-                    )}
-                  </View>
                 )}
               </View>
             ))}
-          </View>
-
-          {/* ── Transport Details ── */}
-          <View style={styles.card}>
-            <Text style={styles.tableTitle}>Transport Details</Text>
-            <View style={styles.fieldGrid}>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Vehicle No.</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={vehicleNo}
-                  onChangeText={setVehicleNo}
-                  placeholder="e.g. MH12AB1234"
-                  placeholderTextColor={C.textMuted}
-                  autoCapitalize="characters"
-                />
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Transporter</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={transporter}
-                  onChangeText={setTransporter}
-                  placeholder="Transporter name"
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Driver Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={driverName}
-                  onChangeText={setDriverName}
-                  placeholder="Driver name"
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Driver No.</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={driverNo}
-                  onChangeText={setDriverNo}
-                  placeholder="Mobile number"
-                  placeholderTextColor={C.textMuted}
-                  keyboardType="phone-pad"
-                />
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Kaanta Parchi Nett Wgt</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={kaantaWt}
-                  onChangeText={setKaantaWt}
-                  placeholder="Net weight"
-                  placeholderTextColor={C.textMuted}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>GRR No.</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={grrNo}
-                  onChangeText={setGrrNo}
-                  placeholder="GRR number"
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-            </View>
           </View>
 
           {/* ── Section B ── */}
@@ -1723,6 +2038,14 @@ const styles = StyleSheet.create({
   },
   selectorBtnPlaceholder: { color: C.textMuted, fontSize: 14, flex: 1 },
 
+  createdRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 10,
+  },
+  createdText: { color: C.textMuted, fontSize: 12, fontWeight: "600" },
+
   tableTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1764,8 +2087,17 @@ const styles = StyleSheet.create({
 
   colItemWide: { flex: 5, paddingRight: 6 },
   colQty: { flex: 2, paddingHorizontal: 4 },
-  colWt: { flex: 2, paddingHorizontal: 4 },
   colAction: { width: 28, alignItems: "center" },
+
+  itemBlock: { paddingVertical: 10 },
+  itemBlockBorder: { borderBottomWidth: 1, borderBottomColor: C.border },
+  itemBlockHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  qtyInputWrap: { width: 76, marginLeft: 8 },
+  itemQtyBracket: { color: C.textMuted, fontWeight: "600" },
 
   itemSelector: {
     backgroundColor: C.inputBg,
@@ -1789,9 +2121,9 @@ const styles = StyleSheet.create({
   itemSelectorPlaceholder: { color: C.textMuted, fontSize: 12 },
   itemNameReadOnly: {
     color: C.textPrimary,
-    fontSize: 12,
-    fontWeight: "500",
-    lineHeight: 16,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
   },
 
   numInput: {
@@ -1810,11 +2142,6 @@ const styles = StyleSheet.create({
     backgroundColor: C.primaryLight,
     borderColor: C.primaryMuted,
     color: C.primary,
-  },
-  numInputFilledWt: {
-    backgroundColor: C.amberBg,
-    borderColor: C.amberLight,
-    color: C.amber,
   },
 
   fieldGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
@@ -1848,6 +2175,98 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { backgroundColor: C.primaryMuted },
   submitBtnText: { color: C.textInverse, fontSize: 15, fontWeight: "800" },
+});
+
+// ─── Loading Entries Table Styles ─────────────────────────────────────────────
+
+const loadStyles = StyleSheet.create({
+  wrap: {
+    backgroundColor: C.subtleBg,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 10,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    marginBottom: 6,
+  },
+  headCell: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: C.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    textAlign: "center",
+  },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 4 },
+  colDim: { flex: 1, paddingHorizontal: 2 },
+  colSub: { flex: 1, paddingHorizontal: 2, alignItems: "center" },
+  colAction: { width: 24, alignItems: "center" },
+  dimInput: {
+    backgroundColor: C.cardBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 6,
+    paddingHorizontal: 2,
+    paddingVertical: 6,
+    fontSize: 11,
+    color: C.textPrimary,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  dimInputFilled: {
+    backgroundColor: C.primaryLight,
+    borderColor: C.primaryMuted,
+    color: C.primary,
+  },
+  subtotalText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.textPrimary,
+    textAlign: "center",
+  },
+  emptyText: {
+    color: C.textMuted,
+    fontSize: 12,
+    fontStyle: "italic",
+    paddingVertical: 8,
+    textAlign: "center",
+  },
+  addEntryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    marginTop: 6,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: C.primaryLight,
+    borderWidth: 1,
+    borderColor: C.primaryMuted,
+  },
+  addEntryBtnText: { color: C.primary, fontSize: 11, fontWeight: "700" },
+  totalsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  totalsLabel: { fontSize: 11, fontWeight: "700", color: C.textSecondary },
+  totalsValue: { fontSize: 12, fontWeight: "800", color: C.textPrimary },
+  weightRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  weightLabel: { fontSize: 11, fontWeight: "700", color: C.textSecondary },
+  weightValue: { fontSize: 12, fontWeight: "800", color: C.amber },
 });
 
 // ─── Session Card Styles ──────────────────────────────────────────────────────

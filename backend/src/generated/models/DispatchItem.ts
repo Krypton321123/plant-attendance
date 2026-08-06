@@ -229,6 +229,7 @@ export type DispatchItemWhereInput = {
   QTY?: Prisma.DecimalFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.XOR<Prisma.DispatchSessionScalarRelationFilter, Prisma.DispatchSessionWhereInput>
+  loadingEntries?: Prisma.DispatchLoadingEntryListRelationFilter
 }
 
 export type DispatchItemOrderByWithRelationInput = {
@@ -239,6 +240,7 @@ export type DispatchItemOrderByWithRelationInput = {
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrderInput | Prisma.SortOrder
   session?: Prisma.DispatchSessionOrderByWithRelationInput
+  loadingEntries?: Prisma.DispatchLoadingEntryOrderByRelationAggregateInput
 }
 
 export type DispatchItemWhereUniqueInput = Prisma.AtLeast<{
@@ -252,6 +254,7 @@ export type DispatchItemWhereUniqueInput = Prisma.AtLeast<{
   QTY?: Prisma.DecimalFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.XOR<Prisma.DispatchSessionScalarRelationFilter, Prisma.DispatchSessionWhereInput>
+  loadingEntries?: Prisma.DispatchLoadingEntryListRelationFilter
 }, "ITEM_ID">
 
 export type DispatchItemOrderByWithAggregationInput = {
@@ -287,6 +290,7 @@ export type DispatchItemCreateInput = {
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session: Prisma.DispatchSessionCreateNestedOneWithoutItemsInput
+  loadingEntries?: Prisma.DispatchLoadingEntryCreateNestedManyWithoutItemInput
 }
 
 export type DispatchItemUncheckedCreateInput = {
@@ -296,6 +300,7 @@ export type DispatchItemUncheckedCreateInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type DispatchItemUpdateInput = {
@@ -305,6 +310,7 @@ export type DispatchItemUpdateInput = {
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.DispatchSessionUpdateOneRequiredWithoutItemsNestedInput
+  loadingEntries?: Prisma.DispatchLoadingEntryUpdateManyWithoutItemNestedInput
 }
 
 export type DispatchItemUncheckedUpdateInput = {
@@ -314,6 +320,7 @@ export type DispatchItemUncheckedUpdateInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type DispatchItemCreateManyInput = {
@@ -389,6 +396,11 @@ export type DispatchItemSumOrderByAggregateInput = {
   FULL_BOX_WT?: Prisma.SortOrder
 }
 
+export type DispatchItemScalarRelationFilter = {
+  is?: Prisma.DispatchItemWhereInput
+  isNot?: Prisma.DispatchItemWhereInput
+}
+
 export type DispatchItemCreateNestedManyWithoutSessionInput = {
   create?: Prisma.XOR<Prisma.DispatchItemCreateWithoutSessionInput, Prisma.DispatchItemUncheckedCreateWithoutSessionInput> | Prisma.DispatchItemCreateWithoutSessionInput[] | Prisma.DispatchItemUncheckedCreateWithoutSessionInput[]
   connectOrCreate?: Prisma.DispatchItemCreateOrConnectWithoutSessionInput | Prisma.DispatchItemCreateOrConnectWithoutSessionInput[]
@@ -431,12 +443,27 @@ export type DispatchItemUncheckedUpdateManyWithoutSessionNestedInput = {
   deleteMany?: Prisma.DispatchItemScalarWhereInput | Prisma.DispatchItemScalarWhereInput[]
 }
 
+export type DispatchItemCreateNestedOneWithoutLoadingEntriesInput = {
+  create?: Prisma.XOR<Prisma.DispatchItemCreateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedCreateWithoutLoadingEntriesInput>
+  connectOrCreate?: Prisma.DispatchItemCreateOrConnectWithoutLoadingEntriesInput
+  connect?: Prisma.DispatchItemWhereUniqueInput
+}
+
+export type DispatchItemUpdateOneRequiredWithoutLoadingEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.DispatchItemCreateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedCreateWithoutLoadingEntriesInput>
+  connectOrCreate?: Prisma.DispatchItemCreateOrConnectWithoutLoadingEntriesInput
+  upsert?: Prisma.DispatchItemUpsertWithoutLoadingEntriesInput
+  connect?: Prisma.DispatchItemWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DispatchItemUpdateToOneWithWhereWithoutLoadingEntriesInput, Prisma.DispatchItemUpdateWithoutLoadingEntriesInput>, Prisma.DispatchItemUncheckedUpdateWithoutLoadingEntriesInput>
+}
+
 export type DispatchItemCreateWithoutSessionInput = {
   ITEM_ID?: string
   ITMCD: string
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryCreateNestedManyWithoutItemInput
 }
 
 export type DispatchItemUncheckedCreateWithoutSessionInput = {
@@ -445,6 +472,7 @@ export type DispatchItemUncheckedCreateWithoutSessionInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type DispatchItemCreateOrConnectWithoutSessionInput = {
@@ -484,6 +512,58 @@ export type DispatchItemScalarWhereInput = {
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
+export type DispatchItemCreateWithoutLoadingEntriesInput = {
+  ITEM_ID?: string
+  ITMCD: string
+  ITMNM: string
+  QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
+  FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  session: Prisma.DispatchSessionCreateNestedOneWithoutItemsInput
+}
+
+export type DispatchItemUncheckedCreateWithoutLoadingEntriesInput = {
+  ITEM_ID?: string
+  SESSION_ID: string
+  ITMCD: string
+  ITMNM: string
+  QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
+  FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+}
+
+export type DispatchItemCreateOrConnectWithoutLoadingEntriesInput = {
+  where: Prisma.DispatchItemWhereUniqueInput
+  create: Prisma.XOR<Prisma.DispatchItemCreateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedCreateWithoutLoadingEntriesInput>
+}
+
+export type DispatchItemUpsertWithoutLoadingEntriesInput = {
+  update: Prisma.XOR<Prisma.DispatchItemUpdateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedUpdateWithoutLoadingEntriesInput>
+  create: Prisma.XOR<Prisma.DispatchItemCreateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedCreateWithoutLoadingEntriesInput>
+  where?: Prisma.DispatchItemWhereInput
+}
+
+export type DispatchItemUpdateToOneWithWhereWithoutLoadingEntriesInput = {
+  where?: Prisma.DispatchItemWhereInput
+  data: Prisma.XOR<Prisma.DispatchItemUpdateWithoutLoadingEntriesInput, Prisma.DispatchItemUncheckedUpdateWithoutLoadingEntriesInput>
+}
+
+export type DispatchItemUpdateWithoutLoadingEntriesInput = {
+  ITEM_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
+  QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  session?: Prisma.DispatchSessionUpdateOneRequiredWithoutItemsNestedInput
+}
+
+export type DispatchItemUncheckedUpdateWithoutLoadingEntriesInput = {
+  ITEM_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  SESSION_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
+  QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+}
+
 export type DispatchItemCreateManySessionInput = {
   ITEM_ID?: string
   ITMCD: string
@@ -498,6 +578,7 @@ export type DispatchItemUpdateWithoutSessionInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryUpdateManyWithoutItemNestedInput
 }
 
 export type DispatchItemUncheckedUpdateWithoutSessionInput = {
@@ -506,6 +587,7 @@ export type DispatchItemUncheckedUpdateWithoutSessionInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  loadingEntries?: Prisma.DispatchLoadingEntryUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type DispatchItemUncheckedUpdateManyWithoutSessionInput = {
@@ -517,6 +599,35 @@ export type DispatchItemUncheckedUpdateManyWithoutSessionInput = {
 }
 
 
+/**
+ * Count Type DispatchItemCountOutputType
+ */
+
+export type DispatchItemCountOutputType = {
+  loadingEntries: number
+}
+
+export type DispatchItemCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  loadingEntries?: boolean | DispatchItemCountOutputTypeCountLoadingEntriesArgs
+}
+
+/**
+ * DispatchItemCountOutputType without action
+ */
+export type DispatchItemCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DispatchItemCountOutputType
+   */
+  select?: Prisma.DispatchItemCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * DispatchItemCountOutputType without action
+ */
+export type DispatchItemCountOutputTypeCountLoadingEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DispatchLoadingEntryWhereInput
+}
+
 
 export type DispatchItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   ITEM_ID?: boolean
@@ -526,6 +637,8 @@ export type DispatchItemSelect<ExtArgs extends runtime.Types.Extensions.Internal
   QTY?: boolean
   FULL_BOX_WT?: boolean
   session?: boolean | Prisma.DispatchSessionDefaultArgs<ExtArgs>
+  loadingEntries?: boolean | Prisma.DispatchItem$loadingEntriesArgs<ExtArgs>
+  _count?: boolean | Prisma.DispatchItemCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dispatchItem"]>
 
 
@@ -542,12 +655,15 @@ export type DispatchItemSelectScalar = {
 export type DispatchItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ITEM_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "QTY" | "FULL_BOX_WT", ExtArgs["result"]["dispatchItem"]>
 export type DispatchItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.DispatchSessionDefaultArgs<ExtArgs>
+  loadingEntries?: boolean | Prisma.DispatchItem$loadingEntriesArgs<ExtArgs>
+  _count?: boolean | Prisma.DispatchItemCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $DispatchItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "DispatchItem"
   objects: {
     session: Prisma.$DispatchSessionPayload<ExtArgs>
+    loadingEntries: Prisma.$DispatchLoadingEntryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     ITEM_ID: string
@@ -897,6 +1013,7 @@ readonly fields: DispatchItemFieldRefs;
 export interface Prisma__DispatchItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   session<T extends Prisma.DispatchSessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DispatchSessionDefaultArgs<ExtArgs>>): Prisma.Prisma__DispatchSessionClient<runtime.Types.Result.GetResult<Prisma.$DispatchSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  loadingEntries<T extends Prisma.DispatchItem$loadingEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DispatchItem$loadingEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DispatchLoadingEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1271,6 +1388,30 @@ export type DispatchItemDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many DispatchItems to delete.
    */
   limit?: number
+}
+
+/**
+ * DispatchItem.loadingEntries
+ */
+export type DispatchItem$loadingEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DispatchLoadingEntry
+   */
+  select?: Prisma.DispatchLoadingEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DispatchLoadingEntry
+   */
+  omit?: Prisma.DispatchLoadingEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DispatchLoadingEntryInclude<ExtArgs> | null
+  where?: Prisma.DispatchLoadingEntryWhereInput
+  orderBy?: Prisma.DispatchLoadingEntryOrderByWithRelationInput | Prisma.DispatchLoadingEntryOrderByWithRelationInput[]
+  cursor?: Prisma.DispatchLoadingEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DispatchLoadingEntryScalarFieldEnum | Prisma.DispatchLoadingEntryScalarFieldEnum[]
 }
 
 /**

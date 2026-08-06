@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import {
   getAllEmployees,
-  registerEmployee,
   getEmployeeStatus,
   approveEmployee,
   createEmployee,
   adminLogin,
   getTodayAttendanceByEmp,
 } from './controllers/employee.controller';
+import { login, signup } from './controllers/auth.controller';
 import {
   markAttendance,
   getTodayAttendance,
@@ -41,9 +41,13 @@ import {
 } from './controllers/dispatch.controller';
 import prisma from './util/prisma';
 const router = Router();
+
+// ── Auth Routes ───────────────────────────────────────────────────
+router.post('/auth/login',                  login);
+router.post('/auth/signup',                 upload.single('photo'), signup);
+
 // ── Employee Routes ──────────────────────────────────────────────
 router.get('/employees',                    getAllEmployees);
-router.post('/employees/register',          upload.single('photo'), registerEmployee);
 router.get('/employees/:empId/status',      getEmployeeStatus);
 router.patch('/employees/:empId/approve',   approveEmployee);
 router.post('/employees/create',            createEmployee);
