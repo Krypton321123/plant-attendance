@@ -1172,7 +1172,8 @@ export const DispatchItemScalarFieldEnum = {
   ITMCD: 'ITMCD',
   ITMNM: 'ITMNM',
   QTY: 'QTY',
-  FULL_BOX_WT: 'FULL_BOX_WT'
+  FULL_BOX_WT: 'FULL_BOX_WT',
+  AVG_WT_PER_BOX: 'AVG_WT_PER_BOX'
 } as const
 
 export type DispatchItemScalarFieldEnum = (typeof DispatchItemScalarFieldEnum)[keyof typeof DispatchItemScalarFieldEnum]

@@ -54,6 +54,7 @@ type DispatchItemRow = {
   itmnm: string;
   qty: string;
   wgtconv: string; // weight per box, from mstitm — carried alongside the row so the loading table can compute weight without a second lookup
+  avgWtPerBox: string; // supervisor-entered actual avg weight per box, distinct from wgtconv (catalog rate)
   loadingEntries: LoadingEntryRow[];
 };
 
@@ -84,6 +85,7 @@ type Session = {
     ITMNM: string;
     QTY: string;
     FULL_BOX_WT: string | null;
+    AVG_WT_PER_BOX: string | null;
     loadingEntries?: {
       ENTRY_ID: string;
       LENGTH: number;
@@ -100,6 +102,7 @@ type PDFItemData = {
   qty: string;
   totalBoxes: number;
   weight: number;
+  grossWeight: number;
   entries: LoadingEntryRow[];
 };
 
@@ -135,6 +138,7 @@ const blankRow = (): DispatchItemRow => ({
   itmnm: "",
   qty: "",
   wgtconv: "",
+  avgWtPerBox: "",
   loadingEntries: [],
 });
 
@@ -170,6 +174,17 @@ const computeItemWeight = (
   wgtconv: string,
 ): number => {
   const perBox = Number(wgtconv) || 0;
+  return computeItemTotalBoxes(entries) * perBox;
+};
+
+// Gross weight = total boxes * supervisor-entered avg weight per box.
+// Distinct from computeItemWeight, which uses the catalog wgtconv rate —
+// this uses the actual measured value the supervisor enters per item.
+const computeItemGrossWeight = (
+  entries: LoadingEntryRow[],
+  avgWtPerBox: string,
+): number => {
+  const perBox = Number(avgWtPerBox) || 0;
   return computeItemTotalBoxes(entries) * perBox;
 };
 
@@ -248,12 +263,17 @@ const generateAndSharePDF = async (data: PDFData) => {
         <div class="item-totals">
           <span>Total Boxes: <strong>${fmtNum(it.totalBoxes)}</strong></span>
           <span>Weight: <strong>${fmtNum(it.weight)} kg</strong></span>
+          <span>Gross Weight: <strong>${fmtNum(it.grossWeight)} kg</strong></span>
         </div>
       </div>`;
     })
     .join("");
 
   const grandTotalWeight = data.items.reduce((s, it) => s + it.weight, 0);
+  const grandTotalGrossWeight = data.items.reduce(
+    (s, it) => s + it.grossWeight,
+    0,
+  );
   const grandTotalBoxes = data.items.reduce((s, it) => s + it.totalBoxes, 0);
 
   const emptyRows = data.emptyItems
@@ -383,6 +403,7 @@ const generateAndSharePDF = async (data: PDFData) => {
         .loading-table th, .loading-table td { padding: 6px 10px; }
         .item-totals {
           display: flex;
+          flex-wrap: wrap;
           gap: 24px;
           margin-top: 8px;
           font-size: 12px;
@@ -391,6 +412,7 @@ const generateAndSharePDF = async (data: PDFData) => {
         .item-totals strong { color: #1e293b; }
         .grand-totals {
           display: flex;
+          flex-wrap: wrap;
           justify-content: flex-end;
           gap: 32px;
           margin-top: 14px;
@@ -475,6 +497,7 @@ const generateAndSharePDF = async (data: PDFData) => {
         <div class="grand-totals">
           <span>Total Boxes: <strong>${fmtNum(grandTotalBoxes)}</strong></span>
           <span>Total Weight: <strong>${fmtNum(grandTotalWeight)} kg</strong></span>
+          <span>Total Gross Weight: <strong>${fmtNum(grandTotalGrossWeight)} kg</strong></span>
         </div>
       </div>
 
@@ -824,6 +847,7 @@ function SessionCard({
 function LoadingEntriesTable({
   entries,
   wgtconv,
+  avgWtPerBox,
   editable,
   onAddEntry,
   onUpdateEntry,
@@ -831,6 +855,7 @@ function LoadingEntriesTable({
 }: {
   entries: LoadingEntryRow[];
   wgtconv: string;
+  avgWtPerBox: string;
   editable: boolean;
   onAddEntry: () => void;
   onUpdateEntry: (idx: number, field: keyof LoadingEntryRow, value: string) => void;
@@ -838,6 +863,7 @@ function LoadingEntriesTable({
 }) {
   const totalBoxes = computeItemTotalBoxes(entries);
   const weight = computeItemWeight(entries, wgtconv);
+  const grossWeight = computeItemGrossWeight(entries, avgWtPerBox);
 
   return (
     <View style={loadStyles.wrap}>
@@ -939,6 +965,15 @@ function LoadingEntriesTable({
         <View style={loadStyles.weightRow}>
           <Text style={loadStyles.weightLabel}>Weight</Text>
           <Text style={loadStyles.weightValue}>{fmtNum(weight)} kg</Text>
+        </View>
+      )}
+
+      {entries.length > 0 && (
+        <View style={loadStyles.grossWeightRow}>
+          <Text style={loadStyles.grossWeightLabel}>Gross Weight</Text>
+          <Text style={loadStyles.grossWeightValue}>
+            {fmtNum(grossWeight)} kg
+          </Text>
         </View>
       )}
     </View>
@@ -1113,6 +1148,12 @@ export default function DispatchPlantScreen() {
     [],
   );
 
+  const updateAvgWtPerBox = useCallback((idx: number, value: string) => {
+    setDispItems((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, avgWtPerBox: value } : r)),
+    );
+  }, []);
+
   const updateEmptyRow = useCallback(
     (idx: number, field: keyof EmptyItemRow, value: string) => {
       setEmptyItems((prev) =>
@@ -1250,6 +1291,7 @@ export default function DispatchPlantScreen() {
             qty: r.qty,
             totalBoxes: 0,
             weight: 0,
+            grossWeight: 0,
             entries: [],
           })),
           emptyItems: validEmpty,
@@ -1287,6 +1329,7 @@ export default function DispatchPlantScreen() {
         itmnm: i.ITMNM,
         qty: String(i.QTY),
         wgtconv: wgtconvFor(i.ITMCD),
+        avgWtPerBox: i.AVG_WT_PER_BOX != null ? String(i.AVG_WT_PER_BOX) : "",
         loadingEntries: (i.loadingEntries ?? []).map((e) => ({
           key: e.ENTRY_ID,
           entryId: e.ENTRY_ID,
@@ -1324,6 +1367,7 @@ export default function DispatchPlantScreen() {
             items: dispItems.map((r) => ({
               itemId: r.itemId,
               qty: r.qty,
+              avgWtPerBox: r.avgWtPerBox,
               loadingEntries: r.loadingEntries
                 .filter(
                   (e) => e.length || e.width || e.height || e.extra,
@@ -1356,6 +1400,7 @@ export default function DispatchPlantScreen() {
             qty: r.qty,
             totalBoxes: computeItemTotalBoxes(r.loadingEntries),
             weight: computeItemWeight(r.loadingEntries, r.wgtconv),
+            grossWeight: computeItemGrossWeight(r.loadingEntries, r.avgWtPerBox),
             entries: r.loadingEntries,
           })),
           emptyItems: emptyItems,
@@ -1666,6 +1711,27 @@ export default function DispatchPlantScreen() {
                     )}
                   </View>
 
+                  {/* Avg weight per box — supervisor-entered actual measured
+                      value, distinct from the catalog wgtconv rate. Only
+                      shown once the supervisor is completing a session and
+                      an item is chosen. */}
+                  {!isOffice && row.itmcd && (
+                    <View style={styles.avgWtInputWrap}>
+                      <Text style={styles.avgWtLabel}>Avg Wt/Box</Text>
+                      <TextInput
+                        style={[
+                          styles.numInput,
+                          row.avgWtPerBox ? styles.numInputFilled : null,
+                        ]}
+                        value={row.avgWtPerBox}
+                        onChangeText={(v) => updateAvgWtPerBox(idx, v)}
+                        keyboardType="decimal-pad"
+                        placeholder="0.000"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                  )}
+
                   {isOffice ? (
                     <View style={styles.qtyInputWrap}>
                       <TextInput
@@ -1704,6 +1770,7 @@ export default function DispatchPlantScreen() {
                   <LoadingEntriesTable
                     entries={row.loadingEntries}
                     wgtconv={row.wgtconv}
+                    avgWtPerBox={row.avgWtPerBox}
                     editable={!isOffice}
                     onAddEntry={() => addLoadingEntry(idx)}
                     onUpdateEntry={(entryIdx, field, value) =>
@@ -1714,6 +1781,109 @@ export default function DispatchPlantScreen() {
                 )}
               </View>
             ))}
+          </View>
+
+          {/* ── Transport Details ──
+              Editable by OFFICE only (they're the ones who know the vehicle
+              at dispatch-creation time). PPSUPERVISOR sees the same values
+              read-only, matching how party name / item rows are handled
+              above — the supervisor's job is loading entries, not transport. */}
+          <View style={styles.card}>
+            <Text style={styles.tableTitle}>Transport Details</Text>
+            <View style={[styles.fieldGrid, { marginTop: 12 }]}>
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>Vehicle No.</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={vehicleNo}
+                    onChangeText={setVehicleNo}
+                    placeholder="e.g. UP80 AB 1234"
+                    placeholderTextColor={C.textMuted}
+                    autoCapitalize="characters"
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{vehicleNo || "—"}</Text>
+                )}
+              </View>
+
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>Transporter</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={transporter}
+                    onChangeText={setTransporter}
+                    placeholder="Transporter name"
+                    placeholderTextColor={C.textMuted}
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{transporter || "—"}</Text>
+                )}
+              </View>
+
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>Driver Name</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={driverName}
+                    onChangeText={setDriverName}
+                    placeholder="Driver name"
+                    placeholderTextColor={C.textMuted}
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{driverName || "—"}</Text>
+                )}
+              </View>
+
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>Driver No.</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={driverNo}
+                    onChangeText={setDriverNo}
+                    placeholder="10-digit mobile"
+                    placeholderTextColor={C.textMuted}
+                    keyboardType="phone-pad"
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{driverNo || "—"}</Text>
+                )}
+              </View>
+
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>Kaanta Parchi Nett Wgt</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={kaantaWt}
+                    onChangeText={setKaantaWt}
+                    placeholder="e.g. 12500"
+                    placeholderTextColor={C.textMuted}
+                    keyboardType="decimal-pad"
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{kaantaWt || "—"}</Text>
+                )}
+              </View>
+
+              <View style={styles.fieldHalf}>
+                <Text style={styles.fieldLabel}>GRR No.</Text>
+                {isOffice ? (
+                  <TextInput
+                    style={styles.textInput}
+                    value={grrNo}
+                    onChangeText={setGrrNo}
+                    placeholder="GRR number"
+                    placeholderTextColor={C.textMuted}
+                  />
+                ) : (
+                  <Text style={styles.itemNameReadOnly}>{grrNo || "—"}</Text>
+                )}
+              </View>
+            </View>
           </View>
 
           {/* ── Section B ── */}
@@ -2097,6 +2267,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   qtyInputWrap: { width: 76, marginLeft: 8 },
+  avgWtInputWrap: { width: 90, marginLeft: 8, alignItems: "flex-end" },
+  avgWtLabel: {
+    color: C.textMuted,
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 3,
+  },
   itemQtyBracket: { color: C.textMuted, fontWeight: "600" },
 
   itemSelector: {
@@ -2145,7 +2324,7 @@ const styles = StyleSheet.create({
   },
 
   fieldGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  fieldHalf: { width: "47%" },
+  fieldHalf: { flexBasis: "47%", flexGrow: 1 },
   textInput: {
     backgroundColor: C.inputBg,
     borderWidth: 1,
@@ -2267,6 +2446,13 @@ const loadStyles = StyleSheet.create({
   },
   weightLabel: { fontSize: 11, fontWeight: "700", color: C.textSecondary },
   weightValue: { fontSize: 12, fontWeight: "800", color: C.amber },
+  grossWeightRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  grossWeightLabel: { fontSize: 11, fontWeight: "700", color: C.textSecondary },
+  grossWeightValue: { fontSize: 12, fontWeight: "800", color: C.primary },
 });
 
 // ─── Session Card Styles ──────────────────────────────────────────────────────

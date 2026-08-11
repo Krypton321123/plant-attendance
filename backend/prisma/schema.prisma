@@ -109,14 +109,20 @@ model DispatchSession {
 }
 
 model DispatchItem {
-  ITEM_ID        String                 @id @default(cuid())
-  SESSION_ID     String
-  ITMCD          String                 @db.VarChar(50)
-  ITMNM          String                 @db.VarChar(250)
-  QTY            Decimal                @db.Decimal(18, 3)
-  FULL_BOX_WT    Decimal?               @db.Decimal(18, 3)
-  session        DispatchSession        @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
-  loadingEntries DispatchLoadingEntry[]
+  ITEM_ID         String                 @id @default(cuid())
+  SESSION_ID      String
+  ITMCD           String                 @db.VarChar(50)
+  ITMNM           String                 @db.VarChar(250)
+  QTY             Decimal                @db.Decimal(18, 3)
+  FULL_BOX_WT     Decimal?               @db.Decimal(18, 3)
+  // Actual measured average weight per box, entered by PPSUPERVISOR while
+  // recording loading entries (distinct from mstitm.wgtconv, which is a
+  // fixed catalog rate). Gross weight for the item = total boxes (from
+  // loadingEntries) * AVG_WT_PER_BOX. Nullable because it's only populated
+  // at complete-time, never at OFFICE create-time.
+  AVG_WT_PER_BOX  Decimal?               @db.Decimal(18, 3)
+  session         DispatchSession        @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  loadingEntries  DispatchLoadingEntry[]
 
   @@map("dispatch_items")
 }

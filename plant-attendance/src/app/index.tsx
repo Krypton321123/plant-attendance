@@ -32,6 +32,7 @@ export default function IndexScreen() {
   }, []);
 
   const routeForEmpType = (empType: string) => {
+    console.log(empType)
     switch (empType) {
       case "ADMIN":
         return "/admin/home";
@@ -54,7 +55,8 @@ export default function IndexScreen() {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEYS.EMPLOYEE);
       if (raw) {
-        const employee = JSON.parse(raw);
+        let employee = JSON.parse(raw);
+        
         if (employee?.EMPTYPE && employee?.STATUS === "A") {
           router.replace(routeForEmpType(employee.EMPTYPE));
           return;

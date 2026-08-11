@@ -216,33 +216,29 @@ function overallAttendanceStatus(bucket: ShiftBucket): OverallAttendanceStatus {
 // NOTE ON THIS MODEL — read before changing the numbers below.
 //
 // Monthly SALARY is divided by 30 to get a flat "per-day rate." That per-day
-// rate is what gets multiplied by the OT tier(s) below to produce the extra
-// amount shown in the OT column for the currently-selected date. This never
-// touches or overwrites the employee's monthly SALARY value — it's a
-// read-only, per-date derived figure.
+// rate is what gets multiplied by the OT tier below to produce the extra
+// amount for a shift. This never touches or overwrites the employee's
+// monthly SALARY value — it's a read-only, per-date derived figure.
 //
 // TIER RULE (per shift worked that day):
-//   OT_STATUS = 'OT'      → 2x   that shift's contribution
-//   OT_STATUS = 'HALF_OT' → 1.5x that shift's contribution
+//   OT_STATUS = 'OT'      → 2x   that shift's rate
+//   OT_STATUS = 'HALF_OT' → 1.5x that shift's rate
 //   OT_STATUS = 'NO_OT' / not yet set → 1x (no bonus, but shift was worked)
-//   no record for that shift at all  → excluded entirely (not a 1x factor)
+//   no record for that shift at all  → excluded entirely (nothing to show)
 //
-// DAY TOTAL = product of the tier(s) of every shift actually worked that day.
-//   e.g. only day worked, OT      → 2x
-//        only day worked, Half OT → 1.5x
-//        day + night both worked, OT + OT → 2 × 2 = 4x
+// EACH SHIFT IS PRICED INDEPENDENTLY against the same flat daily rate, and
+// only the portion above 1x ("the extra") is ever displayed. Day and night
+// are two separate shift premiums, not one multiplied-together figure —
+// this is what makes it possible to show them as two distinct numbers
+// instead of a single combined multiplier.
 //
-// This was the one interpretation that stayed internally consistent across
-// every single-shift case confirmed during spec discussion. One two-shift
-// example (Half OT + No OT) was given as 3x by the requester, which a plain
-// product model puts at 1.5x instead — that one case could not be reconciled
-// with the OT+OT=4x example under any single consistent rule, so this
-// implementation deliberately takes the more conservative (lower) number in
-// that specific ambiguous case rather than risk overpaying. If the intended
-// rule turns out to include an extra "worked both shifts" bonus factor,
-// change ONLY the `dailyOtMultiplier` function below — everything that calls
-// it (row cell, expanded detail, group subtotal) will pick up the fix
-// automatically since they all go through this one function.
+// Previously this file computed one combined multiplier for both shifts
+// (day tier × night tier) and derived a single blended rupee figure from
+// it. That model doesn't decompose into a "day amount" and a "night
+// amount" on its own, so it's been replaced with per-shift pricing.
+// Anywhere the old combined total is still wanted (e.g. a daily summary
+// line), it's just the sum of the two per-shift figures below — see
+// `dailyOtSummary`.
 
 const OT_TIER_MULTIPLIER: Record<OtStatus, number> = {
   OT: 2,
@@ -258,19 +254,6 @@ function shiftOtMultiplier(record: AttendanceRecord | null | undefined): number 
   return OT_TIER_MULTIPLIER[record.OT_STATUS] ?? 1;
 }
 
-/**
- * Combined OT multiplier for one employee on one date, given their day and
- * night attendance records for that date. Returns 1 (no bonus) if neither
- * shift carries an OT tier above baseline, and null if the employee didn't
- * work at all that date (both shifts absent/missing).
- */
-function dailyOtMultiplier(bucket: ShiftBucket): number | null {
-  const dayMult = shiftOtMultiplier(bucket.day);
-  const nightMult = shiftOtMultiplier(bucket.night);
-  if (dayMult === null && nightMult === null) return null; // didn't work this date
-  return (dayMult ?? 1) * (nightMult ?? 1);
-}
-
 /** Employee's flat per-day rate, derived from their monthly salary. Null if salary isn't set. */
 function dailyRate(salary: number | null | undefined): number | null {
   if (salary === null || salary === undefined) return null;
@@ -278,16 +261,57 @@ function dailyRate(salary: number | null | undefined): number | null {
 }
 
 /**
- * Extra pay (above the normal daily rate) an employee has earned for the
- * given date, based on OT tiers. Returns null when there's nothing to show
- * (no salary on file, or the employee didn't work / has no OT bonus that day).
+ * Extra pay (above the normal daily rate) earned for ONE shift, given that
+ * shift's attendance record. Returns null when there's nothing to show —
+ * no salary on file, the shift wasn't worked, or the tier is at baseline
+ * (NO_OT / unset) with nothing extra above the normal rate.
  */
-function extraOtPay(salary: number | null | undefined, bucket: ShiftBucket): number | null {
+function shiftExtraOtPay(salary: number | null | undefined, record: AttendanceRecord | null | undefined): number | null {
   const rate = dailyRate(salary);
   if (rate === null) return null;
-  const multiplier = dailyOtMultiplier(bucket);
-  if (multiplier === null || multiplier <= 1) return null; // nothing extra to show
-  return rate * (multiplier - 1); // only the "extra" portion above the normal 1x day
+  const multiplier = shiftOtMultiplier(record);
+  if (multiplier === null || multiplier <= 1) return null;
+  return rate * (multiplier - 1);
+}
+
+/** Day-shift extra OT pay for the given bucket. Null if nothing to show. */
+function dayExtraOtPay(salary: number | null | undefined, bucket: ShiftBucket): number | null {
+  return shiftExtraOtPay(salary, bucket.day);
+}
+
+/** Night-shift extra OT pay for the given bucket. Null if nothing to show. */
+function nightExtraOtPay(salary: number | null | undefined, bucket: ShiftBucket): number | null {
+  return shiftExtraOtPay(salary, bucket.night);
+}
+
+/**
+ * Combined day + night extra OT pay, for places that still want one number
+ * (e.g. group subtotal, grand total). This is a straight sum of the two
+ * independent shift figures above, not a multiplied-together combination.
+ * Returns null only when BOTH shifts have nothing to show.
+ */
+function extraOtPay(salary: number | null | undefined, bucket: ShiftBucket): number | null {
+  const day = dayExtraOtPay(salary, bucket);
+  const night = nightExtraOtPay(salary, bucket);
+  if (day === null && night === null) return null;
+  return (day ?? 0) + (night ?? 0);
+}
+
+interface DailyOtSummary {
+  day: number | null;
+  night: number | null;
+  dayMultiplier: number | null;
+  nightMultiplier: number | null;
+}
+
+/** Bundles both shifts' figures together for components that want both at once. */
+function dailyOtSummary(salary: number | null | undefined, bucket: ShiftBucket): DailyOtSummary {
+  return {
+    day: shiftExtraOtPay(salary, bucket.day),
+    night: shiftExtraOtPay(salary, bucket.night),
+    dayMultiplier: shiftOtMultiplier(bucket.day),
+    nightMultiplier: shiftOtMultiplier(bucket.night),
+  };
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -606,14 +630,12 @@ function ShiftCell({
 }
 
 /**
- * Renders the extra-OT-pay amount for one employee on the selected date, or a
- * neutral dash when there's nothing extra to show (no salary, no OT bonus,
- * or the employee didn't work that day).
+ * Renders one shift's extra-OT-pay amount, or a neutral dash when there's
+ * nothing extra to show for that shift (no salary, no OT bonus, or the
+ * shift wasn't worked). Used once for day, once for night — each column
+ * gets its own independent figure rather than a blended total.
  */
-function OtPayCell({ salary, bucket }: { salary: number | null | undefined; bucket: ShiftBucket }) {
-  const extra = extraOtPay(salary, bucket);
-  const multiplier = dailyOtMultiplier(bucket);
-
+function ShiftOtPayCell({ extra, multiplier }: { extra: number | null; multiplier: number | null }) {
   if (extra === null) {
     return <span className="font-mono text-[12px] italic text-zinc-300">—</span>;
   }
@@ -624,7 +646,7 @@ function OtPayCell({ salary, bucket }: { salary: number | null | undefined; buck
         <Zap size={11} className="shrink-0" />+{formatINR(Math.round(extra))}
       </span>
       {multiplier !== null && multiplier > 1 && (
-        <span className="font-mono text-[9px] uppercase tracking-wide text-zinc-400">{multiplier}× today</span>
+        <span className="font-mono text-[9px] uppercase tracking-wide text-zinc-400">{multiplier}×</span>
       )}
     </div>
   );
@@ -636,11 +658,13 @@ interface DetailPaneProps {
   accent: 'day' | 'night';
   record: AttendanceRecord | null | undefined;
   employeesById: Record<string, Employee>;
+  extraOt?: number | null;
+  otMultiplier?: number | null;
 }
 
 const DETAIL_ACCENT: Record<'day' | 'night', string> = { day: 'text-amber-500', night: 'text-indigo-500' };
 
-function DetailPane({ label, icon: Icon, accent, record, employeesById }: DetailPaneProps) {
+function DetailPane({ label, icon: Icon, accent, record, employeesById, extraOt, otMultiplier }: DetailPaneProps) {
   return (
     <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
       <div className="mb-2 flex items-center gap-1.5">
@@ -667,6 +691,17 @@ function DetailPane({ label, icon: Icon, accent, record, employeesById }: Detail
             <dt className="text-zinc-400">OT status</dt>
             <dd className="text-zinc-700">{record.OT_STATUS ? record.OT_STATUS.replace('_', ' ') : 'Not set yet'}</dd>
           </div>
+          {extraOt != null && extraOt > 0 && (
+            <div className="flex justify-between gap-3">
+              <dt className="text-zinc-400">OT extra</dt>
+              <dd className="inline-flex items-center gap-1 font-mono font-semibold text-amber-600">
+                <Zap size={10} />+{formatINR(Math.round(extraOt))}
+                {otMultiplier != null && otMultiplier > 1 && (
+                  <span className="text-zinc-400">({otMultiplier}×)</span>
+                )}
+              </dd>
+            </div>
+          )}
           {record.LOCATION && (
             <div className="flex justify-between gap-3">
               <dt className="text-zinc-400">Location</dt>
@@ -703,9 +738,9 @@ function ExpandedDetail({
   employeesById: Record<string, Employee>;
 }) {
   const bucket: ShiftBucket = { day: dayRecord ?? undefined, night: nightRecord ?? undefined };
-  const extra = extraOtPay(emp.SALARY, bucket);
-  const multiplier = dailyOtMultiplier(bucket);
-  const rate = dailyRate(emp.SALARY);
+  const summary = dailyOtSummary(emp.SALARY, bucket);
+  const combinedExtra = (summary.day ?? 0) + (summary.night ?? 0);
+  const hasAnyOt = summary.day !== null || summary.night !== null;
 
   return (
     <div className="space-y-3 pt-1">
@@ -717,22 +752,48 @@ function ExpandedDetail({
         </span>
       </div>
 
-      {/* OT pay row — only shown when there's an actual bonus to explain */}
-      {extra !== null && rate !== null && (
-        <div className="flex items-center justify-between rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-700">
-            <Zap size={12} />
-            <span>OT bonus today{multiplier ? ` (${multiplier}×)` : ''}</span>
+      {/* OT pay row — only shown when there's an actual bonus to explain, split by shift */}
+      {hasAnyOt && (
+        <div className="space-y-1.5 rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[11px] text-amber-700">
+              <Zap size={12} />
+              <span>OT bonus today</span>
+            </div>
+            <span className="font-mono text-[12px] font-semibold text-amber-700">
+              +{formatINR(Math.round(combinedExtra))}
+            </span>
           </div>
-          <span className="font-mono text-[12px] font-semibold text-amber-700">
-            +{formatINR(Math.round(extra))}
-          </span>
+          <div className="flex flex-col gap-1 border-t border-amber-100/80 pt-1.5 text-[10px]">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1 text-amber-600">
+                <Sun size={10} /> Day{summary.dayMultiplier && summary.dayMultiplier > 1 ? ` (${summary.dayMultiplier}×)` : ''}
+              </span>
+              <span className="font-mono text-amber-700">
+                {summary.day != null ? `+${formatINR(Math.round(summary.day))}` : '—'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1 text-amber-600">
+                <Moon size={10} /> Night{summary.nightMultiplier && summary.nightMultiplier > 1 ? ` (${summary.nightMultiplier}×)` : ''}
+              </span>
+              <span className="font-mono text-amber-700">
+                {summary.night != null ? `+${formatINR(Math.round(summary.night))}` : '—'}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <DetailPane label="Day shift"   icon={Sun}  accent="day"   record={dayRecord}   employeesById={employeesById} />
-        <DetailPane label="Night shift" icon={Moon} accent="night" record={nightRecord} employeesById={employeesById} />
+        <DetailPane
+          label="Day shift" icon={Sun} accent="day" record={dayRecord} employeesById={employeesById}
+          extraOt={summary.day} otMultiplier={summary.dayMultiplier}
+        />
+        <DetailPane
+          label="Night shift" icon={Moon} accent="night" record={nightRecord} employeesById={employeesById}
+          extraOt={summary.night} otMultiplier={summary.nightMultiplier}
+        />
       </div>
     </div>
   );
@@ -913,6 +974,7 @@ function SkeletonRows() {
           </td>
           <td className="px-4 py-3"><div className="h-5 w-16 rounded bg-zinc-100 animate-pulse" /></td>
           <td className="px-4 py-3"><div className="h-5 w-16 rounded bg-zinc-100 animate-pulse" /></td>
+          <td className="px-4 py-3"><div className="h-5 w-16 rounded bg-zinc-100 animate-pulse" /></td>
           <td className="px-4 py-3"><div className="h-6 w-20 rounded-full bg-zinc-100 animate-pulse" /></td>
           <td className="px-4 py-3"><div className="h-6 w-20 rounded-full bg-zinc-100 animate-pulse" /></td>
         </motion.tr>
@@ -937,7 +999,7 @@ function EmptyState({ label }: { label: string }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Employee row  — has both a Salary column and an OT (extra pay) column
+// Employee row  — has Salary, Day OT, and Night OT as three separate columns
 // ════════════════════════════════════════════════════════════════════════
 
 function EmployeeRow({
@@ -950,6 +1012,8 @@ function EmployeeRow({
   isExpanded:     boolean;
   onToggle:       () => void;
 }) {
+  const otSummary = dailyOtSummary(emp.SALARY, shiftBucket);
+
   return (
     <Fragment>
       <motion.tr
@@ -989,9 +1053,14 @@ function EmployeeRow({
           </span>
         </td>
 
-        {/* OT / extra pay for the selected date */}
+        {/* Day OT / extra pay for the selected date */}
         <td className="px-4 py-3 align-top">
-          <OtPayCell salary={emp.SALARY} bucket={shiftBucket} />
+          <ShiftOtPayCell extra={otSummary.day} multiplier={otSummary.dayMultiplier} />
+        </td>
+
+        {/* Night OT / extra pay for the selected date */}
+        <td className="px-4 py-3 align-top">
+          <ShiftOtPayCell extra={otSummary.night} multiplier={otSummary.nightMultiplier} />
         </td>
 
         {/* Day shift */}
@@ -1007,7 +1076,7 @@ function EmployeeRow({
 
       {isExpanded && (
         <tr className="border-b border-zinc-50 bg-zinc-50/40">
-          <td colSpan={5} className="px-5 pb-4 pt-0">
+          <td colSpan={6} className="px-5 pb-4 pt-0">
             <ExpandedDetail
               emp={emp}
               dayRecord={shiftBucket.day}
@@ -1034,15 +1103,19 @@ function DesignationGroupHeaderRow({
   const nightPresent = employees.filter((e) => attendanceByEmp[e.EMP_ID]?.night?.STATUS === 'P').length;
   const groupTotal   = employees.reduce((sum, e) => sum + (e.SALARY ?? 0), 0);
 
-  // Sum of extra OT pay across the group for the currently-selected date.
-  const groupOtTotal = employees.reduce((sum, e) => {
-    const extra = extraOtPay(e.SALARY, attendanceByEmp[e.EMP_ID] || {});
+  // Sum of extra OT pay across the group for the currently-selected date, split by shift.
+  const groupDayOtTotal = employees.reduce((sum, e) => {
+    const extra = dayExtraOtPay(e.SALARY, attendanceByEmp[e.EMP_ID] || {});
+    return sum + (extra ?? 0);
+  }, 0);
+  const groupNightOtTotal = employees.reduce((sum, e) => {
+    const extra = nightExtraOtPay(e.SALARY, attendanceByEmp[e.EMP_ID] || {});
     return sum + (extra ?? 0);
   }, 0);
 
   return (
     <tr className="border-b border-zinc-100 bg-zinc-50">
-      <td colSpan={5} className="p-0">
+      <td colSpan={6} className="p-0">
         <button
           onClick={onToggle}
           aria-expanded={!isCollapsed}
@@ -1055,13 +1128,18 @@ function DesignationGroupHeaderRow({
               {employees.length} {employees.length === 1 ? 'employee' : 'employees'}
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-4">
+          <div className="flex shrink-0 flex-wrap items-center gap-4">
             {groupTotal > 0 && (
               <span className="font-mono text-[10px] text-zinc-500">{formatINR(groupTotal)}/mo</span>
             )}
-            {groupOtTotal > 0 && (
+            {groupDayOtTotal > 0 && (
               <span className="inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10px] text-amber-600">
-                <Zap size={10} /> +{formatINR(Math.round(groupOtTotal))} OT today
+                <Sun size={10} /> +{formatINR(Math.round(groupDayOtTotal))} OT
+              </span>
+            )}
+            {groupNightOtTotal > 0 && (
+              <span className="inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10px] text-amber-600">
+                <Moon size={10} /> +{formatINR(Math.round(groupNightOtTotal))} OT
               </span>
             )}
             <span className="inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10px] text-amber-600">
@@ -1212,12 +1290,16 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
     return { day, night, total: employees.length };
   }, [employees, attendanceByEmp]);
 
-  // Total OT pay owed across everyone currently in view, for the selected date.
+  // Total OT pay owed across everyone currently in view, for the selected date — split by shift.
   const totalOtToday = useMemo(() => {
-    return employees.reduce((sum, e) => {
-      const extra = extraOtPay(e.SALARY, attendanceByEmp[e.EMP_ID] || {});
-      return sum + (extra ?? 0);
-    }, 0);
+    let day = 0;
+    let night = 0;
+    employees.forEach((e) => {
+      const bucket = attendanceByEmp[e.EMP_ID] || {};
+      day   += dayExtraOtPay(e.SALARY, bucket) ?? 0;
+      night += nightExtraOtPay(e.SALARY, bucket) ?? 0;
+    });
+    return { day, night, combined: day + night };
   }, [employees, attendanceByEmp]);
 
   const filteredEmployees = useMemo(() => {
@@ -1360,7 +1442,8 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
           { label: 'Not marked', value: stats.night.notMarked },
         ]} />
         <StatBlock icon={Zap} label="OT payout" accent="amber" items={[
-          { label: 'Extra today', value: totalOtToday, display: formatINR(Math.round(totalOtToday)) },
+          { label: 'Day extra',   value: totalOtToday.day,   display: formatINR(Math.round(totalOtToday.day))   },
+          { label: 'Night extra', value: totalOtToday.night, display: formatINR(Math.round(totalOtToday.night)) },
         ]} />
       </motion.div>
 
@@ -1394,8 +1477,11 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
               <th className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 text-left px-4 py-3 text-[10px] font-medium tracking-widest uppercase text-zinc-400 min-w-[110px] whitespace-nowrap">
                 Salary / mo
               </th>
-              <th className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 text-left px-4 py-3 text-[10px] font-medium tracking-widest uppercase text-amber-500 min-w-[110px] whitespace-nowrap">
-                <span className="inline-flex items-center gap-1.5"><Zap size={11} /> OT extra</span>
+              <th className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 text-left px-4 py-3 text-[10px] font-medium tracking-widest uppercase text-amber-500 min-w-[100px] whitespace-nowrap">
+                <span className="inline-flex items-center gap-1.5"><Sun size={11} /> Day OT</span>
+              </th>
+              <th className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 text-left px-4 py-3 text-[10px] font-medium tracking-widest uppercase text-amber-500 min-w-[100px] whitespace-nowrap">
+                <span className="inline-flex items-center gap-1.5"><Moon size={11} /> Night OT</span>
               </th>
               <th className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 text-left px-4 py-3 text-[10px] font-medium tracking-widest uppercase text-amber-500 min-w-[200px] whitespace-nowrap">
                 <span className="inline-flex items-center gap-1.5"><Sun size={11} /> Day shift</span>
@@ -1468,7 +1554,7 @@ export default function Dashboard({ supervisorId }: AttendanceDashboardProps) {
             <span className="inline-flex items-center gap-1.5"><XCircle      size={12} className="text-rose-400"    /> Absent</span>
             <span className="inline-flex items-center gap-1.5"><CircleDashed size={12} /> Not marked</span>
             <span className="inline-flex items-center gap-1.5"><ShieldCheck  size={12} className="text-indigo-400" /> Supervisor</span>
-            <span className="inline-flex items-center gap-1.5"><Zap size={12} className="text-amber-500" /> OT extra (today's rate)</span>
+            <span className="inline-flex items-center gap-1.5"><Zap size={12} className="text-amber-500" /> Day/Night OT (today's rate)</span>
             <span className="ml-auto whitespace-nowrap font-mono text-[10px]">
               {connectionStatus === 'live' ? `Connected to ${getApiBaseUrl()}` : 'Sample data shown'}
             </span>

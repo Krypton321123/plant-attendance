@@ -29,11 +29,13 @@ export type AggregateDispatchItem = {
 export type DispatchItemAvgAggregateOutputType = {
   QTY: runtime.Decimal | null
   FULL_BOX_WT: runtime.Decimal | null
+  AVG_WT_PER_BOX: runtime.Decimal | null
 }
 
 export type DispatchItemSumAggregateOutputType = {
   QTY: runtime.Decimal | null
   FULL_BOX_WT: runtime.Decimal | null
+  AVG_WT_PER_BOX: runtime.Decimal | null
 }
 
 export type DispatchItemMinAggregateOutputType = {
@@ -43,6 +45,7 @@ export type DispatchItemMinAggregateOutputType = {
   ITMNM: string | null
   QTY: runtime.Decimal | null
   FULL_BOX_WT: runtime.Decimal | null
+  AVG_WT_PER_BOX: runtime.Decimal | null
 }
 
 export type DispatchItemMaxAggregateOutputType = {
@@ -52,6 +55,7 @@ export type DispatchItemMaxAggregateOutputType = {
   ITMNM: string | null
   QTY: runtime.Decimal | null
   FULL_BOX_WT: runtime.Decimal | null
+  AVG_WT_PER_BOX: runtime.Decimal | null
 }
 
 export type DispatchItemCountAggregateOutputType = {
@@ -61,6 +65,7 @@ export type DispatchItemCountAggregateOutputType = {
   ITMNM: number
   QTY: number
   FULL_BOX_WT: number
+  AVG_WT_PER_BOX: number
   _all: number
 }
 
@@ -68,11 +73,13 @@ export type DispatchItemCountAggregateOutputType = {
 export type DispatchItemAvgAggregateInputType = {
   QTY?: true
   FULL_BOX_WT?: true
+  AVG_WT_PER_BOX?: true
 }
 
 export type DispatchItemSumAggregateInputType = {
   QTY?: true
   FULL_BOX_WT?: true
+  AVG_WT_PER_BOX?: true
 }
 
 export type DispatchItemMinAggregateInputType = {
@@ -82,6 +89,7 @@ export type DispatchItemMinAggregateInputType = {
   ITMNM?: true
   QTY?: true
   FULL_BOX_WT?: true
+  AVG_WT_PER_BOX?: true
 }
 
 export type DispatchItemMaxAggregateInputType = {
@@ -91,6 +99,7 @@ export type DispatchItemMaxAggregateInputType = {
   ITMNM?: true
   QTY?: true
   FULL_BOX_WT?: true
+  AVG_WT_PER_BOX?: true
 }
 
 export type DispatchItemCountAggregateInputType = {
@@ -100,6 +109,7 @@ export type DispatchItemCountAggregateInputType = {
   ITMNM?: true
   QTY?: true
   FULL_BOX_WT?: true
+  AVG_WT_PER_BOX?: true
   _all?: true
 }
 
@@ -196,6 +206,7 @@ export type DispatchItemGroupByOutputType = {
   ITMNM: string
   QTY: runtime.Decimal
   FULL_BOX_WT: runtime.Decimal | null
+  AVG_WT_PER_BOX: runtime.Decimal | null
   _count: DispatchItemCountAggregateOutputType | null
   _avg: DispatchItemAvgAggregateOutputType | null
   _sum: DispatchItemSumAggregateOutputType | null
@@ -228,6 +239,7 @@ export type DispatchItemWhereInput = {
   ITMNM?: Prisma.StringFilter<"DispatchItem"> | string
   QTY?: Prisma.DecimalFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.XOR<Prisma.DispatchSessionScalarRelationFilter, Prisma.DispatchSessionWhereInput>
   loadingEntries?: Prisma.DispatchLoadingEntryListRelationFilter
 }
@@ -239,6 +251,7 @@ export type DispatchItemOrderByWithRelationInput = {
   ITMNM?: Prisma.SortOrder
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrderInput | Prisma.SortOrder
   session?: Prisma.DispatchSessionOrderByWithRelationInput
   loadingEntries?: Prisma.DispatchLoadingEntryOrderByRelationAggregateInput
 }
@@ -253,6 +266,7 @@ export type DispatchItemWhereUniqueInput = Prisma.AtLeast<{
   ITMNM?: Prisma.StringFilter<"DispatchItem"> | string
   QTY?: Prisma.DecimalFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.XOR<Prisma.DispatchSessionScalarRelationFilter, Prisma.DispatchSessionWhereInput>
   loadingEntries?: Prisma.DispatchLoadingEntryListRelationFilter
 }, "ITEM_ID">
@@ -264,6 +278,7 @@ export type DispatchItemOrderByWithAggregationInput = {
   ITMNM?: Prisma.SortOrder
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.DispatchItemCountOrderByAggregateInput
   _avg?: Prisma.DispatchItemAvgOrderByAggregateInput
   _max?: Prisma.DispatchItemMaxOrderByAggregateInput
@@ -281,6 +296,7 @@ export type DispatchItemScalarWhereWithAggregatesInput = {
   ITMNM?: Prisma.StringWithAggregatesFilter<"DispatchItem"> | string
   QTY?: Prisma.DecimalWithAggregatesFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemCreateInput = {
@@ -289,6 +305,7 @@ export type DispatchItemCreateInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session: Prisma.DispatchSessionCreateNestedOneWithoutItemsInput
   loadingEntries?: Prisma.DispatchLoadingEntryCreateNestedManyWithoutItemInput
 }
@@ -300,6 +317,7 @@ export type DispatchItemUncheckedCreateInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryUncheckedCreateNestedManyWithoutItemInput
 }
 
@@ -309,6 +327,7 @@ export type DispatchItemUpdateInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.DispatchSessionUpdateOneRequiredWithoutItemsNestedInput
   loadingEntries?: Prisma.DispatchLoadingEntryUpdateManyWithoutItemNestedInput
 }
@@ -320,6 +339,7 @@ export type DispatchItemUncheckedUpdateInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryUncheckedUpdateManyWithoutItemNestedInput
 }
 
@@ -330,6 +350,7 @@ export type DispatchItemCreateManyInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemUpdateManyMutationInput = {
@@ -338,6 +359,7 @@ export type DispatchItemUpdateManyMutationInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemUncheckedUpdateManyInput = {
@@ -347,6 +369,7 @@ export type DispatchItemUncheckedUpdateManyInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemListRelationFilter = {
@@ -366,11 +389,13 @@ export type DispatchItemCountOrderByAggregateInput = {
   ITMNM?: Prisma.SortOrder
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrder
 }
 
 export type DispatchItemAvgOrderByAggregateInput = {
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrder
 }
 
 export type DispatchItemMaxOrderByAggregateInput = {
@@ -380,6 +405,7 @@ export type DispatchItemMaxOrderByAggregateInput = {
   ITMNM?: Prisma.SortOrder
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrder
 }
 
 export type DispatchItemMinOrderByAggregateInput = {
@@ -389,11 +415,13 @@ export type DispatchItemMinOrderByAggregateInput = {
   ITMNM?: Prisma.SortOrder
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrder
 }
 
 export type DispatchItemSumOrderByAggregateInput = {
   QTY?: Prisma.SortOrder
   FULL_BOX_WT?: Prisma.SortOrder
+  AVG_WT_PER_BOX?: Prisma.SortOrder
 }
 
 export type DispatchItemScalarRelationFilter = {
@@ -463,6 +491,7 @@ export type DispatchItemCreateWithoutSessionInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryCreateNestedManyWithoutItemInput
 }
 
@@ -472,6 +501,7 @@ export type DispatchItemUncheckedCreateWithoutSessionInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryUncheckedCreateNestedManyWithoutItemInput
 }
 
@@ -510,6 +540,7 @@ export type DispatchItemScalarWhereInput = {
   ITMNM?: Prisma.StringFilter<"DispatchItem"> | string
   QTY?: Prisma.DecimalFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.DecimalNullableFilter<"DispatchItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemCreateWithoutLoadingEntriesInput = {
@@ -518,6 +549,7 @@ export type DispatchItemCreateWithoutLoadingEntriesInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session: Prisma.DispatchSessionCreateNestedOneWithoutItemsInput
 }
 
@@ -528,6 +560,7 @@ export type DispatchItemUncheckedCreateWithoutLoadingEntriesInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemCreateOrConnectWithoutLoadingEntriesInput = {
@@ -552,6 +585,7 @@ export type DispatchItemUpdateWithoutLoadingEntriesInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   session?: Prisma.DispatchSessionUpdateOneRequiredWithoutItemsNestedInput
 }
 
@@ -562,6 +596,7 @@ export type DispatchItemUncheckedUpdateWithoutLoadingEntriesInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemCreateManySessionInput = {
@@ -570,6 +605,7 @@ export type DispatchItemCreateManySessionInput = {
   ITMNM: string
   QTY: runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type DispatchItemUpdateWithoutSessionInput = {
@@ -578,6 +614,7 @@ export type DispatchItemUpdateWithoutSessionInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryUpdateManyWithoutItemNestedInput
 }
 
@@ -587,6 +624,7 @@ export type DispatchItemUncheckedUpdateWithoutSessionInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   loadingEntries?: Prisma.DispatchLoadingEntryUncheckedUpdateManyWithoutItemNestedInput
 }
 
@@ -596,6 +634,7 @@ export type DispatchItemUncheckedUpdateManyWithoutSessionInput = {
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   QTY?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   FULL_BOX_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  AVG_WT_PER_BOX?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 
@@ -636,6 +675,7 @@ export type DispatchItemSelect<ExtArgs extends runtime.Types.Extensions.Internal
   ITMNM?: boolean
   QTY?: boolean
   FULL_BOX_WT?: boolean
+  AVG_WT_PER_BOX?: boolean
   session?: boolean | Prisma.DispatchSessionDefaultArgs<ExtArgs>
   loadingEntries?: boolean | Prisma.DispatchItem$loadingEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.DispatchItemCountOutputTypeDefaultArgs<ExtArgs>
@@ -650,9 +690,10 @@ export type DispatchItemSelectScalar = {
   ITMNM?: boolean
   QTY?: boolean
   FULL_BOX_WT?: boolean
+  AVG_WT_PER_BOX?: boolean
 }
 
-export type DispatchItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ITEM_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "QTY" | "FULL_BOX_WT", ExtArgs["result"]["dispatchItem"]>
+export type DispatchItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ITEM_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "QTY" | "FULL_BOX_WT" | "AVG_WT_PER_BOX", ExtArgs["result"]["dispatchItem"]>
 export type DispatchItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.DispatchSessionDefaultArgs<ExtArgs>
   loadingEntries?: boolean | Prisma.DispatchItem$loadingEntriesArgs<ExtArgs>
@@ -672,6 +713,7 @@ export type $DispatchItemPayload<ExtArgs extends runtime.Types.Extensions.Intern
     ITMNM: string
     QTY: runtime.Decimal
     FULL_BOX_WT: runtime.Decimal | null
+    AVG_WT_PER_BOX: runtime.Decimal | null
   }, ExtArgs["result"]["dispatchItem"]>
   composites: {}
 }
@@ -1049,6 +1091,7 @@ export interface DispatchItemFieldRefs {
   readonly ITMNM: Prisma.FieldRef<"DispatchItem", 'String'>
   readonly QTY: Prisma.FieldRef<"DispatchItem", 'Decimal'>
   readonly FULL_BOX_WT: Prisma.FieldRef<"DispatchItem", 'Decimal'>
+  readonly AVG_WT_PER_BOX: Prisma.FieldRef<"DispatchItem", 'Decimal'>
 }
     
 

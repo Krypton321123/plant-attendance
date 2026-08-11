@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sun, Moon, RefreshCw, AlertTriangle, X, ImageOff, Clock, UserCircle2 } from 'lucide-react';
+import { Sun, Moon, SunMoon, RefreshCw, AlertTriangle, X, ImageOff, Clock, UserCircle2, Filter } from 'lucide-react';
 
 // ════════════════════════════════════════════════════════════════════════
 // Types
@@ -13,6 +13,10 @@ import { Sun, Moon, RefreshCw, AlertTriangle, X, ImageOff, Clock, UserCircle2 } 
 type EmpType = 'INDIVIDUAL' | 'SUPERVISOR';
 type Shift = 'DAY' | 'NIGHT';
 type OtStatus = 'OT' | 'HALF_OT' | 'NO_OT';
+
+// The shift filter now has a third option — 'BOTH' — which renders day and
+// night attendance side by side in the same table instead of picking one.
+type ShiftFilter = Shift | 'BOTH';
 
 interface Employee {
   EMP_ID: string;
@@ -171,32 +175,37 @@ interface DayCell {
   record: AttendanceRecord | null;
 }
 
-interface EmployeeMonthRow {
-  emp: Employee;
-  cells: DayCell[];   // index 0 = day 1
-  present: number;
-  absent: number;
-  daysMarked: number; // present + absent, i.e. days with an actual record
+// In BOTH mode a single calendar day carries two independent marks — one
+// per shift — instead of the single DayCell used in single-shift mode.
+// Either half can be null (no record for that shift that day).
+interface CombinedDayCell {
+  day: DayCell;
+  night: DayCell;
 }
 
-/**
- * Builds one row per employee for the given shift, deriving each day's cell
- * from that employee's attendance records filtered to the selected shift.
- * Missing days are left as `null` (off/blank) rather than counted absent,
- * matching the inspiration page's convention.
- */
-function buildMonthRows(
-  employees: Employee[],
-  records: AttendanceRecord[],
-  shift: Shift,
-  monthIdx0: number,
-  year: number
-): EmployeeMonthRow[] {
-  const totalDays = daysInMonth(monthIdx0, year);
+interface EmployeeMonthRow {
+  emp: Employee;
+  cells: DayCell[];               // single-shift mode — index 0 = day 1
+  combinedCells: CombinedDayCell[]; // BOTH mode — index 0 = day 1
+  present: number;
+  absent: number;
+  daysMarked: number;   // present + absent, i.e. days with an actual record
+  // BOTH-mode summary — kept separate per shift since a single combined
+  // present/absent count would blur two different things together.
+  dayPresent: number;
+  dayAbsent: number;
+  nightPresent: number;
+  nightAbsent: number;
+}
 
-  // Group shift-filtered records by EMP_ID → dateKey → record.
-  // Two records can share EMP_ID on the same date (one DAY, one NIGHT); since
-  // we filter by shift first, at most one should remain per employee per day.
+const EMPTY_CELL: DayCell = { status: null, otStatus: null, record: null };
+
+/**
+ * Groups shift-filtered records by EMP_ID → dateKey → record. Two records
+ * can share EMP_ID on the same date (one DAY, one NIGHT); filtering by
+ * shift first means at most one record remains per employee per day.
+ */
+function groupByEmpThenDate(records: AttendanceRecord[], shift: Shift): Map<string, Map<string, AttendanceRecord>> {
   const byEmpThenDate = new Map<string, Map<string, AttendanceRecord>>();
   for (const r of records) {
     if (r.SHIFT !== shift) continue;
@@ -204,6 +213,84 @@ function buildMonthRows(
     if (!byEmpThenDate.has(r.EMP_ID)) byEmpThenDate.set(r.EMP_ID, new Map());
     byEmpThenDate.get(r.EMP_ID)!.set(dateKey, r);
   }
+  return byEmpThenDate;
+}
+
+function recordToCell(rec: AttendanceRecord | undefined): DayCell {
+  if (!rec) return EMPTY_CELL;
+  return {
+    status: rec.STATUS,
+    // OT only means anything on a present day; ignore it on absent days
+    // even if a stray value were ever set.
+    otStatus: rec.STATUS === 'P' ? rec.OT_STATUS ?? null : null,
+    record: rec,
+  };
+}
+
+/**
+ * Builds one row per employee, deriving each day's cell(s) from that
+ * employee's attendance records.
+ *
+ * - shiftFilter === 'DAY' | 'NIGHT': single-shift mode, same behaviour as
+ *   before — `cells` is populated, `combinedCells` is left empty.
+ * - shiftFilter === 'BOTH': combined mode — `combinedCells` is populated
+ *   with a { day, night } pair per calendar day, and `cells` is left empty.
+ *
+ * Missing days are left as blank (null status) rather than counted absent,
+ * matching the inspiration page's convention.
+ */
+function buildMonthRows(
+  employees: Employee[],
+  records: AttendanceRecord[],
+  shiftFilter: ShiftFilter,
+  monthIdx0: number,
+  year: number
+): EmployeeMonthRow[] {
+  const totalDays = daysInMonth(monthIdx0, year);
+  const dateKeyFor = (day: number) => `${year}-${String(monthIdx0 + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  if (shiftFilter === 'BOTH') {
+    const byEmpThenDateDay = groupByEmpThenDate(records, 'DAY');
+    const byEmpThenDateNight = groupByEmpThenDate(records, 'NIGHT');
+
+    return employees.map((emp) => {
+      const dayMap = byEmpThenDateDay.get(emp.EMP_ID);
+      const nightMap = byEmpThenDateNight.get(emp.EMP_ID);
+      const combinedCells: CombinedDayCell[] = [];
+
+      let dayPresent = 0, dayAbsent = 0, nightPresent = 0, nightAbsent = 0;
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dateKey = dateKeyFor(day);
+        const dayCell = recordToCell(dayMap?.get(dateKey));
+        const nightCell = recordToCell(nightMap?.get(dateKey));
+
+        if (dayCell.status === 'P') dayPresent += 1;
+        else if (dayCell.status === 'A') dayAbsent += 1;
+        if (nightCell.status === 'P') nightPresent += 1;
+        else if (nightCell.status === 'A') nightAbsent += 1;
+
+        combinedCells.push({ day: dayCell, night: nightCell });
+      }
+
+      return {
+        emp,
+        cells: [],
+        combinedCells,
+        // Overall present/absent/daysMarked treats a day as "marked" if
+        // either shift has a record, and "present" if either shift shows
+        // present — used for the present-only row filter so an employee
+        // who only worked nights doesn't get filtered out.
+        present: dayPresent + nightPresent,
+        absent: dayAbsent + nightAbsent,
+        daysMarked: dayPresent + dayAbsent + nightPresent + nightAbsent,
+        dayPresent, dayAbsent, nightPresent, nightAbsent,
+      };
+    });
+  }
+
+  // Single-shift mode (existing behaviour)
+  const byEmpThenDate = groupByEmpThenDate(records, shiftFilter);
 
   return employees.map((emp) => {
     const byDate = byEmpThenDate.get(emp.EMP_ID);
@@ -212,24 +299,17 @@ function buildMonthRows(
     let absent = 0;
 
     for (let day = 1; day <= totalDays; day++) {
-      const dateKey = `${year}-${String(monthIdx0 + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const rec = byDate?.get(dateKey);
-      if (!rec) {
-        cells.push({ status: null, otStatus: null, record: null });
-        continue;
-      }
-      if (rec.STATUS === 'P') present += 1;
-      else absent += 1;
-      cells.push({
-        status: rec.STATUS,
-        // OT only means anything on a present day; ignore it on absent days
-        // even if a stray value were ever set.
-        otStatus: rec.STATUS === 'P' ? rec.OT_STATUS ?? null : null,
-        record: rec,
-      });
+      const cell = recordToCell(byDate?.get(dateKeyFor(day)));
+      if (cell.status === 'P') present += 1;
+      else if (cell.status === 'A') absent += 1;
+      cells.push(cell);
     }
 
-    return { emp, cells, present, absent, daysMarked: present + absent };
+    return {
+      emp, cells, combinedCells: [],
+      present, absent, daysMarked: present + absent,
+      dayPresent: 0, dayAbsent: 0, nightPresent: 0, nightAbsent: 0,
+    };
   });
 }
 
@@ -441,7 +521,10 @@ function SelectField({
   );
 }
 
-function ShiftToggle({ shift, onChange }: { shift: Shift; onChange: (s: Shift) => void }) {
+// Shift now has three states: Day, Night, and Both (day + night combined
+// in the same table). The toggle keeps the same visual language — a
+// segmented control — with a third segment added.
+function ShiftToggle({ shift, onChange }: { shift: ShiftFilter; onChange: (s: ShiftFilter) => void }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">Shift</span>
@@ -462,7 +545,39 @@ function ShiftToggle({ shift, onChange }: { shift: Shift; onChange: (s: Shift) =
         >
           <Moon size={13} /> Night
         </button>
+        <button
+          onClick={() => onChange('BOTH')}
+          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-mono font-medium transition-colors ${
+            shift === 'BOTH' ? 'bg-violet-50 text-violet-600' : 'text-zinc-400 hover:text-zinc-600'
+          }`}
+        >
+          <SunMoon size={13} /> Both
+        </button>
       </div>
+    </div>
+  );
+}
+
+// Present-only filter — a simple pill toggle next to the shift control.
+// In BOTH mode this hides employees with zero presence across either
+// shift; in single-shift mode it hides employees with zero presence in
+// the selected shift.
+function PresentOnlyToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">Rows</span>
+      <button
+        onClick={() => onChange(!checked)}
+        aria-pressed={checked}
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] font-mono font-medium transition-colors ${
+          checked
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+            : 'border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400 hover:text-zinc-600'
+        }`}
+      >
+        <Filter size={13} strokeWidth={2.5} />
+        Present only
+      </button>
     </div>
   );
 }
@@ -476,7 +591,8 @@ export default function Attendance() {
 
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(today.getMonth()); // 0-11
   const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
-  const [shift, setShift] = useState<Shift>('DAY');
+  const [shift, setShift] = useState<ShiftFilter>('DAY');
+  const [presentOnly, setPresentOnly] = useState<boolean>(false);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -519,24 +635,36 @@ export default function Attendance() {
     [selectedMonthIdx, selectedYear]
   );
 
-  const rows = useMemo(
+  const isCombined = shift === 'BOTH';
+
+  const allRows = useMemo(
     () => buildMonthRows(employees, records, shift, selectedMonthIdx, selectedYear),
     [employees, records, shift, selectedMonthIdx, selectedYear]
+  );
+
+  // Present-only filter is applied after building rows, so switching it on
+  // and off never needs to re-derive the underlying cell data.
+  const rows = useMemo(
+    () => (presentOnly ? allRows.filter((row) => row.present > 0) : allRows),
+    [allRows, presentOnly]
   );
 
   const isLoading = loadState === 'loading';
   const isError = loadState === 'error';
   const isEmpty = loadState === 'loaded' && rows.length === 0;
+  // Distinguishes "no employees at all" from "filter hid everyone" so the
+  // empty state can say something more useful than a generic message.
+  const isFilteredEmpty = isEmpty && allRows.length > 0 && presentOnly;
 
-  const shiftLabel: 'Day' | 'Night' = shift === 'DAY' ? 'Day' : 'Night';
+  const shiftLabel: 'Day' | 'Night' = shift === 'NIGHT' ? 'Night' : 'Day';
 
   const openPhotoModal = useCallback(
-    (emp: Employee, cell: DayCell, dayIndex: number) => {
+    (emp: Employee, cell: DayCell, dayIndex: number, cellShiftLabel: 'Day' | 'Night') => {
       if (!cell.record) return; // nothing to show for off/blank cells
       const dateKey = `${selectedYear}-${String(selectedMonthIdx + 1).padStart(2, '0')}-${String(dayIndex + 1).padStart(2, '0')}`;
-      setPhotoModal({ employee: emp, record: cell.record, shiftLabel, dateKey });
+      setPhotoModal({ employee: emp, record: cell.record, shiftLabel: cellShiftLabel, dateKey });
     },
-    [selectedYear, selectedMonthIdx, shiftLabel]
+    [selectedYear, selectedMonthIdx]
   );
   const closePhotoModal = useCallback(() => setPhotoModal(null), []);
 
@@ -634,6 +762,8 @@ export default function Attendance() {
 
         <ShiftToggle shift={shift} onChange={setShift} />
 
+        <PresentOnlyToggle checked={presentOnly} onChange={setPresentOnly} />
+
         <AnimatePresence>
           {!isLoading && !isError && rows.length > 0 && (
             <motion.div
@@ -644,7 +774,10 @@ export default function Attendance() {
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-zinc-200 text-xs font-mono text-zinc-500 self-end"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-              {rows.length} employees
+              {rows.length} employee{rows.length === 1 ? '' : 's'}
+              {presentOnly && allRows.length !== rows.length && (
+                <span className="text-zinc-300">/ {allRows.length}</span>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -668,24 +801,42 @@ export default function Attendance() {
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => (
                 <th
                   key={day}
-                  className="sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 py-3 min-w-[36px] w-9 text-center text-[10px] font-mono font-normal text-zinc-400"
+                  className={`sticky top-0 z-10 bg-zinc-50 border-b border-zinc-100 py-3 text-center text-[10px] font-mono font-normal text-zinc-400 ${
+                    isCombined ? 'min-w-[58px] w-[58px]' : 'min-w-[36px] w-9'
+                  }`}
                 >
                   {day}
                 </th>
               ))}
 
-              {[
-                { label: 'Present', color: 'text-emerald-600' },
-                { label: 'Days', color: 'text-zinc-500' },
-                { label: 'Absent', color: 'text-rose-500' },
-              ].map(({ label, color }) => (
-                <th
-                  key={label}
-                  className={`sticky top-0 z-10 bg-zinc-50 border-b border-l border-zinc-100 px-4 py-3 text-[10px] font-medium tracking-widest uppercase whitespace-nowrap text-center ${color}`}
-                >
-                  {label}
-                </th>
-              ))}
+              {isCombined ? (
+                [
+                  { label: 'Day P', color: 'text-amber-600' },
+                  { label: 'Day A', color: 'text-amber-500' },
+                  { label: 'Night P', color: 'text-indigo-600' },
+                  { label: 'Night A', color: 'text-indigo-500' },
+                ].map(({ label, color }) => (
+                  <th
+                    key={label}
+                    className={`sticky top-0 z-10 bg-zinc-50 border-b border-l border-zinc-100 px-3 py-3 text-[10px] font-medium tracking-widest uppercase whitespace-nowrap text-center ${color}`}
+                  >
+                    {label}
+                  </th>
+                ))
+              ) : (
+                [
+                  { label: 'Present', color: 'text-emerald-600' },
+                  { label: 'Days', color: 'text-zinc-500' },
+                  { label: 'Absent', color: 'text-rose-500' },
+                ].map(({ label, color }) => (
+                  <th
+                    key={label}
+                    className={`sticky top-0 z-10 bg-zinc-50 border-b border-l border-zinc-100 px-4 py-3 text-[10px] font-medium tracking-widest uppercase whitespace-nowrap text-center ${color}`}
+                  >
+                    {label}
+                  </th>
+                ))
+              )}
             </tr>
           </thead>
 
@@ -707,7 +858,7 @@ export default function Attendance() {
                         <div className="h-3 w-3 rounded bg-zinc-100 animate-pulse mx-auto" />
                       </td>
                     ))}
-                    {[0, 1, 2].map((k) => (
+                    {(isCombined ? [0, 1, 2, 3] : [0, 1, 2]).map((k) => (
                       <td key={k} className="px-4 py-3 border-l border-zinc-50">
                         <div className="h-3 w-5 rounded bg-zinc-100 animate-pulse mx-auto" />
                       </td>
@@ -730,47 +881,118 @@ export default function Attendance() {
                       <div className="text-[10px] text-zinc-400 whitespace-nowrap">{row.emp.EMPDESG}</div>
                     </td>
 
-                    {row.cells.map((cell, dayIndex) => {
-                      const variant = cellVariant(cell);
-                      // Only present cells have a photo worth viewing.
-                      const clickable = variant === 'present';
-                      return (
-                        <td key={dayIndex} className="py-2.5 px-0 text-center">
-                          {clickable ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openPhotoModal(row.emp, cell, dayIndex);
-                              }}
-                              title="View attendance photo"
-                              className="inline-flex min-w-[26px] h-[22px] items-center justify-center rounded px-1 mx-auto whitespace-nowrap text-[9px] font-mono font-medium bg-emerald-50 text-emerald-600 transition-transform hover:scale-110 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1"
-                            >
-                              {cellDisplay(cell)}
-                            </button>
-                          ) : (
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[26px] h-[22px] px-1 rounded text-[9px] font-mono font-medium mx-auto whitespace-nowrap
-                                ${variant === 'absent' ? 'bg-rose-50 text-rose-500' : ''}
-                                ${variant === 'off'    ? 'text-zinc-300' : ''}
-                              `}
-                            >
-                              {cellDisplay(cell)}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
+                    {isCombined ? (
+                      row.combinedCells.map((combined, dayIndex) => (
+                        <td key={dayIndex} className="py-2.5 px-1 text-center">
+                          <div className="flex flex-col items-center gap-0.5">
+                            {(['day', 'night'] as const).map((half) => {
+                              const cell = combined[half];
+                              const variant = cellVariant(cell);
+                              const clickable = variant === 'present';
+                              const haloClasses =
+                                half === 'day'
+                                  ? { present: 'bg-amber-50 text-amber-600', absent: 'bg-amber-50/60 text-amber-400' }
+                                  : { present: 'bg-indigo-50 text-indigo-600', absent: 'bg-indigo-50/60 text-indigo-400' };
+                              const label = half === 'day' ? 'Day' : 'Night';
 
-                    <td className="px-4 py-2.5 text-center font-mono text-[13px] font-medium text-emerald-600 border-l border-zinc-100 bg-zinc-50/50">
-                      {row.present}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-[13px] text-zinc-400 bg-zinc-50/50">
-                      {row.daysMarked}
-                    </td>
-                    <td className={`px-4 py-2.5 text-center font-mono text-[13px] border-l border-zinc-100 bg-zinc-50/50 ${row.absent > 0 ? 'text-rose-500 font-medium' : 'text-zinc-300'}`}>
-                      {row.absent}
-                    </td>
+                              if (variant === 'off') {
+                                return (
+                                  <span
+                                    key={half}
+                                    className="inline-flex items-center justify-center min-w-[44px] h-[18px] px-1 rounded text-[8px] font-mono font-medium text-zinc-300 whitespace-nowrap"
+                                  >
+                                    · {cellDisplay(cell)}
+                                  </span>
+                                );
+                              }
+
+                              return clickable ? (
+                                <button
+                                  key={half}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPhotoModal(row.emp, cell, dayIndex, label as 'Day' | 'Night');
+                                  }}
+                                  title={`View ${label.toLowerCase()} shift attendance photo`}
+                                  className={`inline-flex min-w-[44px] h-[18px] items-center justify-center rounded px-1 whitespace-nowrap text-[8px] font-mono font-medium transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1 ${haloClasses.present}`}
+                                >
+                                  {label[0]}·{cellDisplay(cell)}
+                                </button>
+                              ) : (
+                                <span
+                                  key={half}
+                                  className={`inline-flex items-center justify-center min-w-[44px] h-[18px] px-1 rounded text-[8px] font-mono font-medium whitespace-nowrap ${haloClasses.absent}`}
+                                >
+                                  {label[0]}·{cellDisplay(cell)}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      ))
+                    ) : (
+                      row.cells.map((cell, dayIndex) => {
+                        const variant = cellVariant(cell);
+                        // Only present cells have a photo worth viewing.
+                        const clickable = variant === 'present';
+                        return (
+                          <td key={dayIndex} className="py-2.5 px-0 text-center">
+                            {clickable ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openPhotoModal(row.emp, cell, dayIndex, shiftLabel);
+                                }}
+                                title="View attendance photo"
+                                className="inline-flex min-w-[26px] h-[22px] items-center justify-center rounded px-1 mx-auto whitespace-nowrap text-[9px] font-mono font-medium bg-emerald-50 text-emerald-600 transition-transform hover:scale-110 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1"
+                              >
+                                {cellDisplay(cell)}
+                              </button>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center justify-center min-w-[26px] h-[22px] px-1 rounded text-[9px] font-mono font-medium mx-auto whitespace-nowrap
+                                  ${variant === 'absent' ? 'bg-rose-50 text-rose-500' : ''}
+                                  ${variant === 'off'    ? 'text-zinc-300' : ''}
+                                `}
+                              >
+                                {cellDisplay(cell)}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })
+                    )}
+
+                    {isCombined ? (
+                      <>
+                        <td className="px-3 py-2.5 text-center font-mono text-[13px] font-medium text-amber-600 border-l border-zinc-100 bg-zinc-50/50">
+                          {row.dayPresent}
+                        </td>
+                        <td className={`px-3 py-2.5 text-center font-mono text-[13px] bg-zinc-50/50 ${row.dayAbsent > 0 ? 'text-amber-500 font-medium' : 'text-zinc-300'}`}>
+                          {row.dayAbsent}
+                        </td>
+                        <td className="px-3 py-2.5 text-center font-mono text-[13px] font-medium text-indigo-600 border-l border-zinc-100 bg-zinc-50/50">
+                          {row.nightPresent}
+                        </td>
+                        <td className={`px-3 py-2.5 text-center font-mono text-[13px] bg-zinc-50/50 ${row.nightAbsent > 0 ? 'text-indigo-500 font-medium' : 'text-zinc-300'}`}>
+                          {row.nightAbsent}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-2.5 text-center font-mono text-[13px] font-medium text-emerald-600 border-l border-zinc-100 bg-zinc-50/50">
+                          {row.present}
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-mono text-[13px] text-zinc-400 bg-zinc-50/50">
+                          {row.daysMarked}
+                        </td>
+                        <td className={`px-4 py-2.5 text-center font-mono text-[13px] border-l border-zinc-100 bg-zinc-50/50 ${row.absent > 0 ? 'text-rose-500 font-medium' : 'text-zinc-300'}`}>
+                          {row.absent}
+                        </td>
+                      </>
+                    )}
                   </motion.tr>
                 ))
               )}
@@ -791,8 +1013,14 @@ export default function Attendance() {
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <p className="text-sm font-medium text-zinc-400">No records found</p>
-            <p className="text-xs text-zinc-300">No employees returned for this month</p>
+            <p className="text-sm font-medium text-zinc-400">
+              {isFilteredEmpty ? 'No one present this month' : 'No records found'}
+            </p>
+            <p className="text-xs text-zinc-300">
+              {isFilteredEmpty
+                ? 'Turn off "Present only" to see everyone.'
+                : 'No employees returned for this month'}
+            </p>
           </motion.div>
         )}
       </motion.div>
@@ -808,33 +1036,52 @@ export default function Attendance() {
             transition={{ delay: 0.3 }}
             className="flex flex-wrap gap-x-5 gap-y-2 mt-4"
           >
-            {[
-              { label: 'Present · tap to view photo', badge: 'P', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-              { label: 'Absent', badge: 'A', bg: 'bg-rose-50', text: 'text-rose-500' },
-              { label: 'Off / no record', badge: '—', bg: 'bg-zinc-50', text: 'text-zinc-300' },
-            ].map(({ label, badge, bg, text }) => (
-              <div key={label} className="flex items-center gap-2 text-xs text-zinc-400">
-                <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-mono font-medium ${bg} ${text}`}>
-                  {badge}
-                </span>
-                {label}
-              </div>
-            ))}
-            <span className="mx-1 h-4 w-px bg-zinc-200 self-center" />
-            {[
-              { letter: 'F', label: 'Full OT' },
-              { letter: 'H', label: 'Half OT' },
-              { letter: 'N', label: 'No OT' },
-            ].map(({ letter, label }) => (
-              <div key={letter} className="flex items-center gap-2 text-xs text-zinc-400">
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-50 text-amber-600 text-[9px] font-mono font-medium">
-                  P·{letter}
-                </span>
-                {label}
-              </div>
-            ))}
+            {isCombined ? (
+              <>
+                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-50 text-amber-600 text-[9px] font-mono font-medium">D</span>
+                  Day shift · tap to view photo
+                </div>
+                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-indigo-50 text-indigo-600 text-[9px] font-mono font-medium">N</span>
+                  Night shift · tap to view photo
+                </div>
+                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-mono font-medium text-zinc-300">·A</span>
+                  Absent / off
+                </div>
+              </>
+            ) : (
+              <>
+                {[
+                  { label: 'Present · tap to view photo', badge: 'P', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+                  { label: 'Absent', badge: 'A', bg: 'bg-rose-50', text: 'text-rose-500' },
+                  { label: 'Off / no record', badge: '—', bg: 'bg-zinc-50', text: 'text-zinc-300' },
+                ].map(({ label, badge, bg, text }) => (
+                  <div key={label} className="flex items-center gap-2 text-xs text-zinc-400">
+                    <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-mono font-medium ${bg} ${text}`}>
+                      {badge}
+                    </span>
+                    {label}
+                  </div>
+                ))}
+                <span className="mx-1 h-4 w-px bg-zinc-200 self-center" />
+                {[
+                  { letter: 'F', label: 'Full OT' },
+                  { letter: 'H', label: 'Half OT' },
+                  { letter: 'N', label: 'No OT' },
+                ].map(({ letter, label }) => (
+                  <div key={letter} className="flex items-center gap-2 text-xs text-zinc-400">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-50 text-amber-600 text-[9px] font-mono font-medium">
+                      P·{letter}
+                    </span>
+                    {label}
+                  </div>
+                ))}
+              </>
+            )}
             <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-zinc-400">
-              {shift === 'DAY' ? 'Day shift' : 'Night shift'} · Connected to {getApiBaseUrl()}
+              {isCombined ? 'Day + Night shift' : shift === 'DAY' ? 'Day shift' : 'Night shift'} · Connected to {getApiBaseUrl()}
             </span>
           </motion.div>
         )}

@@ -290,11 +290,17 @@ export const getSession = async (req: Request, res: Response) => {
 };
 
 // ─── PATCH /dispatch/sessions/:sessionId/complete ────────────────────────────
-// PPSUPERVISOR records loading entries (length/width/height/extra) for each
-// item and marks the session COMPLETED.
-// Body: { doneBy, items: [{ itemId, qty, loadingEntries: [{ length, width,
-//         height, extra }] }], vehicleNo, transporter, driverName, driverNo,
-//         kaantaWt, grrNo }
+// PPSUPERVISOR records loading entries (length/width/height/extra) and the
+// actual measured average weight per box for each item, and marks the
+// session COMPLETED.
+// Body: { doneBy, items: [{ itemId, qty, avgWtPerBox, loadingEntries: [{
+//         length, width, height, extra }] }], vehicleNo, transporter,
+//         driverName, driverNo, kaantaWt, grrNo }
+// avgWtPerBox is the supervisor's actual measured average weight per box for
+// the item (distinct from mstitm.wgtconv, the fixed catalog rate used for the
+// existing "Weight" figure). It is required — every item must carry a value
+// before a session can be completed; validated below so a bad/missing value
+// never reaches the transaction.
 // Note: vehicleNo/transporter/driverName/driverNo/kaantaWt/grrNo are accepted
 // for backward compatibility (existing sessions may still carry them from the
 // OFFICE-side create step) but are no longer editable from the supervisor's
@@ -333,6 +339,20 @@ export const completeDispatchSession = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Session not found" });
 
+    // avgWtPerBox is required per item — reject before the transaction if any
+    // item is missing a valid positive value, rather than silently writing
+    // null and letting gross weight go missing downstream.
+    const missingAvgWt = items.some((i: any) => {
+      const v = Number(i.avgWtPerBox);
+      return i.avgWtPerBox === "" || i.avgWtPerBox == null || !Number.isFinite(v) || v <= 0;
+    });
+    if (missingAvgWt) {
+      return res.status(400).json({
+        success: false,
+        message: "Average weight per box is required for every item",
+      });
+    }
+
     await prisma.$transaction([
       // Update session header fields + mark complete
       prisma.dispatchSession.update({
@@ -347,13 +367,17 @@ export const completeDispatchSession = async (req: Request, res: Response) => {
           GRR_NO: grrNo ?? existing.GRR_NO,
         },
       }),
-      // For each item: update qty, then fully replace its loading entries
+      // For each item: update qty + avg weight per box, then fully replace
+      // its loading entries
       ...items.flatMap((i: any) => {
         const entries = i.loadingEntries ?? [];
         return [
           prisma.dispatchItem.update({
             where: { ITEM_ID: i.itemId },
-            data: { QTY: Number(i.qty) },
+            data: {
+              QTY: Number(i.qty),
+              AVG_WT_PER_BOX: Number(i.avgWtPerBox),
+            },
           }),
           prisma.dispatchLoadingEntry.deleteMany({
             where: { ITEM_ID: i.itemId },
