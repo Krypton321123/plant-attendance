@@ -290,13 +290,6 @@ function nightExtraOtPay(salary: number | null | undefined, bucket: ShiftBucket)
  * independent shift figures above, not a multiplied-together combination.
  * Returns null only when BOTH shifts have nothing to show.
  */
-function extraOtPay(salary: number | null | undefined, bucket: ShiftBucket): number | null {
-  const day = dayExtraOtPay(salary, bucket);
-  const night = nightExtraOtPay(salary, bucket);
-  if (day === null && night === null) return null;
-  return (day ?? 0) + (night ?? 0);
-}
-
 interface DailyOtSummary {
   day: number | null;
   night: number | null;
