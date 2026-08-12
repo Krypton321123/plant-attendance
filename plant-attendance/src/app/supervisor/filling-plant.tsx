@@ -40,6 +40,7 @@ type EntryRow = {
   itmcd: string;
   itmnm: string;
   itmsubcat: string | null;
+  batchNo: string;
   filling: string;
   wastage: string;
   operatorId: string;
@@ -188,12 +189,13 @@ export default function FillingPlantScreen() {
         // Build a lookup of already-saved entries by itmcd (API returns desc, so first = most recent)
         const savedMap: Record<
           string,
-          { filling: string; wastage: string; operatorId: string; operatorName: string }
+          { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }
         > = {};
         if (todayData.success) {
           for (const e of todayData.data) {
             if (!savedMap[e.ITMCD]) {
               savedMap[e.ITMCD] = {
+                batchNo:      e.BATCH_NO ?? "",
                 filling:      String(e.FILLING),
                 wastage:      String(e.WASTAGE),
                 operatorId:   e.OPERATOR_ID,
@@ -216,6 +218,7 @@ export default function FillingPlantScreen() {
               itmcd:        item.itmcd,
               itmnm:        item.itmnm,
               itmsubcat:    item.itmsubcat,
+              batchNo:      savedMap[item.itmcd]?.batchNo      ?? "",
               filling:      savedMap[item.itmcd]?.filling      ?? "",
               wastage:      savedMap[item.itmcd]?.wastage      ?? "",
               operatorId:   savedMap[item.itmcd]?.operatorId   ?? "",
@@ -232,7 +235,7 @@ export default function FillingPlantScreen() {
   };
 
   const updateEntry = useCallback(
-    (idx: number, field: "filling" | "wastage", value: string) => {
+    (idx: number, field: "batchNo" | "filling" | "wastage", value: string) => {
       setEntries((prev) =>
         prev.map((e, i) => (i === idx ? { ...e, [field]: value } : e))
       );
@@ -263,10 +266,11 @@ export default function FillingPlantScreen() {
       const todayData = await todayRes.json();
       if (!todayData.success) return;
 
-      const savedMap: Record<string, { filling: string; wastage: string; operatorId: string; operatorName: string }> = {};
+      const savedMap: Record<string, { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }> = {};
       for (const e of todayData.data) {
         if (!savedMap[e.ITMCD]) {
           savedMap[e.ITMCD] = {
+            batchNo:      e.BATCH_NO ?? "",
             filling:      String(e.FILLING),
             wastage:      String(e.WASTAGE),
             operatorId:   e.OPERATOR_ID,
@@ -386,6 +390,7 @@ export default function FillingPlantScreen() {
         {/* ── Column Headers ── */}
         <View style={styles.colHeader}>
           <Text style={[styles.colHeaderText, styles.colItem]}>Item</Text>
+          <Text style={[styles.colHeaderText, styles.colBatch]}>Batch</Text>
           <Text style={[styles.colHeaderText, styles.colFilling]}>Filling</Text>
           <Text style={[styles.colHeaderText, styles.colWastage]}>Wastage</Text>
           <Text style={[styles.colHeaderText, styles.colOperator]}>Operator</Text>
@@ -438,6 +443,22 @@ export default function FillingPlantScreen() {
                           )}
                           <Text style={styles.itemName}>{entry.itmnm}</Text>
                         </View>
+                      </View>
+
+                      {/* Batch No input */}
+                      <View style={styles.colBatch}>
+                        <TextInput
+                          style={[
+                            styles.batchInput,
+                            entry.batchNo ? styles.batchInputFilled : null,
+                          ]}
+                          value={entry.batchNo}
+                          onChangeText={(v) => updateEntry(idx, "batchNo", v)}
+                          placeholder="—"
+                          placeholderTextColor={C.textMuted}
+                          autoCapitalize="characters"
+                          returnKeyType="next"
+                        />
                       </View>
 
                       {/* Filling input */}
@@ -646,11 +667,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 
-  // Column widths — item gets more flex so names have room
+  // Column widths — item gets more flex so names have room.
+  // Batch/Filling/Wastage/Operator share the remaining space; batch is
+  // narrower than the numeric columns since codes are usually short.
   colItem:     { flex: 4, paddingRight: 6 },
-  colFilling:  { flex: 2, paddingHorizontal: 4 },
-  colWastage:  { flex: 2, paddingHorizontal: 4 },
-  colOperator: { flex: 2, paddingLeft: 4 },
+  colBatch:    { flex: 1.6, paddingHorizontal: 3 },
+  colFilling:  { flex: 1.8, paddingHorizontal: 3 },
+  colWastage:  { flex: 1.8, paddingHorizontal: 3 },
+  colOperator: { flex: 1.8, paddingLeft: 3 },
 
   // Scroll
   scroll: { flex: 1 },
@@ -737,6 +761,26 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     flex: 1,
     flexWrap: "wrap",
+  },
+
+  // Batch No input — text field, left-aligned since values are usually
+  // alphanumeric codes rather than numbers
+  batchInput: {
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 7,
+    fontSize: 12,
+    color: C.textPrimary,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  batchInputFilled: {
+    backgroundColor: C.primaryLight,
+    borderColor: C.primaryMuted,
+    color: C.primary,
   },
 
   // Number inputs

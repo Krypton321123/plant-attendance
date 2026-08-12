@@ -1121,6 +1121,7 @@ export const FillingEntryScalarFieldEnum = {
   ITMCD: 'ITMCD',
   ITMNM: 'ITMNM',
   ITMSUBCAT: 'ITMSUBCAT',
+  BATCH_NO: 'BATCH_NO',
   FILLING: 'FILLING',
   WASTAGE: 'WASTAGE',
   OPERATOR_ID: 'OPERATOR_ID',

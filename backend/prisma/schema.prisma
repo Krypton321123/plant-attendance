@@ -59,6 +59,7 @@ model FillingEntry {
   ITMCD       String   @db.VarChar(50)
   ITMNM       String   @db.VarChar(250)
   ITMSUBCAT   String?  @db.VarChar(50)
+  BATCH_NO    String?  @db.VarChar(100)
   FILLING     Decimal  @db.Decimal(18, 3)
   WASTAGE     Decimal  @db.Decimal(18, 3)
   OPERATOR_ID String

@@ -230,18 +230,35 @@ export const updateDispatchSession = async (req: Request, res: Response) => {
 };
 
 // ─── GET /dispatch/sessions/today ────────────────────────────────────────────
-// Returns today's DRAFT sessions for PPSUPERVISOR to pick up
-// Also used by OFFICE to see their own drafts (filter by doneBy)
+// Returns sessions for PPSUPERVISOR (pending queue) and OFFICE (own drafts) to
+// browse. Despite the route name, this is NOT always scoped to today:
+//
+//   - status=DRAFT (the supervisor's pending-work queue): NO date filter.
+//     A draft created yesterday (or last week) and never completed is still
+//     pending today, so it must keep showing up until someone completes it —
+//     filtering it out by CREATEDAT was the original bug here. The supervisor
+//     should see every outstanding draft regardless of when it was created.
+//   - any other/absent status (e.g. OFFICE browsing what THEY created today,
+//     or a completed-sessions report): keeps the original today-only window,
+//     since "today's sessions" is the literal, correct meaning there.
+//
+// Ordering is always CREATEDAT desc, so the most recently created session
+// (today's or an older pending one) is always first regardless of which
+// branch above applies.
 export const getTodaySessions = async (req: Request, res: Response) => {
   try {
     const { doneBy, status } = req.query;
 
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const where: any = {};
 
-    const where: any = { CREATEDAT: { gte: start, lte: end } };
+    if (status !== "DRAFT") {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      where.CREATEDAT = { gte: start, lte: end };
+    }
+
     if (doneBy) where.DONE_BY = doneBy as string;
     if (status) where.STATUS = status as string;
 

@@ -42,6 +42,7 @@ export type FillingEntryMinAggregateOutputType = {
   ITMCD: string | null
   ITMNM: string | null
   ITMSUBCAT: string | null
+  BATCH_NO: string | null
   FILLING: runtime.Decimal | null
   WASTAGE: runtime.Decimal | null
   OPERATOR_ID: string | null
@@ -55,6 +56,7 @@ export type FillingEntryMaxAggregateOutputType = {
   ITMCD: string | null
   ITMNM: string | null
   ITMSUBCAT: string | null
+  BATCH_NO: string | null
   FILLING: runtime.Decimal | null
   WASTAGE: runtime.Decimal | null
   OPERATOR_ID: string | null
@@ -68,6 +70,7 @@ export type FillingEntryCountAggregateOutputType = {
   ITMCD: number
   ITMNM: number
   ITMSUBCAT: number
+  BATCH_NO: number
   FILLING: number
   WASTAGE: number
   OPERATOR_ID: number
@@ -93,6 +96,7 @@ export type FillingEntryMinAggregateInputType = {
   ITMCD?: true
   ITMNM?: true
   ITMSUBCAT?: true
+  BATCH_NO?: true
   FILLING?: true
   WASTAGE?: true
   OPERATOR_ID?: true
@@ -106,6 +110,7 @@ export type FillingEntryMaxAggregateInputType = {
   ITMCD?: true
   ITMNM?: true
   ITMSUBCAT?: true
+  BATCH_NO?: true
   FILLING?: true
   WASTAGE?: true
   OPERATOR_ID?: true
@@ -119,6 +124,7 @@ export type FillingEntryCountAggregateInputType = {
   ITMCD?: true
   ITMNM?: true
   ITMSUBCAT?: true
+  BATCH_NO?: true
   FILLING?: true
   WASTAGE?: true
   OPERATOR_ID?: true
@@ -219,6 +225,7 @@ export type FillingEntryGroupByOutputType = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT: string | null
+  BATCH_NO: string | null
   FILLING: runtime.Decimal
   WASTAGE: runtime.Decimal
   OPERATOR_ID: string
@@ -255,6 +262,7 @@ export type FillingEntryWhereInput = {
   ITMCD?: Prisma.StringFilter<"FillingEntry"> | string
   ITMNM?: Prisma.StringFilter<"FillingEntry"> | string
   ITMSUBCAT?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
+  BATCH_NO?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
   FILLING?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFilter<"FillingEntry"> | string
@@ -270,6 +278,7 @@ export type FillingEntryOrderByWithRelationInput = {
   ITMCD?: Prisma.SortOrder
   ITMNM?: Prisma.SortOrder
   ITMSUBCAT?: Prisma.SortOrderInput | Prisma.SortOrder
+  BATCH_NO?: Prisma.SortOrderInput | Prisma.SortOrder
   FILLING?: Prisma.SortOrder
   WASTAGE?: Prisma.SortOrder
   OPERATOR_ID?: Prisma.SortOrder
@@ -288,6 +297,7 @@ export type FillingEntryWhereUniqueInput = Prisma.AtLeast<{
   ITMCD?: Prisma.StringFilter<"FillingEntry"> | string
   ITMNM?: Prisma.StringFilter<"FillingEntry"> | string
   ITMSUBCAT?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
+  BATCH_NO?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
   FILLING?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFilter<"FillingEntry"> | string
@@ -303,6 +313,7 @@ export type FillingEntryOrderByWithAggregationInput = {
   ITMCD?: Prisma.SortOrder
   ITMNM?: Prisma.SortOrder
   ITMSUBCAT?: Prisma.SortOrderInput | Prisma.SortOrder
+  BATCH_NO?: Prisma.SortOrderInput | Prisma.SortOrder
   FILLING?: Prisma.SortOrder
   WASTAGE?: Prisma.SortOrder
   OPERATOR_ID?: Prisma.SortOrder
@@ -324,6 +335,7 @@ export type FillingEntryScalarWhereWithAggregatesInput = {
   ITMCD?: Prisma.StringWithAggregatesFilter<"FillingEntry"> | string
   ITMNM?: Prisma.StringWithAggregatesFilter<"FillingEntry"> | string
   ITMSUBCAT?: Prisma.StringNullableWithAggregatesFilter<"FillingEntry"> | string | null
+  BATCH_NO?: Prisma.StringNullableWithAggregatesFilter<"FillingEntry"> | string | null
   FILLING?: Prisma.DecimalWithAggregatesFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalWithAggregatesFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringWithAggregatesFilter<"FillingEntry"> | string
@@ -337,6 +349,7 @@ export type FillingEntryCreateInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Date | string
@@ -350,6 +363,7 @@ export type FillingEntryUncheckedCreateInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID: string
@@ -363,6 +377,7 @@ export type FillingEntryUpdateInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,6 +391,7 @@ export type FillingEntryUncheckedUpdateInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFieldUpdateOperationsInput | string
@@ -389,6 +405,7 @@ export type FillingEntryCreateManyInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID: string
@@ -402,6 +419,7 @@ export type FillingEntryUpdateManyMutationInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -413,6 +431,7 @@ export type FillingEntryUncheckedUpdateManyInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFieldUpdateOperationsInput | string
@@ -436,6 +455,7 @@ export type FillingEntryCountOrderByAggregateInput = {
   ITMCD?: Prisma.SortOrder
   ITMNM?: Prisma.SortOrder
   ITMSUBCAT?: Prisma.SortOrder
+  BATCH_NO?: Prisma.SortOrder
   FILLING?: Prisma.SortOrder
   WASTAGE?: Prisma.SortOrder
   OPERATOR_ID?: Prisma.SortOrder
@@ -454,6 +474,7 @@ export type FillingEntryMaxOrderByAggregateInput = {
   ITMCD?: Prisma.SortOrder
   ITMNM?: Prisma.SortOrder
   ITMSUBCAT?: Prisma.SortOrder
+  BATCH_NO?: Prisma.SortOrder
   FILLING?: Prisma.SortOrder
   WASTAGE?: Prisma.SortOrder
   OPERATOR_ID?: Prisma.SortOrder
@@ -467,6 +488,7 @@ export type FillingEntryMinOrderByAggregateInput = {
   ITMCD?: Prisma.SortOrder
   ITMNM?: Prisma.SortOrder
   ITMSUBCAT?: Prisma.SortOrder
+  BATCH_NO?: Prisma.SortOrder
   FILLING?: Prisma.SortOrder
   WASTAGE?: Prisma.SortOrder
   OPERATOR_ID?: Prisma.SortOrder
@@ -577,6 +599,7 @@ export type FillingEntryCreateWithoutOperatorInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Date | string
@@ -589,6 +612,7 @@ export type FillingEntryUncheckedCreateWithoutOperatorInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   DONE_BY: string
@@ -610,6 +634,7 @@ export type FillingEntryCreateWithoutDoneByInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Date | string
@@ -622,6 +647,7 @@ export type FillingEntryUncheckedCreateWithoutDoneByInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID: string
@@ -662,6 +688,7 @@ export type FillingEntryScalarWhereInput = {
   ITMCD?: Prisma.StringFilter<"FillingEntry"> | string
   ITMNM?: Prisma.StringFilter<"FillingEntry"> | string
   ITMSUBCAT?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
+  BATCH_NO?: Prisma.StringNullableFilter<"FillingEntry"> | string | null
   FILLING?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFilter<"FillingEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFilter<"FillingEntry"> | string
@@ -691,6 +718,7 @@ export type FillingEntryCreateManyOperatorInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   DONE_BY: string
@@ -703,6 +731,7 @@ export type FillingEntryCreateManyDoneByInput = {
   ITMCD: string
   ITMNM: string
   ITMSUBCAT?: string | null
+  BATCH_NO?: string | null
   FILLING: runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID: string
@@ -715,6 +744,7 @@ export type FillingEntryUpdateWithoutOperatorInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -727,6 +757,7 @@ export type FillingEntryUncheckedUpdateWithoutOperatorInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
@@ -739,6 +770,7 @@ export type FillingEntryUncheckedUpdateManyWithoutOperatorInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
@@ -751,6 +783,7 @@ export type FillingEntryUpdateWithoutDoneByInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -763,6 +796,7 @@ export type FillingEntryUncheckedUpdateWithoutDoneByInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFieldUpdateOperationsInput | string
@@ -775,6 +809,7 @@ export type FillingEntryUncheckedUpdateManyWithoutDoneByInput = {
   ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
   ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
   ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BATCH_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   FILLING?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   OPERATOR_ID?: Prisma.StringFieldUpdateOperationsInput | string
@@ -789,6 +824,7 @@ export type FillingEntrySelect<ExtArgs extends runtime.Types.Extensions.Internal
   ITMCD?: boolean
   ITMNM?: boolean
   ITMSUBCAT?: boolean
+  BATCH_NO?: boolean
   FILLING?: boolean
   WASTAGE?: boolean
   OPERATOR_ID?: boolean
@@ -806,6 +842,7 @@ export type FillingEntrySelectScalar = {
   ITMCD?: boolean
   ITMNM?: boolean
   ITMSUBCAT?: boolean
+  BATCH_NO?: boolean
   FILLING?: boolean
   WASTAGE?: boolean
   OPERATOR_ID?: boolean
@@ -813,7 +850,7 @@ export type FillingEntrySelectScalar = {
   CREATEDAT?: boolean
 }
 
-export type FillingEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ENTRY_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "ITMSUBCAT" | "FILLING" | "WASTAGE" | "OPERATOR_ID" | "DONE_BY" | "CREATEDAT", ExtArgs["result"]["fillingEntry"]>
+export type FillingEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ENTRY_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "ITMSUBCAT" | "BATCH_NO" | "FILLING" | "WASTAGE" | "OPERATOR_ID" | "DONE_BY" | "CREATEDAT", ExtArgs["result"]["fillingEntry"]>
 export type FillingEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   operator?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
   doneBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
@@ -831,6 +868,7 @@ export type $FillingEntryPayload<ExtArgs extends runtime.Types.Extensions.Intern
     ITMCD: string
     ITMNM: string
     ITMSUBCAT: string | null
+    BATCH_NO: string | null
     FILLING: runtime.Decimal
     WASTAGE: runtime.Decimal
     OPERATOR_ID: string
@@ -1212,6 +1250,7 @@ export interface FillingEntryFieldRefs {
   readonly ITMCD: Prisma.FieldRef<"FillingEntry", 'String'>
   readonly ITMNM: Prisma.FieldRef<"FillingEntry", 'String'>
   readonly ITMSUBCAT: Prisma.FieldRef<"FillingEntry", 'String'>
+  readonly BATCH_NO: Prisma.FieldRef<"FillingEntry", 'String'>
   readonly FILLING: Prisma.FieldRef<"FillingEntry", 'Decimal'>
   readonly WASTAGE: Prisma.FieldRef<"FillingEntry", 'Decimal'>
   readonly OPERATOR_ID: Prisma.FieldRef<"FillingEntry", 'String'>

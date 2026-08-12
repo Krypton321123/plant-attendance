@@ -45,7 +45,7 @@ export const getOperators = async (_req: Request, res: Response) => {
 };
 
 // POST /filling/submit
-// Body: { doneBy: string, entries: [{ itmcd, itmnm, itmsubcat, filling, wastage, operatorId }] }
+// Body: { doneBy: string, entries: [{ itmcd, itmnm, itmsubcat, batchNo, filling, wastage, operatorId }] }
 export const submitFillingEntries = async (req: Request, res: Response) => {
   try {
     const { doneBy, entries } = req.body;
@@ -90,6 +90,7 @@ export const submitFillingEntries = async (req: Request, res: Response) => {
             ITMCD: entry.itmcd,
             ITMNM: entry.itmnm,
             ITMSUBCAT: entry.itmsubcat ?? null,
+            BATCH_NO: entry.batchNo ? String(entry.batchNo).trim() : null,
             FILLING: Number(entry.filling),
             WASTAGE: Number(entry.wastage),
             OPERATOR_ID: entry.operatorId,
