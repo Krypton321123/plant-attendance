@@ -37,6 +37,7 @@ import {
   getParties,
   getSession,
   getTodaySessions,
+  sendDispatchSession,
   updateDispatchSession,
 } from './controllers/dispatch.controller';
 import prisma from './util/prisma';
@@ -78,5 +79,6 @@ router.get('/dispatch/sessions/today',                     getTodaySessions);   
 router.get('/dispatch/sessions/:sessionId',                getSession);
 router.post('/dispatch/sessions',                          createDispatchSession);
 router.put('/dispatch/sessions/:sessionId',                updateDispatchSession);
+router.patch('/dispatch/sessions/:sessionId/send',         sendDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/complete',     completeDispatchSession);
 export default router;

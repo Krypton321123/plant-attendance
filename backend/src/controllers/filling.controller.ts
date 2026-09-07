@@ -1,6 +1,19 @@
 import { Request, Response } from "express";
 import prisma from "../util/prisma";
 
+// Small helper: given a "YYYY-MM-DD" string (or nothing, meaning today),
+// return the [start, end] Date range covering that whole calendar day.
+// Used both when reading entries for a date and when deciding which
+// existing rows count as "the same date" for delete-then-insert.
+const dayRange = (dateParam?: string) => {
+  const base = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date();
+  const start = new Date(base);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(base);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
 // GET /filling/items
 // Returns all items from mstitm, grouped by itmsubcat
 export const getFillingItems = async (_req: Request, res: Response) => {
@@ -45,10 +58,19 @@ export const getOperators = async (_req: Request, res: Response) => {
 };
 
 // POST /filling/submit
-// Body: { doneBy: string, entries: [{ itmcd, itmnm, itmsubcat, batchNo, filling, wastage, operatorId }] }
+// Body: { doneBy: string, date?: "YYYY-MM-DD", entries: [{ itmcd, itmnm, itmsubcat, batchNo, filling, wastage, operatorId }] }
+//
+// "date" is the calendar date the supervisor is filling in for (defaults to
+// today if omitted, so existing callers keep working). For every valid
+// entry we DELETE any existing FillingEntry rows for that same
+// (ITMCD, DONE_BY, date) before inserting the new one, so re-submitting
+// the same date updates in place instead of piling up duplicate rows.
+// Delete + create both happen inside one transaction so a re-submit can
+// never leave the date with zero rows (crash mid-way) or two rows
+// (retried request racing itself).
 export const submitFillingEntries = async (req: Request, res: Response) => {
   try {
-    const { doneBy, entries } = req.body;
+    const { doneBy, date, entries } = req.body;
 
     if (!doneBy) {
       return res
@@ -80,25 +102,44 @@ export const submitFillingEntries = async (req: Request, res: Response) => {
         .json({ success: false, message: "No complete entries to submit" });
     }
 
+    const { start, end } = dayRange(date);
     const sessionId = `FP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
-    const created = await prisma.$transaction(
-      validEntries.map((entry: any) =>
-        prisma.fillingEntry.create({
-          data: {
-            SESSION_ID: sessionId,
-            ITMCD: entry.itmcd,
-            ITMNM: entry.itmnm,
-            ITMSUBCAT: entry.itmsubcat ?? null,
-            BATCH_NO: entry.batchNo ? String(entry.batchNo).trim() : null,
-            FILLING: Number(entry.filling),
-            WASTAGE: Number(entry.wastage),
-            OPERATOR_ID: entry.operatorId,
-            DONE_BY: doneBy,
-          },
-        }),
-      ),
-    );
+    // Delete-then-insert per item, inside a single transaction: for each
+    // valid entry, first remove any prior row for that item/supervisor/date,
+    // then create the fresh one. This intentionally scopes the delete to
+    // DONE_BY as well as ITMCD + date, so one supervisor's re-submit never
+    // touches another supervisor's entry for the same item on the same day.
+    const ops = validEntries.flatMap((entry: any) => [
+      prisma.fillingEntry.deleteMany({
+        where: {
+          ITMCD: entry.itmcd,
+          DONE_BY: doneBy,
+          CREATEDAT: { gte: start, lte: end },
+        },
+      }),
+      prisma.fillingEntry.create({
+        data: {
+          SESSION_ID: sessionId,
+          ITMCD: entry.itmcd,
+          ITMNM: entry.itmnm,
+          ITMSUBCAT: entry.itmsubcat ?? null,
+          BATCH_NO: entry.batchNo ? String(entry.batchNo).trim() : null,
+          FILLING: Number(entry.filling),
+          WASTAGE: Number(entry.wastage),
+          OPERATOR_ID: entry.operatorId,
+          DONE_BY: doneBy,
+          // Keep CREATEDAT inside the requested date's range rather than
+          // "now", so an entry submitted for a past date still shows up
+          // when that date is reloaded (and doesn't leak into "today").
+          CREATEDAT: date ? start : undefined,
+        },
+      }),
+    ]);
+
+    const results = await prisma.$transaction(ops);
+    // Every other item in `ops` is the create() result; count those.
+    const created = results.filter((_: unknown, i: number) => i % 2 === 1);
 
     res.status(201).json({
       success: true,
@@ -116,11 +157,7 @@ export const submitFillingEntries = async (req: Request, res: Response) => {
 export const getFillingHistory = async (req: Request, res: Response) => {
   try {
     const dateParam = req.query.date as string | undefined;
-    const date = dateParam ? new Date(dateParam) : new Date();
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = dayRange(dateParam);
 
     const entries = await prisma.fillingEntry.findMany({
       where: {
@@ -142,19 +179,21 @@ export const getFillingHistory = async (req: Request, res: Response) => {
   }
 };
 
+// GET /filling/today-entries?supervisorId=...&date=YYYY-MM-DD
+// Despite the name (kept for backward compatibility), this now returns the
+// supervisor's saved entries for ANY given date, defaulting to today when
+// "date" is omitted. The frontend uses this both on initial load and
+// whenever the user changes the date picker.
 export const getTodayFillingEntries = async (req: Request, res: Response) => {
   try {
-    const { supervisorId } = req.query;
+    const { supervisorId, date } = req.query;
     if (!supervisorId) {
       return res
         .status(400)
         .json({ success: false, message: "supervisorId is required" });
     }
 
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = dayRange(date as string | undefined);
 
     const entries = await prisma.fillingEntry.findMany({
       where: {

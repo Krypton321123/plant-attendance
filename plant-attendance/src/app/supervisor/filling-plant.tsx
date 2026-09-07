@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -46,6 +46,45 @@ type EntryRow = {
   operatorId: string;
   operatorName: string;
 };
+
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+// Local-date (not UTC) "YYYY-MM-DD" key, since that's what the backend's
+// dayRange() expects and what we use to compare "is this today/yesterday".
+const toDateKey = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const addDays = (d: Date, n: number) => {
+  const copy = new Date(d);
+  copy.setDate(copy.getDate() + n);
+  return copy;
+};
+
+const isSameDay = (a: Date, b: Date) => toDateKey(a) === toDateKey(b);
+
+const formatDateLabel = (d: Date) => {
+  const today = new Date();
+  if (isSameDay(d, today)) return "Today";
+  if (isSameDay(d, addDays(today, -1))) return "Yesterday";
+  if (isSameDay(d, addDays(today, 1))) return "Tomorrow";
+  return d.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatFullDateLabel = (d: Date) =>
+  d.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 // ─── Operator Picker Modal ────────────────────────────────────────────────────
 
@@ -135,6 +174,165 @@ function OperatorPickerModal({
   );
 }
 
+// ─── Date Picker Modal ────────────────────────────────────────────────────────
+// Built from the same primitives as OperatorPickerModal (no new native
+// dependency). Two levels: a quick-pick strip for the common cases, and a
+// "Choose a date" month grid for anything further out. Future dates beyond
+// "Tomorrow" are disabled — this is an entry sheet for work that's happened
+// or is about to, not a scheduler.
+
+function DatePickerModal({
+  visible,
+  selectedDate,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  selectedDate: Date;
+  onSelect: (d: Date) => void;
+  onClose: () => void;
+}) {
+  const today = useMemo(() => new Date(), [visible]);
+  const [viewMonth, setViewMonth] = useState(() => new Date(selectedDate));
+
+  useEffect(() => {
+    if (visible) setViewMonth(new Date(selectedDate));
+  }, [visible, selectedDate]);
+
+  const quickPicks = useMemo(
+    () => [
+      { label: "Yesterday", date: addDays(today, -1) },
+      { label: "Today", date: today },
+      { label: "Tomorrow", date: addDays(today, 1) },
+    ],
+    [today]
+  );
+
+  // Build a 6-row grid for viewMonth, Sunday-first, padded with nulls.
+  const monthGrid = useMemo(() => {
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = firstOfMonth.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells: (Date | null)[] = [];
+    for (let i = 0; i < startWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [viewMonth]);
+
+  const maxSelectable = addDays(today, 1); // "Tomorrow" is the furthest allowed
+  const isDisabled = (d: Date) => d.getTime() > maxSelectable.getTime();
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={modalStyles.backdrop}>
+        <View style={modalStyles.sheet}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Select Date</Text>
+            <TouchableOpacity style={modalStyles.closeBtn} onPress={onClose}>
+              <Ionicons name="close" size={20} color={C.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick picks */}
+          <View style={dateModalStyles.quickRow}>
+            {quickPicks.map((qp) => {
+              const active = isSameDay(qp.date, selectedDate);
+              return (
+                <TouchableOpacity
+                  key={qp.label}
+                  style={[dateModalStyles.quickChip, active && dateModalStyles.quickChipActive]}
+                  onPress={() => {
+                    onSelect(qp.date);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      dateModalStyles.quickChipText,
+                      active && dateModalStyles.quickChipTextActive,
+                    ]}
+                  >
+                    {qp.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Month nav */}
+          <View style={dateModalStyles.monthNav}>
+            <TouchableOpacity
+              style={dateModalStyles.monthNavBtn}
+              onPress={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+            >
+              <Ionicons name="chevron-back" size={18} color={C.textSecondary} />
+            </TouchableOpacity>
+            <Text style={dateModalStyles.monthNavLabel}>
+              {viewMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            </Text>
+            <TouchableOpacity
+              style={dateModalStyles.monthNavBtn}
+              onPress={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+            >
+              <Ionicons name="chevron-forward" size={18} color={C.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Weekday header */}
+          <View style={dateModalStyles.weekdayRow}>
+            {["S", "M", "T", "W", "T", "F", "S"].map((w, i) => (
+              <Text key={`${w}-${i}`} style={dateModalStyles.weekdayText}>
+                {w}
+              </Text>
+            ))}
+          </View>
+
+          {/* Day grid */}
+          <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={dateModalStyles.grid}>
+            {monthGrid.map((cell, i) => {
+              if (!cell) {
+                return <View key={`empty-${i}`} style={dateModalStyles.dayCell} />;
+              }
+              const disabled = isDisabled(cell);
+              const active = isSameDay(cell, selectedDate);
+              const isToday = isSameDay(cell, today);
+              return (
+                <TouchableOpacity
+                  key={cell.toISOString()}
+                  style={[
+                    dateModalStyles.dayCell,
+                    active && dateModalStyles.dayCellActive,
+                    isToday && !active && dateModalStyles.dayCellToday,
+                  ]}
+                  disabled={disabled}
+                  onPress={() => {
+                    onSelect(cell);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      dateModalStyles.dayText,
+                      disabled && dateModalStyles.dayTextDisabled,
+                      active && dateModalStyles.dayTextActive,
+                    ]}
+                  >
+                    {cell.getDate()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function FillingPlantScreen() {
@@ -144,25 +342,86 @@ export default function FillingPlantScreen() {
   const [operators, setOperators] = useState<Operator[]>([]);
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateLoading, setDateLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [supervisorId, setSupervisorId] = useState<string>("");
+
+  // Selected date for this entry sheet — defaults to today.
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
 
   // Operator picker state
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerTargetIdx, setPickerTargetIdx] = useState<number | null>(null);
 
-  // Date
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  // Date picker state
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+
+  const dateLabel = formatFullDateLabel(selectedDate);
+  const dateKey = toDateKey(selectedDate);
 
   useEffect(() => {
     bootstrap();
+    // Only run once on mount — date changes are handled by the effect below,
+    // which reuses the already-loaded items/operators and just refetches
+    // saved entries for the newly selected date.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch saved entries whenever the date changes (but skip the very
+  // first render, since bootstrap() already covers the initial date).
+  const [hasBootstrapped, setHasBootstrapped] = useState(false);
+  useEffect(() => {
+    if (!hasBootstrapped || !supervisorId || items.length === 0) return;
+    loadEntriesForDate(selectedDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateKey]);
+
+  const buildEntriesFromSaved = (
+    baseItems: MstItem[],
+    savedMap: Record<
+      string,
+      { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }
+    >
+  ): EntryRow[] =>
+    baseItems.map((item) => ({
+      itmcd: item.itmcd,
+      itmnm: item.itmnm,
+      itmsubcat: item.itmsubcat,
+      batchNo: savedMap[item.itmcd]?.batchNo ?? "",
+      filling: savedMap[item.itmcd]?.filling ?? "",
+      wastage: savedMap[item.itmcd]?.wastage ?? "",
+      operatorId: savedMap[item.itmcd]?.operatorId ?? "",
+      operatorName: savedMap[item.itmcd]?.operatorName ?? "",
+    }));
+
+  const fetchSavedMapForDate = async (supId: string, date: Date) => {
+    const key = toDateKey(date);
+    const todayRes = await fetch(
+      `${API_URL}/filling/today-entries?supervisorId=${supId}&date=${key}`
+    );
+    const todayData = await todayRes.json();
+
+    const savedMap: Record<
+      string,
+      { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }
+    > = {};
+    if (todayData.success) {
+      for (const e of todayData.data) {
+        if (!savedMap[e.ITMCD]) {
+          savedMap[e.ITMCD] = {
+            batchNo: e.BATCH_NO ?? "",
+            filling: String(e.FILLING),
+            wastage: String(e.WASTAGE),
+            operatorId: e.OPERATOR_ID,
+            operatorName: e.operator
+              ? `${e.operator.EMPNAME} ${e.operator.EMPFNAME}`
+              : "",
+          };
+        }
+      }
+    }
+    return savedMap;
+  };
 
   const bootstrap = async () => {
     try {
@@ -176,61 +435,44 @@ export default function FillingPlantScreen() {
         }
         setSupervisorId(emp.EMP_ID);
 
-        const [itemsRes, opsRes, todayRes] = await Promise.all([
-          fetch(`${API_URL}/filling/items`),
-          fetch(`${API_URL}/filling/operators`),
-          fetch(`${API_URL}/filling/today-entries?supervisorId=${emp.EMP_ID}`),
+        const initialDate = new Date();
+        const [itemsRes, opsRes, savedMap] = await Promise.all([
+          fetch(`${API_URL}/filling/items`).then((r) => r.json()),
+          fetch(`${API_URL}/filling/operators`).then((r) => r.json()),
+          fetchSavedMapForDate(emp.EMP_ID, initialDate),
         ]);
 
-        const itemsData = await itemsRes.json();
-        const opsData   = await opsRes.json();
-        const todayData = await todayRes.json();
-
-        // Build a lookup of already-saved entries by itmcd (API returns desc, so first = most recent)
-        const savedMap: Record<
-          string,
-          { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }
-        > = {};
-        if (todayData.success) {
-          for (const e of todayData.data) {
-            if (!savedMap[e.ITMCD]) {
-              savedMap[e.ITMCD] = {
-                batchNo:      e.BATCH_NO ?? "",
-                filling:      String(e.FILLING),
-                wastage:      String(e.WASTAGE),
-                operatorId:   e.OPERATOR_ID,
-                operatorName: e.operator
-                  ? `${e.operator.EMPNAME} ${e.operator.EMPFNAME}`
-                  : "",
-              };
-            }
-          }
+        if (opsRes.success) {
+          setOperators(opsRes.data);
         }
 
-        if (opsData.success) {
-          setOperators(opsData.data);
-        }
-
-        if (itemsData.success) {
-          setItems(itemsData.data);
-          setEntries(
-            itemsData.data.map((item: MstItem) => ({
-              itmcd:        item.itmcd,
-              itmnm:        item.itmnm,
-              itmsubcat:    item.itmsubcat,
-              batchNo:      savedMap[item.itmcd]?.batchNo      ?? "",
-              filling:      savedMap[item.itmcd]?.filling      ?? "",
-              wastage:      savedMap[item.itmcd]?.wastage      ?? "",
-              operatorId:   savedMap[item.itmcd]?.operatorId   ?? "",
-              operatorName: savedMap[item.itmcd]?.operatorName ?? "",
-            }))
-          );
+        if (itemsRes.success) {
+          setItems(itemsRes.data);
+          setEntries(buildEntriesFromSaved(itemsRes.data, savedMap));
         }
       }
     } catch (err) {
       Alert.alert("Error", "Failed to load data. Check your connection.");
     } finally {
       setLoading(false);
+      setHasBootstrapped(true);
+    }
+  };
+
+  // Called whenever the user picks a different date. Re-fetches that
+  // date's saved entries and rebuilds the form from `items` (already
+  // loaded) — any unsaved input for the previous date is intentionally
+  // discarded, since it belongs to a different day's sheet.
+  const loadEntriesForDate = async (date: Date) => {
+    if (!supervisorId || items.length === 0) return;
+    setDateLoading(true);
+    try {
+      const savedMap = await fetchSavedMapForDate(supervisorId, date);
+      setEntries(buildEntriesFromSaved(items, savedMap));
+    } catch {
+      Alert.alert("Error", "Failed to load entries for that date.");
+    } finally {
+      setDateLoading(false);
     }
   };
 
@@ -260,30 +502,17 @@ export default function FillingPlantScreen() {
     setPickerTargetIdx(null);
   };
 
-  const reloadToday = async (supId: string) => {
+  const onDateSelected = (d: Date) => {
+    setSelectedDate(d);
+    // loadEntriesForDate runs via the dateKey effect above.
+  };
+
+  const reloadToday = async (supId: string, date: Date) => {
     try {
-      const todayRes  = await fetch(`${API_URL}/filling/today-entries?supervisorId=${supId}`);
-      const todayData = await todayRes.json();
-      if (!todayData.success) return;
-
-      const savedMap: Record<string, { batchNo: string; filling: string; wastage: string; operatorId: string; operatorName: string }> = {};
-      for (const e of todayData.data) {
-        if (!savedMap[e.ITMCD]) {
-          savedMap[e.ITMCD] = {
-            batchNo:      e.BATCH_NO ?? "",
-            filling:      String(e.FILLING),
-            wastage:      String(e.WASTAGE),
-            operatorId:   e.OPERATOR_ID,
-            operatorName: e.operator ? `${e.operator.EMPNAME} ${e.operator.EMPFNAME}` : "",
-          };
-        }
-      }
-
+      const savedMap = await fetchSavedMapForDate(supId, date);
       setEntries((prev) =>
         prev.map((e) =>
-          savedMap[e.itmcd]
-            ? { ...e, ...savedMap[e.itmcd] }
-            : e
+          savedMap[e.itmcd] ? { ...e, ...savedMap[e.itmcd] } : e
         )
       );
     } catch {
@@ -312,16 +541,19 @@ export default function FillingPlantScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           doneBy: supervisorId,
-          entries, // backend filters valid ones
+          date: dateKey,
+          entries, // backend filters valid ones, and replaces any existing
+                   // rows for this date/item/supervisor rather than
+                   // double-inserting
         }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        Alert.alert("Saved", `${data.data.count} entries saved.`);
-        // Reload today's entries so the form reflects what's in the DB
-        await reloadToday(supervisorId);
+        Alert.alert("Saved", `${data.data.count} entries saved for ${formatDateLabel(selectedDate)}.`);
+        // Reload this date's entries so the form reflects what's in the DB
+        await reloadToday(supervisorId, selectedDate);
       } else {
         Alert.alert("Error", data.message || "Submission failed");
       }
@@ -348,6 +580,20 @@ export default function FillingPlantScreen() {
 
   const progress = entries.length > 0 ? filledCount / entries.length : 0;
 
+  // Totals for the Filling and Wastage columns (the two middle columns
+  // between Batch and Operator), shown in a footer row at the bottom
+  // of the table. Blank/non-numeric inputs count as 0 so a partially
+  // filled sheet still gives a running total rather than NaN.
+  const totalFilling = entries.reduce(
+    (sum, e) => sum + (parseFloat(e.filling) || 0),
+    0
+  );
+  const totalWastage = entries.reduce(
+    (sum, e) => sum + (parseFloat(e.wastage) || 0),
+    0
+  );
+  const formatTotal = (n: number) => (n % 1 === 0 ? String(n) : n.toFixed(2));
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -373,7 +619,6 @@ export default function FillingPlantScreen() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.topBarTitle}>Filling Plant</Text>
-            <Text style={styles.topBarSub}>{dateLabel}</Text>
           </View>
           <View style={styles.progressPill}>
             <Text style={styles.progressPillText}>
@@ -381,6 +626,21 @@ export default function FillingPlantScreen() {
             </Text>
           </View>
         </View>
+
+        {/* ── Date Selector ── */}
+        <TouchableOpacity
+          style={styles.dateSelector}
+          onPress={() => setDatePickerVisible(true)}
+          disabled={dateLoading}
+        >
+          <Ionicons name="calendar-outline" size={16} color={C.primary} />
+          <Text style={styles.dateSelectorText}>{dateLabel}</Text>
+          {dateLoading ? (
+            <ActivityIndicator size="small" color={C.primary} style={{ marginLeft: 4 }} />
+          ) : (
+            <Ionicons name="chevron-down" size={14} color={C.textMuted} style={{ marginLeft: 2 }} />
+          )}
+        </TouchableOpacity>
 
         {/* ── Progress Bar ── */}
         <View style={styles.progressBarTrack}>
@@ -522,6 +782,21 @@ export default function FillingPlantScreen() {
             </View>
           ))}
 
+          {/* ── Totals Row — sums the Filling and Wastage columns ── */}
+          {entries.length > 0 && (
+            <View style={styles.totalsRow}>
+              <Text style={[styles.totalsLabel, styles.colItem]}>Total</Text>
+              <View style={styles.colBatch} />
+              <Text style={[styles.totalsValue, styles.colFilling]}>
+                {formatTotal(totalFilling)}
+              </Text>
+              <Text style={[styles.totalsValue, styles.colWastage]}>
+                {formatTotal(totalWastage)}
+              </Text>
+              <View style={styles.colOperator} />
+            </View>
+          )}
+
           {/* Bottom spacer */}
           <View style={{ height: 24 }} />
         </ScrollView>
@@ -575,6 +850,14 @@ export default function FillingPlantScreen() {
           setPickerVisible(false);
           setPickerTargetIdx(null);
         }}
+      />
+
+      {/* ── Date Picker Modal ── */}
+      <DatePickerModal
+        visible={datePickerVisible}
+        selectedDate={selectedDate}
+        onSelect={onDateSelected}
+        onClose={() => setDatePickerVisible(false)}
       />
     </SafeAreaView>
   );
@@ -636,6 +919,25 @@ const styles = StyleSheet.create({
   progressPillText: {
     color: C.primary,
     fontSize: 12,
+    fontWeight: "700",
+  },
+
+  // Date selector — sits between the top bar and progress bar, tappable
+  // to open DatePickerModal. Kept visually lighter than the top bar so it
+  // reads as a filter/control rather than a second title row.
+  dateSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: C.inputBg,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  dateSelectorText: {
+    color: C.textPrimary,
+    fontSize: 13,
     fontWeight: "700",
   },
 
@@ -823,6 +1125,34 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  // Totals row — sits below the last category card, sums Filling and
+  // Wastage. Uses the same column flex widths as the table so the
+  // numbers line up directly under their columns.
+  totalsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.inputBg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  totalsLabel: {
+    color: C.textSecondary,
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  totalsValue: {
+    color: C.primary,
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
   // Footer
   footer: {
     flexDirection: "row",
@@ -978,5 +1308,107 @@ const modalStyles = StyleSheet.create({
     textAlign: "center",
     marginTop: 24,
     fontSize: 14,
+  },
+});
+
+// ─── Date Modal Styles ────────────────────────────────────────────────────────
+
+const dateModalStyles = StyleSheet.create({
+  quickRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  quickChip: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  quickChipActive: {
+    backgroundColor: C.primaryLight,
+    borderColor: C.primaryMuted,
+  },
+  quickChipText: {
+    color: C.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  quickChipTextActive: {
+    color: C.primary,
+  },
+  monthNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  monthNavBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  monthNavLabel: {
+    color: C.textPrimary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  weekdayRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
+  weekdayText: {
+    flex: 1,
+    textAlign: "center",
+    color: C.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 2,
+  },
+  dayCellActive: {
+    backgroundColor: C.primary,
+    borderRadius: 999,
+  },
+  dayCellToday: {
+    borderWidth: 1,
+    borderColor: C.primaryMuted,
+    borderRadius: 999,
+  },
+  dayText: {
+    color: C.textPrimary,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  dayTextDisabled: {
+    color: C.textMuted,
+    opacity: 0.35,
+  },
+  dayTextActive: {
+    color: C.textInverse,
+    fontWeight: "800",
   },
 });

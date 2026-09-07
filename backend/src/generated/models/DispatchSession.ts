@@ -20,8 +20,28 @@ export type DispatchSessionModel = runtime.Types.Result.DefaultSelection<Prisma.
 
 export type AggregateDispatchSession = {
   _count: DispatchSessionCountAggregateOutputType | null
+  _avg: DispatchSessionAvgAggregateOutputType | null
+  _sum: DispatchSessionSumAggregateOutputType | null
   _min: DispatchSessionMinAggregateOutputType | null
   _max: DispatchSessionMaxAggregateOutputType | null
+}
+
+export type DispatchSessionAvgAggregateOutputType = {
+  GROSS_WT: runtime.Decimal | null
+  TARE_WT: runtime.Decimal | null
+  TOTAL_WT: runtime.Decimal | null
+  TOTAL_FREIGHT: runtime.Decimal | null
+  ADVANCE: runtime.Decimal | null
+  BALANCE: runtime.Decimal | null
+}
+
+export type DispatchSessionSumAggregateOutputType = {
+  GROSS_WT: runtime.Decimal | null
+  TARE_WT: runtime.Decimal | null
+  TOTAL_WT: runtime.Decimal | null
+  TOTAL_FREIGHT: runtime.Decimal | null
+  ADVANCE: runtime.Decimal | null
+  BALANCE: runtime.Decimal | null
 }
 
 export type DispatchSessionMinAggregateOutputType = {
@@ -30,11 +50,17 @@ export type DispatchSessionMinAggregateOutputType = {
   PARTY_CD: string | null
   PARTY_NM: string | null
   VEHICLE_NO: string | null
+  BILTY_NO: string | null
   TRANSPORTER: string | null
   DRIVER_NAME: string | null
   DRIVER_NO: string | null
-  KAANTA_WT: string | null
   GRR_NO: string | null
+  GROSS_WT: runtime.Decimal | null
+  TARE_WT: runtime.Decimal | null
+  TOTAL_WT: runtime.Decimal | null
+  TOTAL_FREIGHT: runtime.Decimal | null
+  ADVANCE: runtime.Decimal | null
+  BALANCE: runtime.Decimal | null
   STATUS: string | null
   DONE_BY: string | null
   CREATEDAT: Date | null
@@ -46,11 +72,17 @@ export type DispatchSessionMaxAggregateOutputType = {
   PARTY_CD: string | null
   PARTY_NM: string | null
   VEHICLE_NO: string | null
+  BILTY_NO: string | null
   TRANSPORTER: string | null
   DRIVER_NAME: string | null
   DRIVER_NO: string | null
-  KAANTA_WT: string | null
   GRR_NO: string | null
+  GROSS_WT: runtime.Decimal | null
+  TARE_WT: runtime.Decimal | null
+  TOTAL_WT: runtime.Decimal | null
+  TOTAL_FREIGHT: runtime.Decimal | null
+  ADVANCE: runtime.Decimal | null
+  BALANCE: runtime.Decimal | null
   STATUS: string | null
   DONE_BY: string | null
   CREATEDAT: Date | null
@@ -62,11 +94,17 @@ export type DispatchSessionCountAggregateOutputType = {
   PARTY_CD: number
   PARTY_NM: number
   VEHICLE_NO: number
+  BILTY_NO: number
   TRANSPORTER: number
   DRIVER_NAME: number
   DRIVER_NO: number
-  KAANTA_WT: number
   GRR_NO: number
+  GROSS_WT: number
+  TARE_WT: number
+  TOTAL_WT: number
+  TOTAL_FREIGHT: number
+  ADVANCE: number
+  BALANCE: number
   STATUS: number
   DONE_BY: number
   CREATEDAT: number
@@ -74,17 +112,41 @@ export type DispatchSessionCountAggregateOutputType = {
 }
 
 
+export type DispatchSessionAvgAggregateInputType = {
+  GROSS_WT?: true
+  TARE_WT?: true
+  TOTAL_WT?: true
+  TOTAL_FREIGHT?: true
+  ADVANCE?: true
+  BALANCE?: true
+}
+
+export type DispatchSessionSumAggregateInputType = {
+  GROSS_WT?: true
+  TARE_WT?: true
+  TOTAL_WT?: true
+  TOTAL_FREIGHT?: true
+  ADVANCE?: true
+  BALANCE?: true
+}
+
 export type DispatchSessionMinAggregateInputType = {
   SESSION_ID?: true
   DISPATCH_TO?: true
   PARTY_CD?: true
   PARTY_NM?: true
   VEHICLE_NO?: true
+  BILTY_NO?: true
   TRANSPORTER?: true
   DRIVER_NAME?: true
   DRIVER_NO?: true
-  KAANTA_WT?: true
   GRR_NO?: true
+  GROSS_WT?: true
+  TARE_WT?: true
+  TOTAL_WT?: true
+  TOTAL_FREIGHT?: true
+  ADVANCE?: true
+  BALANCE?: true
   STATUS?: true
   DONE_BY?: true
   CREATEDAT?: true
@@ -96,11 +158,17 @@ export type DispatchSessionMaxAggregateInputType = {
   PARTY_CD?: true
   PARTY_NM?: true
   VEHICLE_NO?: true
+  BILTY_NO?: true
   TRANSPORTER?: true
   DRIVER_NAME?: true
   DRIVER_NO?: true
-  KAANTA_WT?: true
   GRR_NO?: true
+  GROSS_WT?: true
+  TARE_WT?: true
+  TOTAL_WT?: true
+  TOTAL_FREIGHT?: true
+  ADVANCE?: true
+  BALANCE?: true
   STATUS?: true
   DONE_BY?: true
   CREATEDAT?: true
@@ -112,11 +180,17 @@ export type DispatchSessionCountAggregateInputType = {
   PARTY_CD?: true
   PARTY_NM?: true
   VEHICLE_NO?: true
+  BILTY_NO?: true
   TRANSPORTER?: true
   DRIVER_NAME?: true
   DRIVER_NO?: true
-  KAANTA_WT?: true
   GRR_NO?: true
+  GROSS_WT?: true
+  TARE_WT?: true
+  TOTAL_WT?: true
+  TOTAL_FREIGHT?: true
+  ADVANCE?: true
+  BALANCE?: true
   STATUS?: true
   DONE_BY?: true
   CREATEDAT?: true
@@ -161,6 +235,18 @@ export type DispatchSessionAggregateArgs<ExtArgs extends runtime.Types.Extension
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: DispatchSessionAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: DispatchSessionSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: DispatchSessionMinAggregateInputType
@@ -191,6 +277,8 @@ export type DispatchSessionGroupByArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   _count?: DispatchSessionCountAggregateInputType | true
+  _avg?: DispatchSessionAvgAggregateInputType
+  _sum?: DispatchSessionSumAggregateInputType
   _min?: DispatchSessionMinAggregateInputType
   _max?: DispatchSessionMaxAggregateInputType
 }
@@ -201,15 +289,23 @@ export type DispatchSessionGroupByOutputType = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO: string | null
+  BILTY_NO: string | null
   TRANSPORTER: string | null
   DRIVER_NAME: string | null
   DRIVER_NO: string | null
-  KAANTA_WT: string | null
   GRR_NO: string | null
+  GROSS_WT: runtime.Decimal | null
+  TARE_WT: runtime.Decimal | null
+  TOTAL_WT: runtime.Decimal | null
+  TOTAL_FREIGHT: runtime.Decimal | null
+  ADVANCE: runtime.Decimal | null
+  BALANCE: runtime.Decimal | null
   STATUS: string
   DONE_BY: string
   CREATEDAT: Date
   _count: DispatchSessionCountAggregateOutputType | null
+  _avg: DispatchSessionAvgAggregateOutputType | null
+  _sum: DispatchSessionSumAggregateOutputType | null
   _min: DispatchSessionMinAggregateOutputType | null
   _max: DispatchSessionMaxAggregateOutputType | null
 }
@@ -238,11 +334,17 @@ export type DispatchSessionWhereInput = {
   PARTY_CD?: Prisma.StringFilter<"DispatchSession"> | string
   PARTY_NM?: Prisma.StringFilter<"DispatchSession"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  BILTY_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   TRANSPORTER?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NAME?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
-  KAANTA_WT?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   GRR_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  GROSS_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFilter<"DispatchSession"> | string
   DONE_BY?: Prisma.StringFilter<"DispatchSession"> | string
   CREATEDAT?: Prisma.DateTimeFilter<"DispatchSession"> | Date | string
@@ -257,11 +359,17 @@ export type DispatchSessionOrderByWithRelationInput = {
   PARTY_CD?: Prisma.SortOrder
   PARTY_NM?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  BILTY_NO?: Prisma.SortOrderInput | Prisma.SortOrder
   TRANSPORTER?: Prisma.SortOrderInput | Prisma.SortOrder
   DRIVER_NAME?: Prisma.SortOrderInput | Prisma.SortOrder
   DRIVER_NO?: Prisma.SortOrderInput | Prisma.SortOrder
-  KAANTA_WT?: Prisma.SortOrderInput | Prisma.SortOrder
   GRR_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  GROSS_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrderInput | Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrderInput | Prisma.SortOrder
+  BALANCE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
@@ -279,11 +387,17 @@ export type DispatchSessionWhereUniqueInput = Prisma.AtLeast<{
   PARTY_CD?: Prisma.StringFilter<"DispatchSession"> | string
   PARTY_NM?: Prisma.StringFilter<"DispatchSession"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  BILTY_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   TRANSPORTER?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NAME?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
-  KAANTA_WT?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   GRR_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  GROSS_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFilter<"DispatchSession"> | string
   DONE_BY?: Prisma.StringFilter<"DispatchSession"> | string
   CREATEDAT?: Prisma.DateTimeFilter<"DispatchSession"> | Date | string
@@ -298,17 +412,25 @@ export type DispatchSessionOrderByWithAggregationInput = {
   PARTY_CD?: Prisma.SortOrder
   PARTY_NM?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  BILTY_NO?: Prisma.SortOrderInput | Prisma.SortOrder
   TRANSPORTER?: Prisma.SortOrderInput | Prisma.SortOrder
   DRIVER_NAME?: Prisma.SortOrderInput | Prisma.SortOrder
   DRIVER_NO?: Prisma.SortOrderInput | Prisma.SortOrder
-  KAANTA_WT?: Prisma.SortOrderInput | Prisma.SortOrder
   GRR_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  GROSS_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrderInput | Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrderInput | Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrderInput | Prisma.SortOrder
+  BALANCE?: Prisma.SortOrderInput | Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
   _count?: Prisma.DispatchSessionCountOrderByAggregateInput
+  _avg?: Prisma.DispatchSessionAvgOrderByAggregateInput
   _max?: Prisma.DispatchSessionMaxOrderByAggregateInput
   _min?: Prisma.DispatchSessionMinOrderByAggregateInput
+  _sum?: Prisma.DispatchSessionSumOrderByAggregateInput
 }
 
 export type DispatchSessionScalarWhereWithAggregatesInput = {
@@ -320,11 +442,17 @@ export type DispatchSessionScalarWhereWithAggregatesInput = {
   PARTY_CD?: Prisma.StringWithAggregatesFilter<"DispatchSession"> | string
   PARTY_NM?: Prisma.StringWithAggregatesFilter<"DispatchSession"> | string
   VEHICLE_NO?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
+  BILTY_NO?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
   TRANSPORTER?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
   DRIVER_NAME?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
   DRIVER_NO?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
-  KAANTA_WT?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
   GRR_NO?: Prisma.StringNullableWithAggregatesFilter<"DispatchSession"> | string | null
+  GROSS_WT?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.DecimalNullableWithAggregatesFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringWithAggregatesFilter<"DispatchSession"> | string
   DONE_BY?: Prisma.StringWithAggregatesFilter<"DispatchSession"> | string
   CREATEDAT?: Prisma.DateTimeWithAggregatesFilter<"DispatchSession"> | Date | string
@@ -336,11 +464,17 @@ export type DispatchSessionCreateInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
   doneBy: Prisma.EmployeeCreateNestedOneWithoutDispatchSessionInput
@@ -354,11 +488,17 @@ export type DispatchSessionUncheckedCreateInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   DONE_BY: string
   CREATEDAT?: Date | string
@@ -372,11 +512,17 @@ export type DispatchSessionUpdateInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   doneBy?: Prisma.EmployeeUpdateOneRequiredWithoutDispatchSessionNestedInput
@@ -390,11 +536,17 @@ export type DispatchSessionUncheckedUpdateInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -408,11 +560,17 @@ export type DispatchSessionCreateManyInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   DONE_BY: string
   CREATEDAT?: Date | string
@@ -424,11 +582,17 @@ export type DispatchSessionUpdateManyMutationInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -439,11 +603,17 @@ export type DispatchSessionUncheckedUpdateManyInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -465,14 +635,29 @@ export type DispatchSessionCountOrderByAggregateInput = {
   PARTY_CD?: Prisma.SortOrder
   PARTY_NM?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  BILTY_NO?: Prisma.SortOrder
   TRANSPORTER?: Prisma.SortOrder
   DRIVER_NAME?: Prisma.SortOrder
   DRIVER_NO?: Prisma.SortOrder
-  KAANTA_WT?: Prisma.SortOrder
   GRR_NO?: Prisma.SortOrder
+  GROSS_WT?: Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrder
+  BALANCE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
+}
+
+export type DispatchSessionAvgOrderByAggregateInput = {
+  GROSS_WT?: Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrder
+  BALANCE?: Prisma.SortOrder
 }
 
 export type DispatchSessionMaxOrderByAggregateInput = {
@@ -481,11 +666,17 @@ export type DispatchSessionMaxOrderByAggregateInput = {
   PARTY_CD?: Prisma.SortOrder
   PARTY_NM?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  BILTY_NO?: Prisma.SortOrder
   TRANSPORTER?: Prisma.SortOrder
   DRIVER_NAME?: Prisma.SortOrder
   DRIVER_NO?: Prisma.SortOrder
-  KAANTA_WT?: Prisma.SortOrder
   GRR_NO?: Prisma.SortOrder
+  GROSS_WT?: Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrder
+  BALANCE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
@@ -497,14 +688,29 @@ export type DispatchSessionMinOrderByAggregateInput = {
   PARTY_CD?: Prisma.SortOrder
   PARTY_NM?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  BILTY_NO?: Prisma.SortOrder
   TRANSPORTER?: Prisma.SortOrder
   DRIVER_NAME?: Prisma.SortOrder
   DRIVER_NO?: Prisma.SortOrder
-  KAANTA_WT?: Prisma.SortOrder
   GRR_NO?: Prisma.SortOrder
+  GROSS_WT?: Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrder
+  BALANCE?: Prisma.SortOrder
   STATUS?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
+}
+
+export type DispatchSessionSumOrderByAggregateInput = {
+  GROSS_WT?: Prisma.SortOrder
+  TARE_WT?: Prisma.SortOrder
+  TOTAL_WT?: Prisma.SortOrder
+  TOTAL_FREIGHT?: Prisma.SortOrder
+  ADVANCE?: Prisma.SortOrder
+  BALANCE?: Prisma.SortOrder
 }
 
 export type DispatchSessionScalarRelationFilter = {
@@ -588,11 +794,17 @@ export type DispatchSessionCreateWithoutDoneByInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
   items?: Prisma.DispatchItemCreateNestedManyWithoutSessionInput
@@ -605,11 +817,17 @@ export type DispatchSessionUncheckedCreateWithoutDoneByInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
   items?: Prisma.DispatchItemUncheckedCreateNestedManyWithoutSessionInput
@@ -650,11 +868,17 @@ export type DispatchSessionScalarWhereInput = {
   PARTY_CD?: Prisma.StringFilter<"DispatchSession"> | string
   PARTY_NM?: Prisma.StringFilter<"DispatchSession"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  BILTY_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   TRANSPORTER?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NAME?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   DRIVER_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
-  KAANTA_WT?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
   GRR_NO?: Prisma.StringNullableFilter<"DispatchSession"> | string | null
+  GROSS_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.DecimalNullableFilter<"DispatchSession"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFilter<"DispatchSession"> | string
   DONE_BY?: Prisma.StringFilter<"DispatchSession"> | string
   CREATEDAT?: Prisma.DateTimeFilter<"DispatchSession"> | Date | string
@@ -666,11 +890,17 @@ export type DispatchSessionCreateWithoutItemsInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
   doneBy: Prisma.EmployeeCreateNestedOneWithoutDispatchSessionInput
@@ -683,11 +913,17 @@ export type DispatchSessionUncheckedCreateWithoutItemsInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   DONE_BY: string
   CREATEDAT?: Date | string
@@ -716,11 +952,17 @@ export type DispatchSessionUpdateWithoutItemsInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   doneBy?: Prisma.EmployeeUpdateOneRequiredWithoutDispatchSessionNestedInput
@@ -733,11 +975,17 @@ export type DispatchSessionUncheckedUpdateWithoutItemsInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -750,11 +998,17 @@ export type DispatchSessionCreateWithoutEmptyItemsInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
   doneBy: Prisma.EmployeeCreateNestedOneWithoutDispatchSessionInput
@@ -767,11 +1021,17 @@ export type DispatchSessionUncheckedCreateWithoutEmptyItemsInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   DONE_BY: string
   CREATEDAT?: Date | string
@@ -800,11 +1060,17 @@ export type DispatchSessionUpdateWithoutEmptyItemsInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   doneBy?: Prisma.EmployeeUpdateOneRequiredWithoutDispatchSessionNestedInput
@@ -817,11 +1083,17 @@ export type DispatchSessionUncheckedUpdateWithoutEmptyItemsInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -834,11 +1106,17 @@ export type DispatchSessionCreateManyDoneByInput = {
   PARTY_CD: string
   PARTY_NM: string
   VEHICLE_NO?: string | null
+  BILTY_NO?: string | null
   TRANSPORTER?: string | null
   DRIVER_NAME?: string | null
   DRIVER_NO?: string | null
-  KAANTA_WT?: string | null
   GRR_NO?: string | null
+  GROSS_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: string
   CREATEDAT?: Date | string
 }
@@ -849,11 +1127,17 @@ export type DispatchSessionUpdateWithoutDoneByInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.DispatchItemUpdateManyWithoutSessionNestedInput
@@ -866,11 +1150,17 @@ export type DispatchSessionUncheckedUpdateWithoutDoneByInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.DispatchItemUncheckedUpdateManyWithoutSessionNestedInput
@@ -883,11 +1173,17 @@ export type DispatchSessionUncheckedUpdateManyWithoutDoneByInput = {
   PARTY_CD?: Prisma.StringFieldUpdateOperationsInput | string
   PARTY_NM?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  BILTY_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   TRANSPORTER?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NAME?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   DRIVER_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  KAANTA_WT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   GRR_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  GROSS_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TARE_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_WT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  TOTAL_FREIGHT?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  ADVANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  BALANCE?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   STATUS?: Prisma.StringFieldUpdateOperationsInput | string
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -938,11 +1234,17 @@ export type DispatchSessionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   PARTY_CD?: boolean
   PARTY_NM?: boolean
   VEHICLE_NO?: boolean
+  BILTY_NO?: boolean
   TRANSPORTER?: boolean
   DRIVER_NAME?: boolean
   DRIVER_NO?: boolean
-  KAANTA_WT?: boolean
   GRR_NO?: boolean
+  GROSS_WT?: boolean
+  TARE_WT?: boolean
+  TOTAL_WT?: boolean
+  TOTAL_FREIGHT?: boolean
+  ADVANCE?: boolean
+  BALANCE?: boolean
   STATUS?: boolean
   DONE_BY?: boolean
   CREATEDAT?: boolean
@@ -960,17 +1262,23 @@ export type DispatchSessionSelectScalar = {
   PARTY_CD?: boolean
   PARTY_NM?: boolean
   VEHICLE_NO?: boolean
+  BILTY_NO?: boolean
   TRANSPORTER?: boolean
   DRIVER_NAME?: boolean
   DRIVER_NO?: boolean
-  KAANTA_WT?: boolean
   GRR_NO?: boolean
+  GROSS_WT?: boolean
+  TARE_WT?: boolean
+  TOTAL_WT?: boolean
+  TOTAL_FREIGHT?: boolean
+  ADVANCE?: boolean
+  BALANCE?: boolean
   STATUS?: boolean
   DONE_BY?: boolean
   CREATEDAT?: boolean
 }
 
-export type DispatchSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"SESSION_ID" | "DISPATCH_TO" | "PARTY_CD" | "PARTY_NM" | "VEHICLE_NO" | "TRANSPORTER" | "DRIVER_NAME" | "DRIVER_NO" | "KAANTA_WT" | "GRR_NO" | "STATUS" | "DONE_BY" | "CREATEDAT", ExtArgs["result"]["dispatchSession"]>
+export type DispatchSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"SESSION_ID" | "DISPATCH_TO" | "PARTY_CD" | "PARTY_NM" | "VEHICLE_NO" | "BILTY_NO" | "TRANSPORTER" | "DRIVER_NAME" | "DRIVER_NO" | "GRR_NO" | "GROSS_WT" | "TARE_WT" | "TOTAL_WT" | "TOTAL_FREIGHT" | "ADVANCE" | "BALANCE" | "STATUS" | "DONE_BY" | "CREATEDAT", ExtArgs["result"]["dispatchSession"]>
 export type DispatchSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   doneBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
   items?: boolean | Prisma.DispatchSession$itemsArgs<ExtArgs>
@@ -991,11 +1299,17 @@ export type $DispatchSessionPayload<ExtArgs extends runtime.Types.Extensions.Int
     PARTY_CD: string
     PARTY_NM: string
     VEHICLE_NO: string | null
+    BILTY_NO: string | null
     TRANSPORTER: string | null
     DRIVER_NAME: string | null
     DRIVER_NO: string | null
-    KAANTA_WT: string | null
     GRR_NO: string | null
+    GROSS_WT: runtime.Decimal | null
+    TARE_WT: runtime.Decimal | null
+    TOTAL_WT: runtime.Decimal | null
+    TOTAL_FREIGHT: runtime.Decimal | null
+    ADVANCE: runtime.Decimal | null
+    BALANCE: runtime.Decimal | null
     STATUS: string
     DONE_BY: string
     CREATEDAT: Date
@@ -1376,11 +1690,17 @@ export interface DispatchSessionFieldRefs {
   readonly PARTY_CD: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly PARTY_NM: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly VEHICLE_NO: Prisma.FieldRef<"DispatchSession", 'String'>
+  readonly BILTY_NO: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly TRANSPORTER: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly DRIVER_NAME: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly DRIVER_NO: Prisma.FieldRef<"DispatchSession", 'String'>
-  readonly KAANTA_WT: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly GRR_NO: Prisma.FieldRef<"DispatchSession", 'String'>
+  readonly GROSS_WT: Prisma.FieldRef<"DispatchSession", 'Decimal'>
+  readonly TARE_WT: Prisma.FieldRef<"DispatchSession", 'Decimal'>
+  readonly TOTAL_WT: Prisma.FieldRef<"DispatchSession", 'Decimal'>
+  readonly TOTAL_FREIGHT: Prisma.FieldRef<"DispatchSession", 'Decimal'>
+  readonly ADVANCE: Prisma.FieldRef<"DispatchSession", 'Decimal'>
+  readonly BALANCE: Prisma.FieldRef<"DispatchSession", 'Decimal'>
   readonly STATUS: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly DONE_BY: Prisma.FieldRef<"DispatchSession", 'String'>
   readonly CREATEDAT: Prisma.FieldRef<"DispatchSession", 'DateTime'>

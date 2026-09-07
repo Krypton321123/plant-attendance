@@ -54,8 +54,12 @@ export default function IndexScreen() {
   const checkSession = async () => {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEYS.EMPLOYEE);
+
       if (raw) {
         let employee = JSON.parse(raw);
+        // employee.EMPTYPE = "OFFICE";
+        // let e2 = JSON.stringify(employee); 
+        // await AsyncStorage.setItem(STORAGE_KEYS.EMPLOYEE, e2);
         
         if (employee?.EMPTYPE && employee?.STATUS === "A") {
           router.replace(routeForEmpType(employee.EMPTYPE));

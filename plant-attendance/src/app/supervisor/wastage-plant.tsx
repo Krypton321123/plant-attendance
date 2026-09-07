@@ -6,11 +6,12 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
+  Modal,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -36,27 +37,272 @@ type WastageRow = {
   looseOil: string;
 };
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+// Same helpers as the filling screen — local-date (not UTC) "YYYY-MM-DD"
+// key, since that's what the backend's dayRange() expects.
+const toDateKey = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
-export default function WastagePlantScreen() {
-  const router = useRouter();
+const addDays = (d: Date, n: number) => {
+  const copy = new Date(d);
+  copy.setDate(copy.getDate() + n);
+  return copy;
+};
 
-  const [entries, setEntries] = useState<WastageRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [supervisorId, setSupervisorId] = useState<string>("");
+const isSameDay = (a: Date, b: Date) => toDateKey(a) === toDateKey(b);
 
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString("en-IN", {
+const formatDateLabel = (d: Date) => {
+  const today = new Date();
+  if (isSameDay(d, today)) return "Today";
+  if (isSameDay(d, addDays(today, -1))) return "Yesterday";
+  if (isSameDay(d, addDays(today, 1))) return "Tomorrow";
+  return d.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatFullDateLabel = (d: Date) =>
+  d.toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 
+// ─── Date Picker Modal ────────────────────────────────────────────────────────
+// Same component as the filling screen — quick-pick strip + month grid,
+// built from existing primitives so no new native dependency is needed.
+// Future dates beyond "Tomorrow" are disabled — this is an entry sheet for
+// work that's happened or is about to, not a scheduler.
+
+function DatePickerModal({
+  visible,
+  selectedDate,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  selectedDate: Date;
+  onSelect: (d: Date) => void;
+  onClose: () => void;
+}) {
+  const today = useMemo(() => new Date(), [visible]);
+  const [viewMonth, setViewMonth] = useState(() => new Date(selectedDate));
+
+  useEffect(() => {
+    if (visible) setViewMonth(new Date(selectedDate));
+  }, [visible, selectedDate]);
+
+  const quickPicks = useMemo(
+    () => [
+      { label: "Yesterday", date: addDays(today, -1) },
+      { label: "Today", date: today },
+      { label: "Tomorrow", date: addDays(today, 1) },
+    ],
+    [today]
+  );
+
+  const monthGrid = useMemo(() => {
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = firstOfMonth.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells: (Date | null)[] = [];
+    for (let i = 0; i < startWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [viewMonth]);
+
+  const maxSelectable = addDays(today, 1); // "Tomorrow" is the furthest allowed
+  const isDisabled = (d: Date) => d.getTime() > maxSelectable.getTime();
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={modalStyles.backdrop}>
+        <View style={modalStyles.sheet}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Select Date</Text>
+            <TouchableOpacity style={modalStyles.closeBtn} onPress={onClose}>
+              <Ionicons name="close" size={20} color={C.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick picks */}
+          <View style={modalStyles.quickRow}>
+            {quickPicks.map((qp) => {
+              const active = isSameDay(qp.date, selectedDate);
+              return (
+                <TouchableOpacity
+                  key={qp.label}
+                  style={[modalStyles.quickChip, active && modalStyles.quickChipActive]}
+                  onPress={() => {
+                    onSelect(qp.date);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      modalStyles.quickChipText,
+                      active && modalStyles.quickChipTextActive,
+                    ]}
+                  >
+                    {qp.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Month nav */}
+          <View style={modalStyles.monthNav}>
+            <TouchableOpacity
+              style={modalStyles.monthNavBtn}
+              onPress={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+            >
+              <Ionicons name="chevron-back" size={18} color={C.textSecondary} />
+            </TouchableOpacity>
+            <Text style={modalStyles.monthNavLabel}>
+              {viewMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            </Text>
+            <TouchableOpacity
+              style={modalStyles.monthNavBtn}
+              onPress={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+            >
+              <Ionicons name="chevron-forward" size={18} color={C.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Weekday header */}
+          <View style={modalStyles.weekdayRow}>
+            {["S", "M", "T", "W", "T", "F", "S"].map((w, i) => (
+              <Text key={`${w}-${i}`} style={modalStyles.weekdayText}>
+                {w}
+              </Text>
+            ))}
+          </View>
+
+          {/* Day grid */}
+          <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={modalStyles.grid}>
+            {monthGrid.map((cell, i) => {
+              if (!cell) {
+                return <View key={`empty-${i}`} style={modalStyles.dayCell} />;
+              }
+              const disabled = isDisabled(cell);
+              const active = isSameDay(cell, selectedDate);
+              const isToday = isSameDay(cell, today);
+              return (
+                <TouchableOpacity
+                  key={cell.toISOString()}
+                  style={[
+                    modalStyles.dayCell,
+                    active && modalStyles.dayCellActive,
+                    isToday && !active && modalStyles.dayCellToday,
+                  ]}
+                  disabled={disabled}
+                  onPress={() => {
+                    onSelect(cell);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      modalStyles.dayText,
+                      disabled && modalStyles.dayTextDisabled,
+                      active && modalStyles.dayTextActive,
+                    ]}
+                  >
+                    {cell.getDate()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
+export default function WastagePlantScreen() {
+  const router = useRouter();
+
+  const [items, setItems] = useState<MstItem[]>([]);
+  const [entries, setEntries] = useState<WastageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dateLoading, setDateLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [supervisorId, setSupervisorId] = useState<string>("");
+
+  // Selected date for this entry sheet — defaults to today.
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+
+  const dateLabel = formatFullDateLabel(selectedDate);
+  const dateKey = toDateKey(selectedDate);
+
   useEffect(() => {
     bootstrap();
+    // Only run once on mount — date changes are handled by the effect
+    // below, which reuses the already-loaded items and just refetches
+    // saved entries for the newly selected date.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch saved entries whenever the date changes (skip the very first
+  // render, since bootstrap() already covers the initial date).
+  const [hasBootstrapped, setHasBootstrapped] = useState(false);
+  useEffect(() => {
+    if (!hasBootstrapped || !supervisorId || items.length === 0) return;
+    loadEntriesForDate(selectedDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateKey]);
+
+  const buildEntriesFromSaved = (
+    baseItems: MstItem[],
+    savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }>
+  ): WastageRow[] =>
+    baseItems.map((item) => ({
+      itmcd: item.itmcd,
+      itmnm: item.itmnm,
+      itmsubcat: item.itmsubcat,
+      cartonWastage: savedMap[item.itmcd]?.cartonWastage ?? "",
+      pcsWastage: savedMap[item.itmcd]?.pcsWastage ?? "",
+      looseOil: savedMap[item.itmcd]?.looseOil ?? "",
+    }));
+
+  const fetchSavedMapForDate = async (supId: string, date: Date) => {
+    const key = toDateKey(date);
+    const todayRes = await fetch(
+      `${API_URL}/wastage/today-entries?supervisorId=${supId}&date=${key}`
+    );
+    const todayData = await todayRes.json();
+
+    const savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }> = {};
+    if (todayData.success) {
+      for (const e of todayData.data) {
+        if (!savedMap[e.ITMCD]) {
+          savedMap[e.ITMCD] = {
+            cartonWastage: e.CARTON_WASTAGE != null ? String(e.CARTON_WASTAGE) : "",
+            pcsWastage: e.PCS_WASTAGE != null ? String(e.PCS_WASTAGE) : "",
+            looseOil: e.LOOSE_OIL != null ? String(e.LOOSE_OIL) : "",
+          };
+        }
+      }
+    }
+    return savedMap;
+  };
 
   const bootstrap = async () => {
     try {
@@ -71,44 +317,38 @@ export default function WastagePlantScreen() {
       }
       setSupervisorId(emp.EMP_ID);
 
-      const [itemsRes, todayRes] = await Promise.all([
-        fetch(`${API_URL}/wastage/items`),
-        fetch(`${API_URL}/wastage/today-entries?supervisorId=${emp.EMP_ID}`),
+      const initialDate = new Date();
+      const [itemsRes, savedMap] = await Promise.all([
+        fetch(`${API_URL}/wastage/items`).then((r) => r.json()),
+        fetchSavedMapForDate(emp.EMP_ID, initialDate),
       ]);
 
-      const itemsData = await itemsRes.json();
-      const todayData = await todayRes.json();
-
-      // Build lookup from today's saved entries (desc order → first = most recent)
-      const savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }> = {};
-      if (todayData.success) {
-        for (const e of todayData.data) {
-          if (!savedMap[e.ITMCD]) {
-            savedMap[e.ITMCD] = {
-              cartonWastage: e.CARTON_WASTAGE != null ? String(e.CARTON_WASTAGE) : "",
-              pcsWastage:    e.PCS_WASTAGE    != null ? String(e.PCS_WASTAGE)    : "",
-              looseOil:      e.LOOSE_OIL      != null ? String(e.LOOSE_OIL)      : "",
-            };
-          }
-        }
-      }
-
-      if (itemsData.success) {
-        setEntries(
-          itemsData.data.map((item: MstItem) => ({
-            itmcd:         item.itmcd,
-            itmnm:         item.itmnm,
-            itmsubcat:     item.itmsubcat,
-            cartonWastage: savedMap[item.itmcd]?.cartonWastage ?? "",
-            pcsWastage:    savedMap[item.itmcd]?.pcsWastage    ?? "",
-            looseOil:      savedMap[item.itmcd]?.looseOil      ?? "",
-          }))
-        );
+      if (itemsRes.success) {
+        setItems(itemsRes.data);
+        setEntries(buildEntriesFromSaved(itemsRes.data, savedMap));
       }
     } catch {
       Alert.alert("Error", "Failed to load data. Check your connection.");
     } finally {
       setLoading(false);
+      setHasBootstrapped(true);
+    }
+  };
+
+  // Called whenever the user picks a different date. Re-fetches that
+  // date's saved entries and rebuilds the form from `items` (already
+  // loaded) — any unsaved input for the previous date is intentionally
+  // discarded, since it belongs to a different day's sheet.
+  const loadEntriesForDate = async (date: Date) => {
+    if (!supervisorId || items.length === 0) return;
+    setDateLoading(true);
+    try {
+      const savedMap = await fetchSavedMapForDate(supervisorId, date);
+      setEntries(buildEntriesFromSaved(items, savedMap));
+    } catch {
+      Alert.alert("Error", "Failed to load entries for that date.");
+    } finally {
+      setDateLoading(false);
     }
   };
 
@@ -121,23 +361,14 @@ export default function WastagePlantScreen() {
     []
   );
 
-  const reloadToday = async (supId: string) => {
+  const onDateSelected = (d: Date) => {
+    setSelectedDate(d);
+    // loadEntriesForDate runs via the dateKey effect above.
+  };
+
+  const reloadToday = async (supId: string, date: Date) => {
     try {
-      const todayRes  = await fetch(`${API_URL}/wastage/today-entries?supervisorId=${supId}`);
-      const todayData = await todayRes.json();
-      if (!todayData.success) return;
-
-      const savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }> = {};
-      for (const e of todayData.data) {
-        if (!savedMap[e.ITMCD]) {
-          savedMap[e.ITMCD] = {
-            cartonWastage: e.CARTON_WASTAGE != null ? String(e.CARTON_WASTAGE) : "",
-            pcsWastage:    e.PCS_WASTAGE    != null ? String(e.PCS_WASTAGE)    : "",
-            looseOil:      e.LOOSE_OIL      != null ? String(e.LOOSE_OIL)      : "",
-          };
-        }
-      }
-
+      const savedMap = await fetchSavedMapForDate(supId, date);
       setEntries((prev) =>
         prev.map((e) => (savedMap[e.itmcd] ? { ...e, ...savedMap[e.itmcd] } : e))
       );
@@ -161,14 +392,20 @@ export default function WastagePlantScreen() {
       const res = await fetch(`${API_URL}/wastage/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doneBy: supervisorId, entries }),
+        body: JSON.stringify({
+          doneBy: supervisorId,
+          date: dateKey,
+          entries, // backend filters valid ones, and replaces any existing
+                   // rows for this date/item/supervisor rather than
+                   // double-inserting
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        Alert.alert("Saved", `${data.data.count} entries saved.`);
-        await reloadToday(supervisorId);
+        Alert.alert("Saved", `${data.data.count} entries saved for ${formatDateLabel(selectedDate)}.`);
+        await reloadToday(supervisorId, selectedDate);
       } else {
         Alert.alert("Error", data.message || "Submission failed");
       }
@@ -221,7 +458,6 @@ export default function WastagePlantScreen() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.topBarTitle}>Wastage Plant</Text>
-            <Text style={styles.topBarSub}>{dateLabel}</Text>
           </View>
           <View style={styles.progressPill}>
             <Text style={styles.progressPillText}>
@@ -229,6 +465,21 @@ export default function WastagePlantScreen() {
             </Text>
           </View>
         </View>
+
+        {/* ── Date Selector ── */}
+        <TouchableOpacity
+          style={styles.dateSelector}
+          onPress={() => setDatePickerVisible(true)}
+          disabled={dateLoading}
+        >
+          <Ionicons name="calendar-outline" size={16} color={C.primary} />
+          <Text style={styles.dateSelectorText}>{dateLabel}</Text>
+          {dateLoading ? (
+            <ActivityIndicator size="small" color={C.primary} style={{ marginLeft: 4 }} />
+          ) : (
+            <Ionicons name="chevron-down" size={14} color={C.textMuted} style={{ marginLeft: 2 }} />
+          )}
+        </TouchableOpacity>
 
         {/* ── Progress Bar ── */}
         <View style={styles.progressBarTrack}>
@@ -375,6 +626,14 @@ export default function WastagePlantScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* ── Date Picker Modal ── */}
+      <DatePickerModal
+        visible={datePickerVisible}
+        selectedDate={selectedDate}
+        onSelect={onDateSelected}
+        onClose={() => setDatePickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -409,6 +668,24 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: C.primaryMuted,
   },
   progressPillText: { color: C.primary, fontSize: 12, fontWeight: "700" },
+
+  // Date selector — sits between the top bar and progress bar, tappable
+  // to open DatePickerModal. Same treatment as the filling screen.
+  dateSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: C.inputBg,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  dateSelectorText: {
+    color: C.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
 
   progressBarTrack: { height: 3, backgroundColor: C.border },
   progressBarFill:  { height: 3, backgroundColor: C.primary },
@@ -509,4 +786,145 @@ const styles = StyleSheet.create({
   submitBtnDisabled:   { backgroundColor: C.primaryMuted },
   submitBtnIncomplete: { backgroundColor: C.primaryDark, opacity: 0.7 },
   submitBtnText:       { color: C.textInverse, fontSize: 14, fontWeight: "800" },
+});
+
+// ─── Date Modal Styles ────────────────────────────────────────────────────────
+
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15,23,42,0.4)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: C.cardBg,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "70%",
+    borderTopWidth: 1,
+    borderColor: C.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  title: { color: C.textPrimary, fontSize: 16, fontWeight: "800" },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quickRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  quickChip: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  quickChipActive: {
+    backgroundColor: C.primaryLight,
+    borderColor: C.primaryMuted,
+  },
+  quickChipText: {
+    color: C.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  quickChipTextActive: {
+    color: C.primary,
+  },
+  monthNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  monthNavBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  monthNavLabel: {
+    color: C.textPrimary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  weekdayRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
+  weekdayText: {
+    flex: 1,
+    textAlign: "center",
+    color: C.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 2,
+  },
+  dayCellActive: {
+    backgroundColor: C.primary,
+    borderRadius: 999,
+  },
+  dayCellToday: {
+    borderWidth: 1,
+    borderColor: C.primaryMuted,
+    borderRadius: 999,
+  },
+  dayText: {
+    color: C.textPrimary,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  dayTextDisabled: {
+    color: C.textMuted,
+    opacity: 0.35,
+  },
+  dayTextActive: {
+    color: C.textInverse,
+    fontWeight: "800",
+  },
 });
