@@ -118,7 +118,7 @@ export default function SupervisorDrawer({ supervisorName, empType }: Props) {
   const handleLogout = async () => {
     close();
     await AsyncStorage.removeItem(STORAGE_KEYS.EMPLOYEE);
-    setTimeout(() => router.replace("/auth/select-employee"), DURATION + 20);
+    setTimeout(() => router.replace("/"), DURATION + 20);
   };
 
   const isAdmin = empType === "ADMIN";

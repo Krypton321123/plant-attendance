@@ -28,11 +28,15 @@ import { C } from "../../constants/theme";
 
 type EmpType = "OFFICE" | "PPSUPERVISOR";
 
-// DRAFT (office editing, not yet visible to supervisor) -> PENDING (sent,
-// visible in supervisor's queue, but STILL editable by office until the
-// supervisor completes it) -> COMPLETED (supervisor finished loading
-// entries; locked for everyone).
-type DispatchStatus = "DRAFT" | "PENDING" | "COMPLETED";
+// DRAFT (office editing Dispatch/Empty Material Details, not yet visible to
+// supervisor) -> PENDING (sent, visible in supervisor's queue, but STILL
+// editable by office for Dispatch/Empty Material Details until the
+// supervisor completes it) -> COMPLETED (supervisor has finished loading
+// entries; Dispatch/Empty Material Details are now frozen for office, who
+// must fill Transporter + Weight/Freight Details for the first time) ->
+// FINALIZED (office has filled Transporter + Weight/Freight; locked for
+// everyone).
+type DispatchStatus = "DRAFT" | "PENDING" | "COMPLETED" | "FINALIZED";
 
 type MstItem = {
   itmcd: string;
@@ -173,13 +177,18 @@ const STATUS_META: Record<
 > = {
   DRAFT: { label: "Draft", bg: "#F1F5F9", border: "#CBD5E1", text: "#475569" },
   PENDING: { label: "Pending", bg: "#FEF3C7", border: "#FCD34D", text: "#B45309" },
-  COMPLETED: { label: "Completed", bg: "#DCFCE7", border: "#86EFAC", text: "#15803D" },
+  // Labelled "Loaded" rather than "Completed" — office still owes
+  // Transporter + Weight/Freight Details at this point, so "Completed"
+  // would misleadingly suggest nothing is left to do.
+  COMPLETED: { label: "Loaded", bg: "#DBEAFE", border: "#93C5FD", text: "#1D4ED8" },
+  FINALIZED: { label: "Finalized", bg: "#DCFCE7", border: "#86EFAC", text: "#15803D" },
 };
 
 const OFFICE_FOOTER_TEXT: Record<DispatchStatus, string> = {
   DRAFT: "Tap to continue editing →",
   PENDING: "Sent — tap to review or edit →",
-  COMPLETED: "Tap to view completed challan →",
+  COMPLETED: "Supervisor has loaded this — tap to add transporter & weight details →",
+  FINALIZED: "Tap to view finalized challan →",
 };
 
 // Box count for one loading entry. Any of length/width/height that is not
@@ -1074,26 +1083,34 @@ export default function DispatchPlantScreen() {
   const [parties, setParties] = useState<Party[]>([]);
   const [depos, setDepos] = useState<Depo[]>([]);
 
-  // OFFICE — own sessions (all statuses) + wizard mode/step
+  // OFFICE — own sessions (all statuses) + current screen mode.
+  //   "list"     — the session list.
+  //   "details"  — Dispatch Details + Empty Material Details, the only page
+  //                 office fills before sending. Editable while DRAFT or
+  //                 PENDING.
+  //   "finalize" — read-only recap of the supervisor's loading work, plus
+  //                 the Transporter/Weight Details form. Only reachable for
+  //                 COMPLETED (editable) or FINALIZED (read-only) sessions.
   const [officeSessions, setOfficeSessions] = useState<Session[]>([]);
-  const [officeMode, setOfficeMode] = useState<"list" | "wizard">("list");
-  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [officeMode, setOfficeMode] = useState<"list" | "details" | "finalize">(
+    "list",
+  );
 
   // PPSUPERVISOR — pending queue
   const [sessions, setSessions] = useState<Session[]>([]);
 
-  // Shared: the session currently open in the wizard/complete-form, for
-  // both roles. null = OFFICE is creating a brand new session.
+  // Shared: the session currently open for both roles. null = OFFICE is
+  // creating a brand new session.
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
-  // Form state — Step 1 (Dispatch Details)
+  // Form state — Dispatch Details + Empty Material (office's "details" page)
   const [dispatchTo, setDispatchTo] = useState<"DEPO" | "PARTY">("DEPO");
   const [partyCd, setPartyCd] = useState("");
   const [partyNm, setPartyNm] = useState("");
   const [dispItems, setDispItems] = useState<DispatchItemRow[]>([blankRow()]);
   const [emptyItems, setEmptyItems] = useState<EmptyItemRow[]>([blankEmpty()]);
 
-  // Form state — Step 2 (Transporter Details)
+  // Form state — Transporter Details (office's "finalize" page)
   const [vehicleNo, setVehicleNo] = useState("");
   const [biltyNo, setBiltyNo] = useState("");
   const [driverName, setDriverName] = useState("");
@@ -1101,7 +1118,7 @@ export default function DispatchPlantScreen() {
   const [grrNo, setGrrNo] = useState("");
   const [transporter, setTransporter] = useState("");
 
-  // Form state — Step 3 (Weight Details)
+  // Form state — Weight Details (also office's "finalize" page)
   const [grossWt, setGrossWt] = useState("");
   const [tareWt, setTareWt] = useState("");
   const [totalWt, setTotalWt] = useState("");
@@ -1124,23 +1141,19 @@ export default function DispatchPlantScreen() {
     year: "numeric",
   });
 
-  // A session opened by OFFICE is view-only only once the supervisor has
-  // COMPLETED it. DRAFT (not yet sent) and PENDING (sent, but supervisor
-  // hasn't finished loading) are both still editable — office can keep
-  // correcting dispatch/transporter/weight details right up until the
-  // supervisor completes the session. This drives the wizard's
-  // editable/read-only mode.
-  const readOnlyWizard = activeSession != null && activeSession.STATUS === "COMPLETED";
-  const stepsEditable = !readOnlyWizard;
+  // True once OFFICE has already finalized (Transporter + Weight filled,
+  // locked for everyone). Used only within "finalize" mode to decide
+  // whether that form is editable or a read-only recap.
+  const finalizeReadOnly = activeSession?.STATUS === "FINALIZED";
 
-  // True only for a PENDING session being edited by OFFICE — i.e. it's
-  // editable (stepsEditable) but has already been sent once, so the final
-  // step's action must be "save changes", not "send to supervisor" again
-  // (the backend now rejects a re-send of a non-DRAFT session).
-  const alreadySent = activeSession?.STATUS === "PENDING";
+  // True for a PENDING session being edited by OFFICE in "details" mode —
+  // it's already been sent once, so the footer action must be "save", not
+  // "send" again (the backend rejects a re-send of a non-DRAFT session).
+  const detailsAlreadySent = activeSession?.STATUS === "PENDING";
 
-  // Live preview of Balance while OFFICE is typing — the authoritative value
-  // always comes back from the server on save, this is just for feedback.
+  // Live preview of Balance while OFFICE is typing in "finalize" mode — the
+  // authoritative value always comes back from the server on save, this is
+  // just for feedback.
   const liveBalance = (Number(totalFreight) || 0) - (Number(advance) || 0);
 
   useEffect(() => {
@@ -1415,27 +1428,24 @@ export default function DispatchPlantScreen() {
     [hydrateItemRows],
   );
 
-  // ── OFFICE: session payload + step navigation ─────────────────────────────
+  // ── OFFICE: payload builders ───────────────────────────────────────────────
+  // Split in two because the two office pages write disjoint fields at
+  // disjoint stages: "details" writes Dispatch/Empty Material (create or
+  // update, pre-send or PENDING), "finalize" writes Transporter/Weight
+  // (only once, post-supervisor). Sending the wrong shape to the wrong
+  // endpoint would either silently no-op fields the endpoint no longer
+  // accepts or, worse, mask a stage the UI shouldn't be able to reach.
 
-  const buildSessionPayload = () => {
+  const buildDetailsPayload = () => {
     const validDisp = dispItems.filter((r) => r.itmcd && r.qty.trim());
+    // Empty Material has no "at least one" requirement — a session can be
+    // sent with zero empty-material rows.
     const validEmpty = emptyItems.filter((r) => r.itmcd && r.qty.trim());
     return {
       doneBy: empId,
       dispatchTo,
       partyCd,
       partyNm,
-      vehicleNo,
-      biltyNo,
-      transporter,
-      driverName,
-      driverNo,
-      grrNo,
-      grossWt,
-      tareWt,
-      totalWt,
-      totalFreight,
-      advance,
       items: validDisp.map((r) => ({ itmcd: r.itmcd, itmnm: r.itmnm, qty: r.qty })),
       emptyItems: validEmpty.map((r) => ({
         itmcd: r.itmcd,
@@ -1445,36 +1455,65 @@ export default function DispatchPlantScreen() {
     };
   };
 
+  const buildFinalizePayload = () => ({
+    doneBy: empId,
+    vehicleNo,
+    biltyNo,
+    transporter,
+    driverName,
+    driverNo,
+    grrNo,
+    grossWt,
+    tareWt,
+    totalWt,
+    totalFreight,
+    advance,
+  });
+
+  // ── OFFICE: mode navigation ────────────────────────────────────────────────
+
   const startNewSession = () => {
     setActiveSession(null);
     resetForm();
-    setWizardStep(1);
-    setOfficeMode("wizard");
+    setOfficeMode("details");
   };
 
   const openOfficeSession = (session: Session) => {
     setActiveSession(session);
     hydrateSessionIntoForm(session);
-    setWizardStep(1);
-    setOfficeMode("wizard");
+    // DRAFT/PENDING still owe Dispatch/Empty Material Details ("details");
+    // COMPLETED/FINALIZED have that frozen and instead show the supervisor's
+    // work alongside Transporter/Weight Details ("finalize").
+    setOfficeMode(
+      session.STATUS === "COMPLETED" || session.STATUS === "FINALIZED"
+        ? "finalize"
+        : "details",
+    );
   };
 
-  const exitWizardToList = () => {
+  const exitToList = () => {
     setActiveSession(null);
-    setWizardStep(1);
     resetForm();
     setOfficeMode("list");
     loadOfficeSessions();
   };
 
-  const handleWizardBackArrow = async () => {
-    if (activeSession && !readOnlyWizard) {
+  // Best-effort silent save when backing out of "details" mode without
+  // explicitly sending/saving — mirrors the old wizard's back-arrow
+  // behavior. Only applies to an existing DRAFT/PENDING session; a brand
+  // new, never-saved session is simply discarded on back-out, same as
+  // before.
+  const handleDetailsBackArrow = async () => {
+    if (
+      activeSession &&
+      (activeSession.STATUS === "DRAFT" || activeSession.STATUS === "PENDING")
+    ) {
       setSubmitting(true);
       try {
         await fetch(`${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildSessionPayload()),
+          body: JSON.stringify(buildDetailsPayload()),
         });
       } catch {
         // best-effort background save — don't block leaving on a failure
@@ -1482,10 +1521,13 @@ export default function DispatchPlantScreen() {
         setSubmitting(false);
       }
     }
-    exitWizardToList();
+    exitToList();
   };
 
-  const handleStep1Next = async () => {
+  // ── OFFICE: "details" page actions ────────────────────────────────────────
+
+  // DRAFT (new or existing): create-or-update, then send in one tap.
+  const handleSendToSupervisor = async () => {
     if (!partyCd) {
       Alert.alert(
         "Missing",
@@ -1501,8 +1543,8 @@ export default function DispatchPlantScreen() {
 
     setSubmitting(true);
     try {
-      const payload = buildSessionPayload();
-      const res = activeSession
+      const payload = buildDetailsPayload();
+      const saveRes = activeSession
         ? await fetch(`${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -1513,71 +1555,15 @@ export default function DispatchPlantScreen() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setActiveSession(data.data);
-        setWizardStep(2);
-      } else {
-        Alert.alert("Error", data.message || "Failed to save");
-      }
-    } catch(err: any) {
-      console.log(err);
-      Alert.alert("Error", "Network error.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleStep2Next = async () => {
-    if (!activeSession) {
-      setWizardStep(3);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await fetch(
-        `${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildSessionPayload()),
-        },
-      );
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setActiveSession(data.data);
-        setWizardStep(3);
-      } else {
-        Alert.alert("Error", data.message || "Failed to save");
-      }
-    } catch(err: any) {
-      console.log(err);
-      Alert.alert("Error", "Network error.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSendToSupervisor = async () => {
-    if (!activeSession) return;
-    setSubmitting(true);
-    try {
-      const putRes = await fetch(
-        `${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildSessionPayload()),
-        },
-      );
-      const putData = await putRes.json();
-      if (!putRes.ok || !putData.success) {
-        Alert.alert("Error", putData.message || "Failed to save");
+      const saveData = await saveRes.json();
+      if (!saveRes.ok || !saveData.success) {
+        Alert.alert("Error", saveData.message || "Failed to save");
         return;
       }
 
+      const sessionId = saveData.data.SESSION_ID;
       const sendRes = await fetch(
-        `${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}/send`,
+        `${API_URL}/dispatch/sessions/${sessionId}/send`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -1586,44 +1572,12 @@ export default function DispatchPlantScreen() {
       );
       const sendData = await sendRes.json();
       if (sendRes.ok && sendData.success) {
-        await generateAndSharePDF({
-          dispatchTo,
-          partyNm,
-          createdAt: fmtDateTime(
-            sendData.data?.CREATEDAT ?? activeSession.CREATEDAT,
-          ),
-          vehicleNo,
-          biltyNo,
-          transporter,
-          driverName,
-          driverNo,
-          grrNo,
-          grossWt,
-          tareWt,
-          totalWt,
-          totalFreight,
-          advance,
-          balance: fmtNum(liveBalance),
-          // Loading entries don't exist yet — that's the supervisor's job —
-          // so each item's entries are empty here.
-          items: dispItems
-            .filter((r) => r.itmnm)
-            .map((r) => ({
-              itmnm: r.itmnm,
-              qty: r.qty,
-              totalBoxes: 0,
-              weight: 0,
-              grossWeight: 0,
-              entries: [],
-            })),
-          emptyItems: emptyItems.filter((r) => r.itmcd),
-        });
         Alert.alert("Sent", "Dispatch session sent to the supervisor.");
-        exitWizardToList();
+        exitToList();
       } else {
         Alert.alert("Error", sendData.message || "Failed to send");
       }
-    } catch(err: any) {
+    } catch (err: any) {
       console.log(err);
       Alert.alert("Error", "Network error.");
     } finally {
@@ -1631,12 +1585,9 @@ export default function DispatchPlantScreen() {
     }
   };
 
-  // OFFICE saves changes to a session that was already sent (PENDING) —
-  // unlike handleSendToSupervisor, this never calls the /send endpoint again
-  // (the session is already visible to the supervisor; re-sending a non-DRAFT
-  // session is rejected server-side). This just persists the edits and
-  // returns to the list.
-  const handleSaveAndExit = async () => {
+  // PENDING: office edits an already-sent session — save only, never
+  // re-send (the backend rejects re-sending a non-DRAFT session).
+  const handleSaveDetails = async () => {
     if (!activeSession) return;
     setSubmitting(true);
     try {
@@ -1645,13 +1596,13 @@ export default function DispatchPlantScreen() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildSessionPayload()),
+          body: JSON.stringify(buildDetailsPayload()),
         },
       );
       const data = await res.json();
       if (res.ok && data.success) {
         Alert.alert("Saved", "Your changes have been saved.");
-        exitWizardToList();
+        exitToList();
       } else {
         Alert.alert("Error", data.message || "Failed to save");
       }
@@ -1663,6 +1614,75 @@ export default function DispatchPlantScreen() {
     }
   };
 
+  // ── OFFICE: "finalize" page actions ───────────────────────────────────────
+
+  // COMPLETED: office fills Transporter/Weight for the first time and
+  // finalizes. This is the first point in the flow where every section of
+  // the challan (items, supervisor's loading entries, transporter, weight/
+  // freight) actually has data, so the PDF is generated and shared here —
+  // not at send-time or at supervisor-complete-time, when it would have
+  // been mostly blank.
+  const handleFinalize = async () => {
+    if (!activeSession) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/dispatch/sessions/${activeSession.SESSION_ID}/finalize`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildFinalizePayload()),
+        },
+      );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const finalized: Session = data.data;
+        await generateAndSharePDF({
+          dispatchTo,
+          partyNm,
+          createdAt: fmtDateTime(finalized.CREATEDAT ?? activeSession.CREATEDAT),
+          vehicleNo,
+          biltyNo,
+          transporter,
+          driverName,
+          driverNo,
+          grrNo,
+          grossWt,
+          tareWt,
+          totalWt,
+          totalFreight,
+          advance,
+          balance:
+            finalized.BALANCE != null
+              ? String(finalized.BALANCE)
+              : fmtNum(liveBalance),
+          items: dispItems
+            .filter((r) => r.itmnm)
+            .map((r) => ({
+              itmnm: r.itmnm,
+              qty: r.qty,
+              totalBoxes: computeItemTotalBoxes(r.loadingEntries),
+              weight: computeItemWeight(r.loadingEntries, r.wgtconv),
+              grossWeight: computeItemGrossWeight(r.loadingEntries, r.avgWtPerBox),
+              entries: r.loadingEntries,
+            })),
+          emptyItems: emptyItems.filter((r) => r.itmcd),
+        });
+        Alert.alert("Finalized", "Dispatch session finalized.");
+        exitToList();
+      } else {
+        Alert.alert("Error", data.message || "Failed to finalize");
+      }
+    } catch (err: any) {
+      console.log("errori is", err);
+      Alert.alert("Error", "Network error.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // FINALIZED: already saved server-side, this just re-shares the same
+  // challan without another API call.
   const handleShareChallan = async () => {
     if (!activeSession) return;
     await generateAndSharePDF({
@@ -1680,7 +1700,10 @@ export default function DispatchPlantScreen() {
       totalWt,
       totalFreight,
       advance,
-      balance: fmtNum(liveBalance),
+      balance:
+        activeSession.BALANCE != null
+          ? String(activeSession.BALANCE)
+          : fmtNum(liveBalance),
       items: dispItems
         .filter((r) => r.itmnm)
         .map((r) => ({
@@ -1733,33 +1756,10 @@ export default function DispatchPlantScreen() {
       );
       const data = await res.json();
       if (res.ok && data.success) {
-        await generateAndSharePDF({
-          dispatchTo,
-          partyNm,
-          createdAt: fmtDateTime(activeSession.CREATEDAT),
-          vehicleNo,
-          biltyNo,
-          transporter,
-          driverName,
-          driverNo,
-          grrNo,
-          grossWt,
-          tareWt,
-          totalWt,
-          totalFreight,
-          advance,
-          balance: fmtNum(liveBalance),
-          items: dispItems.map((r) => ({
-            itmnm: r.itmnm,
-            qty: r.qty,
-            totalBoxes: computeItemTotalBoxes(r.loadingEntries),
-            weight: computeItemWeight(r.loadingEntries, r.wgtconv),
-            grossWeight: computeItemGrossWeight(r.loadingEntries, r.avgWtPerBox),
-            entries: r.loadingEntries,
-          })),
-          emptyItems: emptyItems,
-        });
-        Alert.alert("Completed", "Dispatch session completed.");
+        Alert.alert(
+          "Completed",
+          "Loading details recorded. This session now goes back to office to finalize.",
+        );
         setActiveSession(null);
         resetForm();
         await loadPendingSessions();
@@ -1848,15 +1848,11 @@ export default function DispatchPlantScreen() {
     );
   }
 
-  // ── OFFICE: 3-step wizard (create/edit a DRAFT or PENDING session, or
-  //    view a locked COMPLETED one) ───
-  if (empType === "OFFICE" && officeMode === "wizard") {
-    const STEP_TITLES: Record<1 | 2 | 3, string> = {
-      1: "Dispatch Details",
-      2: "Transporter Details",
-      3: "Weight Details",
-    };
-
+  // ── OFFICE: "details" mode — Dispatch Details + Empty Material Details,
+  //    the only page office fills before sending. Always editable: this
+  //    mode is only ever entered for a DRAFT or PENDING session (see
+  //    openOfficeSession / startNewSession). ─────────────────────────────
+  if (empType === "OFFICE" && officeMode === "details") {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
@@ -1867,7 +1863,7 @@ export default function DispatchPlantScreen() {
           <View style={styles.topBar}>
             <TouchableOpacity
               style={styles.backBtn}
-              onPress={handleWizardBackArrow}
+              onPress={handleDetailsBackArrow}
             >
               <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
             </TouchableOpacity>
@@ -1875,10 +1871,370 @@ export default function DispatchPlantScreen() {
               <Text style={styles.topBarTitle}>
                 {activeSession ? activeSession.PARTY_NM || "Dispatch Session" : "New Dispatch"}
               </Text>
+              <Text style={styles.topBarSub}>{dateLabel}</Text>
+            </View>
+            {activeSession && (
+              <View
+                style={[
+                  styles.wizardStatusBadge,
+                  {
+                    backgroundColor: STATUS_META[activeSession.STATUS].bg,
+                    borderColor: STATUS_META[activeSession.STATUS].border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.wizardStatusBadgeText,
+                    { color: STATUS_META[activeSession.STATUS].text },
+                  ]}
+                >
+                  {STATUS_META[activeSession.STATUS].label}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>A</Text>
+              </View>
+              <Text style={styles.sectionTitle}>Dispatch Details</Text>
+            </View>
+
+            {/* Dispatch To toggle */}
+            <View style={styles.card}>
+              <Text style={styles.fieldLabel}>Dispatch To</Text>
+              <View style={styles.toggleRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleBtn,
+                    dispatchTo === "DEPO" && styles.toggleBtnActive,
+                  ]}
+                  onPress={() => {
+                    setDispatchTo("DEPO");
+                    setPartyCd("");
+                    setPartyNm("");
+                  }}
+                >
+                  <Ionicons
+                    name="business-outline"
+                    size={16}
+                    color={dispatchTo === "DEPO" ? C.primary : C.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.toggleBtnText,
+                      dispatchTo === "DEPO" && styles.toggleBtnTextActive,
+                    ]}
+                  >
+                    Own Depo
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleBtn,
+                    dispatchTo === "PARTY" && styles.toggleBtnActive,
+                  ]}
+                  onPress={() => {
+                    setDispatchTo("PARTY");
+                    setPartyCd("");
+                    setPartyNm("");
+                  }}
+                >
+                  <Ionicons
+                    name="people-outline"
+                    size={16}
+                    color={dispatchTo === "PARTY" ? C.primary : C.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.toggleBtnText,
+                      dispatchTo === "PARTY" && styles.toggleBtnTextActive,
+                    ]}
+                  >
+                    Direct to Party
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.fieldLabel, { marginTop: 14 }]}>
+                {dispatchTo === "DEPO" ? "Depo Name" : "Party Name"}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.selectorBtn,
+                  partyCd ? styles.selectorBtnFilled : null,
+                ]}
+                onPress={() => setTargetPickerVisible(true)}
+              >
+                <Text
+                  style={
+                    partyCd
+                      ? styles.selectorBtnFilledText
+                      : styles.selectorBtnPlaceholder
+                  }
+                  numberOfLines={1}
+                >
+                  {partyNm ||
+                    `Select ${dispatchTo === "DEPO" ? "depo" : "party"}…`}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={partyCd ? C.primary : C.textMuted}
+                />
+              </TouchableOpacity>
+
+              {activeSession && (
+                <View style={styles.createdRow}>
+                  <Ionicons name="time-outline" size={13} color={C.textMuted} />
+                  <Text style={styles.createdText}>
+                    Created {fmtDateTime(activeSession.CREATEDAT)}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Items */}
+            <View style={styles.card}>
+              <View style={styles.tableTitleRow}>
+                <Text style={styles.tableTitle}>Item Details</Text>
+                <TouchableOpacity
+                  style={styles.addRowBtn}
+                  onPress={() => setDispItems((p) => [...p, blankRow()])}
+                >
+                  <Ionicons name="add" size={16} color={C.primary} />
+                  <Text style={styles.addRowBtnText}>Add Row</Text>
+                </TouchableOpacity>
+              </View>
+
+              {dispItems.map((row, idx) => (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.itemBlock,
+                    idx < dispItems.length - 1 && styles.itemBlockBorder,
+                  ]}
+                >
+                  <View style={styles.itemBlockHeader}>
+                    <View style={{ flex: 1 }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.itemSelector,
+                          row.itmcd ? styles.itemSelectorFilled : null,
+                        ]}
+                        onPress={() => openItemPicker("dispatch", idx)}
+                      >
+                        <Text
+                          style={
+                            row.itmcd
+                              ? styles.itemSelectorFilledText
+                              : styles.itemSelectorPlaceholder
+                          }
+                          numberOfLines={2}
+                        >
+                          {row.itmnm || "Select item…"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.qtyInputWrap}>
+                      <TextInput
+                        style={[
+                          styles.numInput,
+                          row.qty ? styles.numInputFilled : null,
+                        ]}
+                        value={row.qty}
+                        onChangeText={(v) => updateDispRow(idx, "qty", v)}
+                        keyboardType="decimal-pad"
+                        placeholder="Qty"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+
+                    {dispItems.length > 1 && (
+                      <TouchableOpacity
+                        onPress={() => removeDispRow(idx)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={{ marginLeft: 8 }}
+                      >
+                        <Ionicons
+                          name="remove-circle-outline"
+                          size={20}
+                          color={C.red}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {/* Section B */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionBadge, styles.sectionBadgeB]}>
+                <Text style={styles.sectionBadgeText}>B</Text>
+              </View>
+              <Text style={styles.sectionTitle}>Empty Material Details</Text>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.tableTitleRow}>
+                <Text style={styles.tableTitle}>Items</Text>
+                <TouchableOpacity
+                  style={styles.addRowBtn}
+                  onPress={() => setEmptyItems((p) => [...p, blankEmpty()])}
+                >
+                  <Ionicons name="add" size={16} color={C.primary} />
+                  <Text style={styles.addRowBtnText}>Add Row</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, styles.colItemWide]}>
+                  Item Name
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
+                <View style={styles.colAction} />
+              </View>
+
+              {emptyItems.map((row, idx) => (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.tableRow,
+                    idx < emptyItems.length - 1 && styles.tableRowBorder,
+                  ]}
+                >
+                  <View style={styles.colItemWide}>
+                    <TouchableOpacity
+                      style={[
+                        styles.itemSelector,
+                        row.itmcd ? styles.itemSelectorFilled : null,
+                      ]}
+                      onPress={() => openItemPicker("empty", idx)}
+                    >
+                      <Text
+                        style={
+                          row.itmcd
+                            ? styles.itemSelectorFilledText
+                            : styles.itemSelectorPlaceholder
+                        }
+                        numberOfLines={2}
+                      >
+                        {row.itmnm || "Select item…"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.colQty}>
+                    <TextInput
+                      style={[
+                        styles.numInput,
+                        row.qty ? styles.numInputFilled : null,
+                      ]}
+                      value={row.qty}
+                      onChangeText={(v) => updateEmptyRow(idx, "qty", v)}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      placeholderTextColor={C.textMuted}
+                    />
+                  </View>
+                  <View style={styles.colAction}>
+                    {emptyItems.length > 1 && (
+                      <TouchableOpacity
+                        onPress={() => removeEmptyRow(idx)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons
+                          name="remove-circle-outline"
+                          size={20}
+                          color={C.red}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <View style={{ height: 24 }} />
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+              onPress={detailsAlreadySent ? handleSaveDetails : handleSendToSupervisor}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color={C.textInverse} size="small" />
+              ) : (
+                <>
+                  <Ionicons
+                    name={detailsAlreadySent ? "save-outline" : "send-outline"}
+                    size={18}
+                    color={C.textInverse}
+                  />
+                  <Text style={styles.submitBtnText}>
+                    {detailsAlreadySent ? "Save Changes" : "Send to Supervisor"}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+
+        <TargetPickerModal
+          visible={targetPickerVisible}
+          mode={dispatchTo}
+          parties={parties}
+          depos={depos}
+          onSelect={(cd, nm) => {
+            setPartyCd(cd);
+            setPartyNm(nm);
+          }}
+          onClose={() => setTargetPickerVisible(false)}
+        />
+        <ItemPickerModal
+          visible={itemPickerVisible}
+          items={allItems}
+          onSelect={onItemSelected}
+          onClose={() => setItemPickerVisible(false)}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // ── OFFICE: "finalize" mode — read-only recap of the supervisor's work,
+  //    plus Transporter/Weight Details, filled here for the first time.
+  //    Editable while COMPLETED; read-only once FINALIZED. Only ever
+  //    entered for a COMPLETED or FINALIZED session (see
+  //    openOfficeSession). ──────────────────────────────────────────────
+  if (empType === "OFFICE" && officeMode === "finalize") {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={0}
+        >
+          <View style={styles.topBar}>
+            <TouchableOpacity style={styles.backBtn} onPress={exitToList}>
+              <Ionicons name="arrow-back" size={20} color={C.textPrimary} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.topBarTitle}>
+                {activeSession?.PARTY_NM || "Dispatch Session"}
+              </Text>
               <Text style={styles.topBarSub}>
-                {readOnlyWizard
-                  ? STATUS_META[activeSession!.STATUS].label
-                  : dateLabel}
+                {activeSession ? STATUS_META[activeSession.STATUS].label : dateLabel}
               </Text>
             </View>
             {activeSession && (
@@ -1903,657 +2259,339 @@ export default function DispatchPlantScreen() {
             )}
           </View>
 
-          <View style={styles.stepHeader}>
-            <Text style={styles.stepHeaderTitle}>{STEP_TITLES[wizardStep]}</Text>
-            <Text style={styles.stepHeaderCount}>Step {wizardStep} of 3</Text>
-          </View>
-          <View style={styles.stepProgressTrack}>
-            <View
-              style={[
-                styles.stepProgressFill,
-                { width: `${(wizardStep / 3) * 100}%` },
-              ]}
-            />
-          </View>
-
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {wizardStep === 1 && (
-              <>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionBadge}>
-                    <Text style={styles.sectionBadgeText}>A</Text>
-                  </View>
-                  <Text style={styles.sectionTitle}>Dispatch Details</Text>
-                </View>
+            {/* ── Recap: Dispatch Details (read-only, frozen) ── */}
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>A</Text>
+              </View>
+              <Text style={styles.sectionTitle}>Dispatch Details</Text>
+            </View>
 
-                {/* Dispatch To toggle */}
-                <View style={styles.card}>
-                  <Text style={styles.fieldLabel}>Dispatch To</Text>
-                  <View style={styles.toggleRow}>
-                    <TouchableOpacity
-                      style={[
-                        styles.toggleBtn,
-                        dispatchTo === "DEPO" && styles.toggleBtnActive,
-                      ]}
-                      onPress={() => {
-                        if (stepsEditable) {
-                          setDispatchTo("DEPO");
-                          setPartyCd("");
-                          setPartyNm("");
-                        }
-                      }}
-                      disabled={!stepsEditable}
-                    >
-                      <Ionicons
-                        name="business-outline"
-                        size={16}
-                        color={dispatchTo === "DEPO" ? C.primary : C.textMuted}
-                      />
-                      <Text
-                        style={[
-                          styles.toggleBtnText,
-                          dispatchTo === "DEPO" && styles.toggleBtnTextActive,
-                        ]}
-                      >
-                        Own Depo
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.toggleBtn,
-                        dispatchTo === "PARTY" && styles.toggleBtnActive,
-                      ]}
-                      onPress={() => {
-                        if (stepsEditable) {
-                          setDispatchTo("PARTY");
-                          setPartyCd("");
-                          setPartyNm("");
-                        }
-                      }}
-                      disabled={!stepsEditable}
-                    >
-                      <Ionicons
-                        name="people-outline"
-                        size={16}
-                        color={dispatchTo === "PARTY" ? C.primary : C.textMuted}
-                      />
-                      <Text
-                        style={[
-                          styles.toggleBtnText,
-                          dispatchTo === "PARTY" && styles.toggleBtnTextActive,
-                        ]}
-                      >
-                        Direct to Party
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={[styles.fieldLabel, { marginTop: 14 }]}>
-                    {dispatchTo === "DEPO" ? "Depo Name" : "Party Name"}
+            <View style={styles.card}>
+              <Text style={styles.fieldLabel}>
+                {dispatchTo === "DEPO" ? "Depo Name" : "Party Name"}
+              </Text>
+              <View
+                style={[styles.selectorBtn, styles.selectorBtnFilled, { opacity: 0.7 }]}
+              >
+                <Text style={styles.selectorBtnFilledText} numberOfLines={1}>
+                  {partyNm}
+                </Text>
+              </View>
+              {activeSession && (
+                <View style={styles.createdRow}>
+                  <Ionicons name="time-outline" size={13} color={C.textMuted} />
+                  <Text style={styles.createdText}>
+                    Created {fmtDateTime(activeSession.CREATEDAT)}
                   </Text>
-                  {stepsEditable ? (
-                    <TouchableOpacity
-                      style={[
-                        styles.selectorBtn,
-                        partyCd ? styles.selectorBtnFilled : null,
-                      ]}
-                      onPress={() => setTargetPickerVisible(true)}
-                    >
-                      <Text
-                        style={
-                          partyCd
-                            ? styles.selectorBtnFilledText
-                            : styles.selectorBtnPlaceholder
-                        }
-                        numberOfLines={1}
-                      >
-                        {partyNm ||
-                          `Select ${dispatchTo === "DEPO" ? "depo" : "party"}…`}
+                </View>
+              )}
+            </View>
+
+            {/* ── Recap: items + the supervisor's loading entries ── */}
+            <View style={styles.card}>
+              <Text style={styles.tableTitle}>Item Details</Text>
+              {dispItems.map((row, idx) => (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.itemBlock,
+                    idx < dispItems.length - 1 && styles.itemBlockBorder,
+                  ]}
+                >
+                  <View style={styles.itemBlockHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.itemNameReadOnly}>
+                        {row.itmnm}
+                        {row.qty ? (
+                          <Text style={styles.itemQtyBracket}> ({row.qty})</Text>
+                        ) : null}
                       </Text>
-                      <Ionicons
-                        name="chevron-down"
-                        size={16}
-                        color={partyCd ? C.primary : C.textMuted}
-                      />
-                    </TouchableOpacity>
+                    </View>
+                    {row.avgWtPerBox ? (
+                      <View style={styles.avgWtInputWrap}>
+                        <Text style={styles.avgWtLabel}>Avg Wt/Box</Text>
+                        <Text style={styles.itemNameReadOnly}>
+                          {row.avgWtPerBox}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {(row.avgWtPerBox || row.loadingEntries.length > 0) && (
+                    <LoadingEntriesTable
+                      entries={row.loadingEntries}
+                      wgtconv={row.wgtconv}
+                      avgWtPerBox={row.avgWtPerBox}
+                      editable={false}
+                      onAddEntry={() => {}}
+                      onUpdateEntry={() => {}}
+                      onRemoveEntry={() => {}}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+
+            {/* ── Recap: empty material ── */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionBadge, styles.sectionBadgeB]}>
+                <Text style={styles.sectionBadgeText}>B</Text>
+              </View>
+              <Text style={styles.sectionTitle}>Empty Material Details</Text>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, styles.colItemWide]}>
+                  Item Name
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
+              </View>
+              {emptyItems.map((row, idx) => (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.tableRow,
+                    idx < emptyItems.length - 1 && styles.tableRowBorder,
+                  ]}
+                >
+                  <View style={styles.colItemWide}>
+                    <Text style={styles.itemNameReadOnly}>{row.itmnm}</Text>
+                  </View>
+                  <View style={styles.colQty}>
+                    <Text style={styles.itemNameReadOnly}>{row.qty || "—"}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {/* ── Transporter Details — filled here, for the first time ── */}
+            <View style={styles.card}>
+              <Text style={styles.tableTitle}>Transporter Details</Text>
+              <View style={[styles.fieldGrid, { marginTop: 12 }]}>
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>Vehicle No.</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{vehicleNo || "—"}</Text>
                   ) : (
-                    <View
-                      style={[
-                        styles.selectorBtn,
-                        styles.selectorBtnFilled,
-                        { opacity: 0.7 },
-                      ]}
-                    >
-                      <Text style={styles.selectorBtnFilledText} numberOfLines={1}>
-                        {partyNm}
-                      </Text>
-                    </View>
-                  )}
-
-                  {activeSession && (
-                    <View style={styles.createdRow}>
-                      <Ionicons name="time-outline" size={13} color={C.textMuted} />
-                      <Text style={styles.createdText}>
-                        Created {fmtDateTime(activeSession.CREATEDAT)}
-                      </Text>
-                    </View>
+                    <TextInput
+                      style={styles.textInput}
+                      value={vehicleNo}
+                      onChangeText={setVehicleNo}
+                      placeholder="e.g. UP80 AB 1234"
+                      placeholderTextColor={C.textMuted}
+                      autoCapitalize="characters"
+                    />
                   )}
                 </View>
 
-                {/* Items */}
-                <View style={styles.card}>
-                  <View style={styles.tableTitleRow}>
-                    <Text style={styles.tableTitle}>Item Details</Text>
-                    {stepsEditable && (
-                      <TouchableOpacity
-                        style={styles.addRowBtn}
-                        onPress={() => setDispItems((p) => [...p, blankRow()])}
-                      >
-                        <Ionicons name="add" size={16} color={C.primary} />
-                        <Text style={styles.addRowBtnText}>Add Row</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {dispItems.map((row, idx) => (
-                    <View
-                      key={row.key}
-                      style={[
-                        styles.itemBlock,
-                        idx < dispItems.length - 1 && styles.itemBlockBorder,
-                      ]}
-                    >
-                      <View style={styles.itemBlockHeader}>
-                        <View style={{ flex: 1 }}>
-                          {stepsEditable ? (
-                            <TouchableOpacity
-                              style={[
-                                styles.itemSelector,
-                                row.itmcd ? styles.itemSelectorFilled : null,
-                              ]}
-                              onPress={() => openItemPicker("dispatch", idx)}
-                            >
-                              <Text
-                                style={
-                                  row.itmcd
-                                    ? styles.itemSelectorFilledText
-                                    : styles.itemSelectorPlaceholder
-                                }
-                                numberOfLines={2}
-                              >
-                                {row.itmnm || "Select item…"}
-                              </Text>
-                            </TouchableOpacity>
-                          ) : (
-                            <Text style={styles.itemNameReadOnly}>
-                              {row.itmnm}
-                              {row.qty ? (
-                                <Text style={styles.itemQtyBracket}> ({row.qty})</Text>
-                              ) : null}
-                            </Text>
-                          )}
-                        </View>
-
-                        {!stepsEditable && row.itmcd && row.avgWtPerBox ? (
-                          <View style={styles.avgWtInputWrap}>
-                            <Text style={styles.avgWtLabel}>Avg Wt/Box</Text>
-                            <Text style={styles.itemNameReadOnly}>
-                              {row.avgWtPerBox}
-                            </Text>
-                          </View>
-                        ) : null}
-
-                        {stepsEditable ? (
-                          <View style={styles.qtyInputWrap}>
-                            <TextInput
-                              style={[
-                                styles.numInput,
-                                row.qty ? styles.numInputFilled : null,
-                              ]}
-                              value={row.qty}
-                              onChangeText={(v) => updateDispRow(idx, "qty", v)}
-                              keyboardType="decimal-pad"
-                              placeholder="Qty"
-                              placeholderTextColor={C.textMuted}
-                            />
-                          </View>
-                        ) : null}
-
-                        {stepsEditable && dispItems.length > 1 && (
-                          <TouchableOpacity
-                            onPress={() => removeDispRow(idx)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            style={{ marginLeft: 8 }}
-                          >
-                            <Ionicons
-                              name="remove-circle-outline"
-                              size={20}
-                              color={C.red}
-                            />
-                          </TouchableOpacity>
-                        )}
-                      </View>
-
-                      {/* Read-only view of a completed session also shows the
-                          supervisor's loading entries, since office may want
-                          to review what was actually loaded. */}
-                      {!stepsEditable &&
-                        row.itmcd &&
-                        (row.avgWtPerBox || row.loadingEntries.length > 0) && (
-                          <LoadingEntriesTable
-                            entries={row.loadingEntries}
-                            wgtconv={row.wgtconv}
-                            avgWtPerBox={row.avgWtPerBox}
-                            editable={false}
-                            onAddEntry={() => {}}
-                            onUpdateEntry={() => {}}
-                            onRemoveEntry={() => {}}
-                          />
-                        )}
-                    </View>
-                  ))}
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>Bilty No.</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{biltyNo || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={biltyNo}
+                      onChangeText={setBiltyNo}
+                      placeholder="Bilty / LR number"
+                      placeholderTextColor={C.textMuted}
+                    />
+                  )}
                 </View>
 
-                {/* Section B */}
-                <View style={styles.sectionHeader}>
-                  <View style={[styles.sectionBadge, styles.sectionBadgeB]}>
-                    <Text style={styles.sectionBadgeText}>B</Text>
-                  </View>
-                  <Text style={styles.sectionTitle}>Empty Material Details</Text>
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>Driver Name</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{driverName || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={driverName}
+                      onChangeText={setDriverName}
+                      placeholder="Driver name"
+                      placeholderTextColor={C.textMuted}
+                    />
+                  )}
                 </View>
 
-                <View style={styles.card}>
-                  <View style={styles.tableTitleRow}>
-                    <Text style={styles.tableTitle}>Items</Text>
-                    {stepsEditable && (
-                      <TouchableOpacity
-                        style={styles.addRowBtn}
-                        onPress={() => setEmptyItems((p) => [...p, blankEmpty()])}
-                      >
-                        <Ionicons name="add" size={16} color={C.primary} />
-                        <Text style={styles.addRowBtnText}>Add Row</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>Driver No.</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{driverNo || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={driverNo}
+                      onChangeText={setDriverNo}
+                      placeholder="10-digit mobile"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="phone-pad"
+                    />
+                  )}
+                </View>
 
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderCell, styles.colItemWide]}>
-                      Item Name
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>GRR No.</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{grrNo || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={grrNo}
+                      onChangeText={setGrrNo}
+                      placeholder="GRR number"
+                      placeholderTextColor={C.textMuted}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.fieldHalf}>
+                  <Text style={styles.fieldLabel}>Transporter Name</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{transporter || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={transporter}
+                      onChangeText={setTransporter}
+                      placeholder="Transporter name"
+                      placeholderTextColor={C.textMuted}
+                    />
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* ── Weight & Freight Details — filled here too ── */}
+            <View style={styles.card}>
+              <Text style={styles.tableTitle}>Weight Details</Text>
+              <View style={[styles.fieldGrid, { marginTop: 12 }]}>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Gross Weight (kg)</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{grossWt || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={grossWt}
+                      onChangeText={setGrossWt}
+                      placeholder="0.000"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  )}
+                </View>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Tare Weight (kg)</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{tareWt || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={tareWt}
+                      onChangeText={setTareWt}
+                      placeholder="0.000"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  )}
+                </View>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Total Weight (kg)</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{totalWt || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={totalWt}
+                      onChangeText={setTotalWt}
+                      placeholder="0.000"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  )}
+                </View>
+              </View>
+
+              <View style={[styles.fieldGrid, { marginTop: 16 }]}>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Total Freight (₹)</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{totalFreight || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={totalFreight}
+                      onChangeText={setTotalFreight}
+                      placeholder="0.00"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  )}
+                </View>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Advance (₹)</Text>
+                  {finalizeReadOnly ? (
+                    <Text style={styles.itemNameReadOnly}>{advance || "—"}</Text>
+                  ) : (
+                    <TextInput
+                      style={styles.textInput}
+                      value={advance}
+                      onChangeText={setAdvance}
+                      placeholder="0.00"
+                      placeholderTextColor={C.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  )}
+                </View>
+                <View style={styles.fieldThird}>
+                  <Text style={styles.fieldLabel}>Balance (₹)</Text>
+                  <View style={styles.balanceBox}>
+                    <Text style={styles.balanceBoxText}>
+                      {finalizeReadOnly && activeSession?.BALANCE != null
+                        ? String(activeSession.BALANCE)
+                        : fmtNum(liveBalance)}
                     </Text>
-                    <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
-                    {stepsEditable && <View style={styles.colAction} />}
                   </View>
-
-                  {emptyItems.map((row, idx) => (
-                    <View
-                      key={row.key}
-                      style={[
-                        styles.tableRow,
-                        idx < emptyItems.length - 1 && styles.tableRowBorder,
-                      ]}
-                    >
-                      <View style={styles.colItemWide}>
-                        {stepsEditable ? (
-                          <TouchableOpacity
-                            style={[
-                              styles.itemSelector,
-                              row.itmcd ? styles.itemSelectorFilled : null,
-                            ]}
-                            onPress={() => openItemPicker("empty", idx)}
-                          >
-                            <Text
-                              style={
-                                row.itmcd
-                                  ? styles.itemSelectorFilledText
-                                  : styles.itemSelectorPlaceholder
-                              }
-                              numberOfLines={2}
-                            >
-                              {row.itmnm || "Select item…"}
-                            </Text>
-                          </TouchableOpacity>
-                        ) : (
-                          <Text style={styles.itemNameReadOnly}>{row.itmnm}</Text>
-                        )}
-                      </View>
-                      <View style={styles.colQty}>
-                        {stepsEditable ? (
-                          <TextInput
-                            style={[
-                              styles.numInput,
-                              row.qty ? styles.numInputFilled : null,
-                            ]}
-                            value={row.qty}
-                            onChangeText={(v) => updateEmptyRow(idx, "qty", v)}
-                            keyboardType="decimal-pad"
-                            placeholder="0"
-                            placeholderTextColor={C.textMuted}
-                          />
-                        ) : (
-                          <Text style={styles.itemNameReadOnly}>{row.qty || "—"}</Text>
-                        )}
-                      </View>
-                      {stepsEditable && (
-                        <View style={styles.colAction}>
-                          {emptyItems.length > 1 && (
-                            <TouchableOpacity
-                              onPress={() => removeEmptyRow(idx)}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <Ionicons
-                                name="remove-circle-outline"
-                                size={20}
-                                color={C.red}
-                              />
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {wizardStep === 2 && (
-              <View style={styles.card}>
-                <Text style={styles.tableTitle}>Transporter Details</Text>
-                <View style={[styles.fieldGrid, { marginTop: 12 }]}>
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>Vehicle No.</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={vehicleNo}
-                        onChangeText={setVehicleNo}
-                        placeholder="e.g. UP80 AB 1234"
-                        placeholderTextColor={C.textMuted}
-                        autoCapitalize="characters"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{vehicleNo || "—"}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>Bilty No.</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={biltyNo}
-                        onChangeText={setBiltyNo}
-                        placeholder="Bilty / LR number"
-                        placeholderTextColor={C.textMuted}
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{biltyNo || "—"}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>Driver Name</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={driverName}
-                        onChangeText={setDriverName}
-                        placeholder="Driver name"
-                        placeholderTextColor={C.textMuted}
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{driverName || "—"}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>Driver No.</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={driverNo}
-                        onChangeText={setDriverNo}
-                        placeholder="10-digit mobile"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="phone-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{driverNo || "—"}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>GRR No.</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={grrNo}
-                        onChangeText={setGrrNo}
-                        placeholder="GRR number"
-                        placeholderTextColor={C.textMuted}
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{grrNo || "—"}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.fieldHalf}>
-                    <Text style={styles.fieldLabel}>Transporter Name</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={transporter}
-                        onChangeText={setTransporter}
-                        placeholder="Transporter name"
-                        placeholderTextColor={C.textMuted}
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{transporter || "—"}</Text>
-                    )}
-                  </View>
+                  <Text style={styles.balanceHint}>Auto-calculated</Text>
                 </View>
               </View>
-            )}
-
-            {wizardStep === 3 && (
-              <View style={styles.card}>
-                <Text style={styles.tableTitle}>Weight Details</Text>
-                <View style={[styles.fieldGrid, { marginTop: 12 }]}>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Gross Weight (kg)</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={grossWt}
-                        onChangeText={setGrossWt}
-                        placeholder="0.000"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="decimal-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{grossWt || "—"}</Text>
-                    )}
-                  </View>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Tare Weight (kg)</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={tareWt}
-                        onChangeText={setTareWt}
-                        placeholder="0.000"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="decimal-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{tareWt || "—"}</Text>
-                    )}
-                  </View>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Total Weight (kg)</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={totalWt}
-                        onChangeText={setTotalWt}
-                        placeholder="0.000"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="decimal-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{totalWt || "—"}</Text>
-                    )}
-                  </View>
-                </View>
-
-                <View style={[styles.fieldGrid, { marginTop: 16 }]}>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Total Freight (₹)</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={totalFreight}
-                        onChangeText={setTotalFreight}
-                        placeholder="0.00"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="decimal-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{totalFreight || "—"}</Text>
-                    )}
-                  </View>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Advance (₹)</Text>
-                    {stepsEditable ? (
-                      <TextInput
-                        style={styles.textInput}
-                        value={advance}
-                        onChangeText={setAdvance}
-                        placeholder="0.00"
-                        placeholderTextColor={C.textMuted}
-                        keyboardType="decimal-pad"
-                      />
-                    ) : (
-                      <Text style={styles.itemNameReadOnly}>{advance || "—"}</Text>
-                    )}
-                  </View>
-                  <View style={styles.fieldThird}>
-                    <Text style={styles.fieldLabel}>Balance (₹)</Text>
-                    <View style={styles.balanceBox}>
-                      <Text style={styles.balanceBoxText}>
-                        {readOnlyWizard && activeSession?.BALANCE != null
-                          ? String(activeSession.BALANCE)
-                          : fmtNum(liveBalance)}
-                      </Text>
-                    </View>
-                    <Text style={styles.balanceHint}>Auto-calculated</Text>
-                  </View>
-                </View>
-              </View>
-            )}
+            </View>
 
             <View style={{ height: 24 }} />
           </ScrollView>
 
-          {/* ── Footer ── */}
           <View style={styles.footer}>
-            <View style={styles.wizardFooterRow}>
-              {wizardStep > 1 && (
-                <TouchableOpacity
-                  style={styles.backStepBtn}
-                  onPress={() =>
-                    setWizardStep((s) => ((s - 1) as 1 | 2))
-                  }
-                  disabled={submitting}
-                >
-                  <Ionicons name="chevron-back" size={18} color={C.textSecondary} />
-                  <Text style={styles.backStepBtnText}>Back</Text>
-                </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+              onPress={finalizeReadOnly ? handleShareChallan : handleFinalize}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color={C.textInverse} size="small" />
+              ) : (
+                <>
+                  <Ionicons
+                    name={finalizeReadOnly ? "share-outline" : "checkmark-done-outline"}
+                    size={20}
+                    color={C.textInverse}
+                  />
+                  <Text style={styles.submitBtnText}>
+                    {finalizeReadOnly ? "Share Challan" : "Finalize & Share Challan"}
+                  </Text>
+                </>
               )}
-              <TouchableOpacity
-                style={[
-                  styles.submitBtn,
-                  styles.wizardPrimaryBtn,
-                  submitting && styles.submitBtnDisabled,
-                ]}
-                onPress={() => {
-                  if (readOnlyWizard) {
-                    if (wizardStep < 3) setWizardStep((s) => ((s + 1) as 2 | 3));
-                    else handleShareChallan();
-                  } else if (alreadySent) {
-                    // PENDING session: step through same as DRAFT, but the
-                    // final step saves (doesn't try to re-send).
-                    if (wizardStep === 1) handleStep1Next();
-                    else if (wizardStep === 2) handleStep2Next();
-                    else handleSaveAndExit();
-                  } else {
-                    if (wizardStep === 1) handleStep1Next();
-                    else if (wizardStep === 2) handleStep2Next();
-                    else handleSendToSupervisor();
-                  }
-                }}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator color={C.textInverse} size="small" />
-                ) : (
-                  <>
-                    <Ionicons
-                      name={
-                        readOnlyWizard
-                          ? wizardStep < 3
-                            ? "chevron-forward"
-                            : "share-outline"
-                          : wizardStep < 3
-                            ? "chevron-forward"
-                            : alreadySent
-                              ? "save-outline"
-                              : "send-outline"
-                      }
-                      size={18}
-                      color={C.textInverse}
-                    />
-                    <Text style={styles.submitBtnText}>
-                      {readOnlyWizard
-                        ? wizardStep < 3
-                          ? "Next"
-                          : "Share Challan"
-                        : wizardStep === 1
-                          ? "Next: Transporter Details"
-                          : wizardStep === 2
-                            ? "Next: Weight Details"
-                            : alreadySent
-                              ? "Save Changes"
-                              : "Send to Supervisor"}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-
-        <TargetPickerModal
-          visible={targetPickerVisible}
-          mode={dispatchTo}
-          parties={parties}
-          depos={depos}
-          onSelect={(cd, nm) => {
-            setPartyCd(cd);
-            setPartyNm(nm);
-          }}
-          onClose={() => setTargetPickerVisible(false)}
-        />
-        <ItemPickerModal
-          visible={itemPickerVisible}
-          items={allItems}
-          onSelect={onItemSelected}
-          onClose={() => setItemPickerVisible(false)}
-        />
       </SafeAreaView>
     );
   }
@@ -2618,6 +2656,11 @@ export default function DispatchPlantScreen() {
   }
 
   // ── PPSUPERVISOR — complete a session ────────────────────────────────────
+  // Transporter Details and Weight & Freight Details are intentionally not
+  // shown here: under this flow they don't exist yet at this point (office
+  // fills them later, at finalize time, after this screen's action
+  // completes) — they'd always render as an unbroken wall of "—", which is
+  // just noise, not information.
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
@@ -2741,74 +2784,6 @@ export default function DispatchPlantScreen() {
             ))}
           </View>
 
-          {/* ── Transporter Details — read-only, set by office in Step 2 ── */}
-          <View style={styles.card}>
-            <Text style={styles.tableTitle}>Transporter Details</Text>
-            <View style={[styles.fieldGrid, { marginTop: 12 }]}>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Vehicle No.</Text>
-                <Text style={styles.itemNameReadOnly}>{vehicleNo || "—"}</Text>
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Bilty No.</Text>
-                <Text style={styles.itemNameReadOnly}>{biltyNo || "—"}</Text>
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Driver Name</Text>
-                <Text style={styles.itemNameReadOnly}>{driverName || "—"}</Text>
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Driver No.</Text>
-                <Text style={styles.itemNameReadOnly}>{driverNo || "—"}</Text>
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>GRR No.</Text>
-                <Text style={styles.itemNameReadOnly}>{grrNo || "—"}</Text>
-              </View>
-              <View style={styles.fieldHalf}>
-                <Text style={styles.fieldLabel}>Transporter Name</Text>
-                <Text style={styles.itemNameReadOnly}>{transporter || "—"}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ── Weight & Freight — read-only, set by office in Step 3 ── */}
-          <View style={styles.card}>
-            <Text style={styles.tableTitle}>Weight &amp; Freight Details</Text>
-            <View style={[styles.fieldGrid, { marginTop: 12 }]}>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Gross Weight (kg)</Text>
-                <Text style={styles.itemNameReadOnly}>{grossWt || "—"}</Text>
-              </View>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Tare Weight (kg)</Text>
-                <Text style={styles.itemNameReadOnly}>{tareWt || "—"}</Text>
-              </View>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Total Weight (kg)</Text>
-                <Text style={styles.itemNameReadOnly}>{totalWt || "—"}</Text>
-              </View>
-            </View>
-            <View style={[styles.fieldGrid, { marginTop: 16 }]}>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Total Freight (₹)</Text>
-                <Text style={styles.itemNameReadOnly}>{totalFreight || "—"}</Text>
-              </View>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Advance (₹)</Text>
-                <Text style={styles.itemNameReadOnly}>{advance || "—"}</Text>
-              </View>
-              <View style={styles.fieldThird}>
-                <Text style={styles.fieldLabel}>Balance (₹)</Text>
-                <Text style={styles.itemNameReadOnly}>
-                  {activeSession?.BALANCE != null
-                    ? String(activeSession.BALANCE)
-                    : fmtNum(liveBalance)}
-                </Text>
-              </View>
-            </View>
-          </View>
-
           {/* ── Section B — empty material, read-only for supervisor ── */}
           <View style={styles.sectionHeader}>
             <View style={[styles.sectionBadge, styles.sectionBadgeB]}>
@@ -2856,7 +2831,7 @@ export default function DispatchPlantScreen() {
             ) : (
               <>
                 <Ionicons name="checkmark-circle-outline" size={20} color={C.textInverse} />
-                <Text style={styles.submitBtnText}>Complete &amp; Share Challan</Text>
+                <Text style={styles.submitBtnText}>Complete &amp; Send to Office</Text>
               </>
             )}
           </TouchableOpacity>
@@ -2945,30 +2920,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   newSessionBtnText: { color: C.textInverse, fontSize: 14, fontWeight: "800" },
-
-  stepHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  stepHeaderTitle: { fontSize: 15, fontWeight: "800", color: C.textPrimary },
-  stepHeaderCount: { fontSize: 12, fontWeight: "700", color: C.textMuted },
-  stepProgressTrack: {
-    height: 6,
-    backgroundColor: C.border,
-    borderRadius: 3,
-    overflow: "hidden",
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  stepProgressFill: {
-    height: "100%",
-    backgroundColor: C.primary,
-    borderRadius: 3,
-  },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 14 },
@@ -3231,20 +3182,6 @@ const styles = StyleSheet.create({
     borderTopColor: C.border,
     backgroundColor: C.cardBg,
   },
-  wizardFooterRow: { flexDirection: "row", gap: 10, alignItems: "center" },
-  backStepBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderRadius: 14,
-    backgroundColor: C.inputBg,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  backStepBtnText: { color: C.textSecondary, fontSize: 14, fontWeight: "700" },
-  wizardPrimaryBtn: { flex: 1 },
   submitBtn: {
     flexDirection: "row",
     alignItems: "center",
