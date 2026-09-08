@@ -39,13 +39,22 @@ export const getWastageItems = async (_req: Request, res: Response) => {
 // Body: { doneBy: string, date?: "YYYY-MM-DD", entries: [{ itmcd, itmnm, itmsubcat, cartonWastage, pcsWastage, looseOil }] }
 //
 // "date" is the calendar date the supervisor is recording wastage for
-// (defaults to today if omitted, so existing callers keep working). For
-// every valid entry we DELETE any existing WastageEntry rows for that same
-// (ITMCD, DONE_BY, date) before inserting the new one, so re-submitting the
-// same date updates in place instead of piling up duplicate rows. Delete +
-// create both happen inside one transaction, same reasoning as filling: a
-// re-submit can never leave the date with zero rows (crash mid-way) or two
-// rows (retried request racing itself).
+// (defaults to today if omitted, so existing callers keep working).
+//
+// SHARED-PER-DAY MODEL: a row's identity is (ITMCD, date) — NOT
+// (ITMCD, DONE_BY, date). Any PPSUPERVISOR can see and overwrite any other
+// supervisor's entry for the same item/day. For every valid entry we
+// DELETE any existing WastageEntry row for that (ITMCD, date) — regardless
+// of who created it — before inserting the new one with DONE_BY set to
+// whoever is submitting now. This is intentionally an "ownership transfers
+// to last editor" model: the new submitter becomes the row's DONE_BY, and
+// the previous author is not retained anywhere once overwritten. If an
+// audit trail of prior authors is ever needed, that requires a separate
+// history/log table — DONE_BY alone can only reflect current ownership.
+// Delete + create both happen inside one transaction, same reasoning as
+// filling: a re-submit can never leave the date with zero rows (crash
+// mid-way) or two rows (retried request racing itself, or two supervisors
+// submitting the same item/day at nearly the same moment).
 export const submitWastageEntries = async (req: Request, res: Response) => {
   try {
     const { doneBy, date, entries } = req.body;
@@ -75,15 +84,15 @@ export const submitWastageEntries = async (req: Request, res: Response) => {
     const sessionId = `WP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
     // Delete-then-insert per item, inside a single transaction: for each
-    // valid entry, first remove any prior row for that item/supervisor/date,
-    // then create the fresh one. Scoped to DONE_BY as well as ITMCD + date,
-    // so one supervisor's re-submit never touches another supervisor's
-    // entry for the same item on the same day.
+    // valid entry, first remove ANY prior row for that item on that date —
+    // no matter which supervisor created it — then create the fresh one
+    // owned by the current submitter. This is the shared-per-day behavior:
+    // the delete is scoped to ITMCD + date only, so B's submit will remove
+    // A's earlier row for the same item/day and replace it with B's.
     const ops = validEntries.flatMap((entry: any) => [
       prisma.wastageEntry.deleteMany({
         where: {
           ITMCD: entry.itmcd,
-          DONE_BY: doneBy,
           CREATEDAT: { gte: start, lte: end },
         },
       }),
@@ -121,11 +130,15 @@ export const submitWastageEntries = async (req: Request, res: Response) => {
 };
 
 // GET /wastage/today-entries?supervisorId=xxx&date=YYYY-MM-DD
-// Despite the name (kept for backward compatibility), this now returns the
-// supervisor's saved entries for ANY given date, defaulting to today when
-// "date" is omitted — same convention as filling's today-entries. The
-// frontend uses this both on initial load and whenever the date picker
-// changes.
+// Despite the name (kept for backward compatibility) AND despite still
+// requiring supervisorId as a param (kept so existing frontend calls don't
+// need to change shape), this NO LONGER scopes results to that supervisor.
+//
+// SHARED-PER-DAY MODEL: any PPSUPERVISOR fetching a given date sees every
+// item's saved entry for that date, regardless of who (which DONE_BY)
+// created it — same convention as filling's today-entries. supervisorId is
+// currently unused for filtering — accepted but ignored, kept only for
+// backward request-shape compatibility.
 export const getTodayWastageEntries = async (req: Request, res: Response) => {
   try {
     const { supervisorId, date } = req.query;
@@ -137,7 +150,7 @@ export const getTodayWastageEntries = async (req: Request, res: Response) => {
 
     const entries = await prisma.wastageEntry.findMany({
       where: {
-        DONE_BY:   supervisorId as string,
+        // NOTE: no DONE_BY filter here — this is the shared-per-day read.
         CREATEDAT: { gte: start, lte: end },
       },
       orderBy: { CREATEDAT: "desc" },

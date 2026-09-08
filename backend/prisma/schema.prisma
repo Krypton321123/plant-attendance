@@ -88,41 +88,47 @@ model WastageEntry {
   @@map("wastage_entries")
 }
 
-// STATUS lifecycle (replaces the old DRAFT/COMPLETED binary):
-//   DRAFT     — created by OFFICE, fully editable by OFFICE, NOT visible to
-//                PPSUPERVISOR yet.
-//   PENDING   — OFFICE has sent it (see the /send endpoint). Locked for
-//                OFFICE from this point on; now visible in PPSUPERVISOR's
-//                queue for them to complete.
-//   COMPLETED — PPSUPERVISOR has recorded loading entries and completed it.
-//                Locked for everyone.
+// STATUS lifecycle:
+//   DRAFT     — created by OFFICE, who fills Dispatch Details (party/depo +
+//                items) and Empty Material Details only. Fully editable by
+//                OFFICE. NOT visible to PPSUPERVISOR yet. Transporter and
+//                Weight/Freight fields are not collected at this stage and
+//                remain null.
+//   PENDING   — OFFICE has sent it (see the /send endpoint). Dispatch
+//                Details + Empty Material remain editable by OFFICE — right
+//                up until PPSUPERVISOR completes the session. Now visible in
+//                PPSUPERVISOR's queue for them to record loading entries.
+//   COMPLETED — PPSUPERVISOR has recorded loading entries (and avg weight
+//                per box) and completed their part. Dispatch Details + Empty
+//                Material are now frozen for OFFICE. OFFICE must now fill in
+//                Transporter Details and Weight/Freight Details for the
+//                first time (see the /finalize endpoint) — these fields do
+//                not exist before this point.
+//   FINALIZED — OFFICE has filled Transporter + Weight/Freight details and
+//                finalized the session. Locked for everyone.
 model DispatchSession {
   SESSION_ID  String   @id @default(cuid())
   DISPATCH_TO String   @db.VarChar(10)
   PARTY_CD    String   @db.VarChar(250)
   PARTY_NM    String   @db.VarChar(250)
 
-  // ── Step 2 (OFFICE): Transporter Details ──────────────────────────────
+  // ── Transporter Details — filled by OFFICE at finalize time, i.e. only
+  // once STATUS is COMPLETED (after PPSUPERVISOR has finished loading).
+  // Always null before then. ──────────────────────────────────────────────
   VEHICLE_NO  String?  @db.VarChar(100)
-  // NOTE: this field did not exist before — added per the new "Bilty No"
-  // step-2 field. Confirm the name/label is what you want (Bilty/LR number).
   BILTY_NO    String?  @db.VarChar(100)
   TRANSPORTER String?  @db.VarChar(250)
   DRIVER_NAME String?  @db.VarChar(250)
   DRIVER_NO   String?  @db.VarChar(50)
   GRR_NO      String?  @db.VarChar(100)
 
-  // ── Step 3 (OFFICE): Weight Details ────────────────────────────────────
-  // Row 1 — plain manual entries for now (no auto-calc between them yet).
+  // ── Weight & Freight Details — also filled by OFFICE at finalize time,
+  // alongside Transporter Details above. Always null before then. ─────────
   GROSS_WT      Decimal? @db.Decimal(18, 3)
-  // Replaces the old KAANTA_WT field (Kaanta Parchi Nett Wgt is now Tare
-  // Weight). See migration note in the accompanying summary — this is a
-  // rename, not a pure addition, so existing KAANTA_WT data needs a manual
-  // migration step if you have live rows.
   TARE_WT       Decimal? @db.Decimal(18, 3)
   TOTAL_WT      Decimal? @db.Decimal(18, 3)
-  // Row 2 — Balance is always server-computed (TOTAL_FREIGHT - ADVANCE),
-  // never accepted directly from the client.
+  // Balance is always server-computed (TOTAL_FREIGHT - ADVANCE), never
+  // accepted directly from the client.
   TOTAL_FREIGHT Decimal? @db.Decimal(18, 2)
   ADVANCE       Decimal? @db.Decimal(18, 2)
   BALANCE       Decimal? @db.Decimal(18, 2)

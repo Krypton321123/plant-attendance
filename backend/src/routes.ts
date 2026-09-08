@@ -32,6 +32,7 @@ import {
 import {
   completeDispatchSession,
   createDispatchSession,
+  finalizeDispatchSession,
   getDepos,
   getDispatchItems,
   getParties,
@@ -81,4 +82,5 @@ router.post('/dispatch/sessions',                          createDispatchSession
 router.put('/dispatch/sessions/:sessionId',                updateDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/send',         sendDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/complete',     completeDispatchSession);
+router.patch('/dispatch/sessions/:sessionId/finalize',     finalizeDispatchSession);
 export default router;

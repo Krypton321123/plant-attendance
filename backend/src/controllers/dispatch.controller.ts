@@ -81,9 +81,11 @@ export const getDispatchItems = async (_req: Request, res: Response) => {
 // ─── POST /dispatch/sessions ──────────────────────────────────────────────────
 // OFFICE user creates a session. Always created as DRAFT — it only becomes
 // visible to PPSUPERVISOR once explicitly sent (see sendDispatchSession).
-// Body accepts step 1/2/3 fields together or step-1-only; anything omitted is
-// simply left null (steps 2/3 are typically filled in on later calls to
-// updateDispatchSession as the OFFICE wizard advances).
+// Only Dispatch Details (party/depo + items) and Empty Material Details are
+// collected here. Transporter Details and Weight/Freight Details are NOT
+// part of session creation anymore — those are filled by OFFICE later, at
+// finalize time (see finalizeDispatchSession), after PPSUPERVISOR has
+// completed loading. They're written as null here unconditionally.
 export const createDispatchSession = async (req: Request, res: Response) => {
   try {
     const {
@@ -91,17 +93,6 @@ export const createDispatchSession = async (req: Request, res: Response) => {
       dispatchTo,
       partyCd,
       partyNm,
-      vehicleNo,
-      biltyNo,
-      transporter,
-      driverName,
-      driverNo,
-      grrNo,
-      grossWt,
-      tareWt,
-      totalWt,
-      totalFreight,
-      advance,
       items = [],
       emptyItems = [],
     } = req.body;
@@ -127,28 +118,27 @@ export const createDispatchSession = async (req: Request, res: Response) => {
         });
     }
 
-    const { totalFreightVal, advanceVal, balanceVal } = computeFreightBalance(
-      totalFreight,
-      advance,
-    );
-
     const session = await prisma.dispatchSession.create({
       data: {
         DISPATCH_TO: dispatchTo,
         PARTY_CD: partyCd,
         PARTY_NM: partyNm,
-        VEHICLE_NO: vehicleNo || null,
-        BILTY_NO: biltyNo || null,
-        TRANSPORTER: transporter || null,
-        DRIVER_NAME: driverName || null,
-        DRIVER_NO: driverNo || null,
-        GRR_NO: grrNo || null,
-        GROSS_WT: orNull(grossWt),
-        TARE_WT: orNull(tareWt),
-        TOTAL_WT: orNull(totalWt),
-        TOTAL_FREIGHT: totalFreightVal,
-        ADVANCE: advanceVal,
-        BALANCE: balanceVal,
+        // Transporter + Weight/Freight fields don't exist yet at this stage
+        // of the flow — they're filled by OFFICE at finalize time, only
+        // after PPSUPERVISOR has completed loading. See
+        // finalizeDispatchSession.
+        VEHICLE_NO: null,
+        BILTY_NO: null,
+        TRANSPORTER: null,
+        DRIVER_NAME: null,
+        DRIVER_NO: null,
+        GRR_NO: null,
+        GROSS_WT: null,
+        TARE_WT: null,
+        TOTAL_WT: null,
+        TOTAL_FREIGHT: null,
+        ADVANCE: null,
+        BALANCE: null,
         STATUS: "DRAFT",
         DONE_BY: doneBy,
         items: {
@@ -179,13 +169,15 @@ export const createDispatchSession = async (req: Request, res: Response) => {
 };
 
 // ─── PUT /dispatch/sessions/:sessionId ───────────────────────────────────────
-// OFFICE user updates a session (full replace of items). Allowed while
-// STATUS is DRAFT (not yet sent) or PENDING (sent, but the supervisor hasn't
-// completed it yet) — office can keep correcting dispatch/transporter/weight
-// details right up until the supervisor finishes loading. Only once the
-// supervisor marks the session COMPLETED does office lose write access. This
-// is the server-side enforcement of the lock; the app also hides the edit UI
-// once COMPLETED, but this check is what actually prevents it.
+// OFFICE user updates Dispatch Details (party/depo + items) and Empty
+// Material Details — a full replace of items/emptyItems. Allowed only while
+// STATUS is DRAFT (not yet sent) or PENDING (sent, but PPSUPERVISOR hasn't
+// completed loading yet) — office can keep correcting these fields right up
+// until the supervisor finishes. Once PPSUPERVISOR marks the session
+// COMPLETED, these fields are frozen for OFFICE — this endpoint no longer
+// accepts writes at that point. OFFICE's remaining data-entry (Transporter +
+// Weight/Freight Details) goes through finalizeDispatchSession instead, and
+// is not handled here.
 export const updateDispatchSession = async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
@@ -193,17 +185,6 @@ export const updateDispatchSession = async (req: Request, res: Response) => {
       dispatchTo,
       partyCd,
       partyNm,
-      vehicleNo,
-      biltyNo,
-      transporter,
-      driverName,
-      driverNo,
-      grrNo,
-      grossWt,
-      tareWt,
-      totalWt,
-      totalFreight,
-      advance,
       items = [],
       emptyItems = [],
     } = req.body;
@@ -215,17 +196,15 @@ export const updateDispatchSession = async (req: Request, res: Response) => {
       return res
         .status(404)
         .json({ success: false, message: "Session not found" });
-    if (existing.STATUS === "COMPLETED") {
+    if (existing.STATUS !== "DRAFT" && existing.STATUS !== "PENDING") {
       return res.status(400).json({
         success: false,
-        message: "Cannot edit a completed session",
+        message:
+          existing.STATUS === "COMPLETED"
+            ? "Dispatch and empty material details are locked once the supervisor has completed loading"
+            : "Cannot edit a finalized session",
       });
     }
-
-    const { totalFreightVal, advanceVal, balanceVal } = computeFreightBalance(
-      totalFreight,
-      advance,
-    );
 
     // Replace items atomically
     await prisma.$transaction([
@@ -241,18 +220,6 @@ export const updateDispatchSession = async (req: Request, res: Response) => {
           DISPATCH_TO: dispatchTo,
           PARTY_CD: partyCd,
           PARTY_NM: partyNm,
-          VEHICLE_NO: vehicleNo || null,
-          BILTY_NO: biltyNo || null,
-          TRANSPORTER: transporter || null,
-          DRIVER_NAME: driverName || null,
-          DRIVER_NO: driverNo || null,
-          GRR_NO: grrNo || null,
-          GROSS_WT: orNull(grossWt),
-          TARE_WT: orNull(tareWt),
-          TOTAL_WT: orNull(totalWt),
-          TOTAL_FREIGHT: totalFreightVal,
-          ADVANCE: advanceVal,
-          BALANCE: balanceVal,
         },
       }),
       ...items.map((i: any) =>
@@ -292,11 +259,14 @@ export const updateDispatchSession = async (req: Request, res: Response) => {
 };
 
 // ─── PATCH /dispatch/sessions/:sessionId/send ────────────────────────────────
-// OFFICE user finalizes a DRAFT session: makes it visible in PPSUPERVISOR's
-// queue. Does NOT lock it against further OFFICE edits — office can still
-// correct details via updateDispatchSession right up until the supervisor
-// completes it (see that function's comment). This endpoint only flips
-// DRAFT -> PENDING so it starts showing up for the supervisor to act on.
+// OFFICE user finalizes a DRAFT session's Dispatch/Empty Material Details:
+// makes it visible in PPSUPERVISOR's queue. Does NOT lock those fields
+// against further OFFICE edits — office can still correct them via
+// updateDispatchSession right up until the supervisor completes it (see that
+// function's comment). This endpoint only flips DRAFT -> PENDING so it
+// starts showing up for the supervisor to act on. An empty emptyItems list
+// is fine — empty material isn't mandatory — but at least one dispatch item
+// is still required (checked below).
 // Body: { doneBy }
 export const sendDispatchSession = async (req: Request, res: Response) => {
   try {
@@ -362,9 +332,11 @@ export const sendDispatchSession = async (req: Request, res: Response) => {
 //     completes it. The supervisor should see every outstanding PENDING
 //     session regardless of when it was created.
 //   - doneBy present (an OFFICE user browsing their own sessions — Draft,
-//     Pending, and Completed alike): NO date filter either. Office needs to
-//     see the full status/history of everything they've created, not just
-//     what happened today.
+//     Pending, Completed, and Finalized alike): NO date filter either.
+//     Office needs to see the full status/history of everything they've
+//     created, not just what happened today — this is also how a
+//     COMPLETED session (awaiting the office's finalize step) surfaces
+//     back to them, so it must not be filtered out by date.
 //   - otherwise (e.g. a completely unfiltered "today's activity" report):
 //     keeps the original today-only window.
 //
@@ -437,16 +409,16 @@ export const getSession = async (req: Request, res: Response) => {
 // actual measured average weight per box for each item, and marks the
 // session COMPLETED. Only allowed while STATUS is PENDING (i.e. OFFICE has
 // sent it) — this prevents completing a session that was never sent, and
-// prevents completing one twice.
+// prevents completing one twice. Once this runs, the session goes back to
+// OFFICE (still under STATUS "COMPLETED") for them to fill Transporter and
+// Weight/Freight Details via finalizeDispatchSession.
 //
 // Body: { doneBy, items: [{ itemId, qty, avgWtPerBox, loadingEntries: [{
 //         length, width, height, extra }] }] }
 //
 // vehicleNo/biltyNo/transporter/driverName/driverNo/grrNo/weight-and-freight
-// fields are intentionally NOT accepted here anymore — those are entered by
-// OFFICE in steps 2/3 of their wizard. OFFICE may keep editing those fields
-// (via updateDispatchSession) all the way up until this endpoint is called,
-// so PPSUPERVISOR can view them but never write them.
+// fields are NOT accepted here — those belong to OFFICE's finalize step,
+// which only happens after this one.
 export const completeDispatchSession = async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
@@ -545,5 +517,102 @@ export const completeDispatchSession = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to complete session" });
+  }
+};
+
+// ─── PATCH /dispatch/sessions/:sessionId/finalize ────────────────────────────
+// OFFICE user fills in Transporter Details and Weight/Freight Details for
+// the first time, and finalizes the session. Only allowed once PPSUPERVISOR
+// has completed loading (STATUS === "COMPLETED") — these fields don't exist
+// before that point in this flow, since they're collected after the
+// supervisor's stage rather than before it. Dispatch Details, Empty
+// Material, and the supervisor's loading entries are NOT touched here —
+// they're already frozen by this point (see updateDispatchSession and
+// completeDispatchSession). On success, STATUS moves COMPLETED -> FINALIZED,
+// which is a terminal state: nothing may write to the session after this.
+//
+// Body: { doneBy, vehicleNo, biltyNo, transporter, driverName, driverNo,
+//         grrNo, grossWt, tareWt, totalWt, totalFreight, advance }
+export const finalizeDispatchSession = async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const {
+      doneBy,
+      vehicleNo,
+      biltyNo,
+      transporter,
+      driverName,
+      driverNo,
+      grrNo,
+      grossWt,
+      tareWt,
+      totalWt,
+      totalFreight,
+      advance,
+    } = req.body;
+
+    const employee = await prisma.employee.findUnique({
+      where: { EMP_ID: doneBy },
+    });
+    if (!employee || employee.EMPTYPE !== "OFFICE") {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Only OFFICE users can finalize a dispatch session",
+        });
+    }
+
+    const existing = await prisma.dispatchSession.findUnique({
+      where: { SESSION_ID: sessionId as string },
+    });
+    if (!existing)
+      return res
+        .status(404)
+        .json({ success: false, message: "Session not found" });
+    if (existing.STATUS !== "COMPLETED") {
+      return res.status(400).json({
+        success: false,
+        message:
+          existing.STATUS === "FINALIZED"
+            ? "This session has already been finalized"
+            : "The supervisor hasn't completed loading for this session yet",
+      });
+    }
+
+    const { totalFreightVal, advanceVal, balanceVal } = computeFreightBalance(
+      totalFreight,
+      advance,
+    );
+
+    const updated = await prisma.dispatchSession.update({
+      where: { SESSION_ID: sessionId as string },
+      data: {
+        VEHICLE_NO: vehicleNo || null,
+        BILTY_NO: biltyNo || null,
+        TRANSPORTER: transporter || null,
+        DRIVER_NAME: driverName || null,
+        DRIVER_NO: driverNo || null,
+        GRR_NO: grrNo || null,
+        GROSS_WT: orNull(grossWt),
+        TARE_WT: orNull(tareWt),
+        TOTAL_WT: orNull(totalWt),
+        TOTAL_FREIGHT: totalFreightVal,
+        ADVANCE: advanceVal,
+        BALANCE: balanceVal,
+        STATUS: "FINALIZED",
+      },
+      include: {
+        items: { include: { loadingEntries: true } },
+        emptyItems: true,
+      },
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("finalizeDispatchSession error", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to finalize session" });
   }
 };
