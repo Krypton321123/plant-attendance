@@ -14,6 +14,11 @@ const dayRange = (dateParam?: string) => {
   end.setHours(23, 59, 59, 999);
   return { start, end };
 };
+const monthRange = (year: number, month0: number) => {
+  const start = new Date(year, month0, 1, 0, 0, 0, 0);
+  const end = new Date(year, month0 + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
 
 // GET /wastage/items
 // Returns all items from mstitm ordered by subcat + name
@@ -179,5 +184,125 @@ export const getWastageHistory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("getWastageHistory error", error);
     res.status(500).json({ success: false, message: "Failed to fetch wastage history" });
+  }
+
+};
+
+export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
+  try {
+    const yearParam = req.query.year as string | undefined;
+    const monthParam = req.query.month as string | undefined;
+ 
+    const now = new Date();
+    const year = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
+    const month0 = monthParam !== undefined ? parseInt(monthParam, 10) : now.getMonth();
+ 
+    if (Number.isNaN(year) || Number.isNaN(month0) || month0 < 0 || month0 > 11) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid year or month" });
+    }
+ 
+    const { start, end } = monthRange(year, month0);
+    const daysInMonth = new Date(year, month0 + 1, 0).getDate();
+ 
+    const entries = await prisma.wastageEntry.findMany({
+      where: {
+        CREATEDAT: { gte: start, lte: end },
+      },
+      select: {
+        ITMCD: true,
+        ITMNM: true,
+        ITMSUBCAT: true,
+        CARTON_WASTAGE: true,
+        PCS_WASTAGE: true,
+        LOOSE_OIL: true,
+        CREATEDAT: true,
+      },
+      orderBy: { CREATEDAT: "asc" },
+    });
+ 
+    type MetricSeries = { days: (number | null)[]; total: number };
+    type Row = {
+      itmcd: string;
+      itmnm: string;
+      itmsubcat: string | null;
+      cartonWastage: MetricSeries;
+      pcsWastage: MetricSeries;
+      looseOil: MetricSeries;
+    };
+ 
+    const emptySeries = (): MetricSeries => ({
+      days: new Array(daysInMonth).fill(null),
+      total: 0,
+    });
+ 
+    const byItem = new Map<string, Row>();
+ 
+    for (const entry of entries) {
+      let row = byItem.get(entry.ITMCD);
+      if (!row) {
+        row = {
+          itmcd: entry.ITMCD,
+          itmnm: entry.ITMNM,
+          itmsubcat: entry.ITMSUBCAT ?? null,
+          cartonWastage: emptySeries(),
+          pcsWastage: emptySeries(),
+          looseOil: emptySeries(),
+        };
+        byItem.set(entry.ITMCD, row);
+      }
+ 
+      // entries are CREATEDAT asc, so the last write per ITMCD is the most
+      // recent name — matches the same convention used for filling.
+      row.itmnm = entry.ITMNM;
+      row.itmsubcat = entry.ITMSUBCAT ?? row.itmsubcat;
+ 
+      // Same server-local-day derivation as filling's monthly-history:
+      // CREATEDAT was written using dayRange's server-local `start`, so
+      // getDate() recovers the intended day-of-month without any timezone
+      // conversion.
+      const dayIndex = entry.CREATEDAT.getDate() - 1;
+      if (dayIndex < 0 || dayIndex >= daysInMonth) continue;
+ 
+      // CARTON_WASTAGE / PCS_WASTAGE are never null on a saved row (see
+      // the file-level comment above), but Number(...) defensively handles
+      // it anyway rather than assuming the invariant holds forever.
+      const cartons = entry.CARTON_WASTAGE !== null ? Number(entry.CARTON_WASTAGE) : null;
+      const pcs = entry.PCS_WASTAGE !== null ? Number(entry.PCS_WASTAGE) : null;
+      // LOOSE_OIL genuinely can be null on a saved row — left as null
+      // rather than coerced to 0, so the grid can show "—" instead of a
+      // misleading "0" for oil that was never recorded that day.
+      const oil = entry.LOOSE_OIL !== null && entry.LOOSE_OIL !== undefined
+        ? Number(entry.LOOSE_OIL)
+        : null;
+ 
+      if (cartons !== null) {
+        row.cartonWastage.days[dayIndex] = cartons;
+        row.cartonWastage.total += cartons;
+      }
+      if (pcs !== null) {
+        row.pcsWastage.days[dayIndex] = pcs;
+        row.pcsWastage.total += pcs;
+      }
+      if (oil !== null) {
+        row.looseOil.days[dayIndex] = oil;
+        row.looseOil.total += oil;
+      }
+    }
+ 
+    const items = Array.from(byItem.values()).sort((a, b) =>
+      a.itmnm.localeCompare(b.itmnm),
+    );
+ 
+    res.json({
+      success: true,
+      data: { year, month: month0, daysInMonth, items },
+    });
+  } catch (error) {
+    console.error("getWastageMonthlyHistory error", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch monthly wastage history" });
   }
 };

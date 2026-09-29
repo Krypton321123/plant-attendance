@@ -14,6 +14,12 @@ const dayRange = (dateParam?: string) => {
   return { start, end };
 };
 
+const monthRange = (year: number, month0: number) => {
+  const start = new Date(year, month0, 1, 0, 0, 0, 0);
+  const end = new Date(year, month0 + 1, 0, 23, 59, 59, 999); // day 0 of next month = last day of this month
+  return { start, end };
+};
+
 // GET /filling/items
 // Returns all items from mstitm, grouped by itmsubcat
 export const getFillingItems = async (_req: Request, res: Response) => {
@@ -228,5 +234,98 @@ export const getTodayFillingEntries = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to fetch today entries" });
+  }
+};
+
+export const getFillingMonthlyHistory = async (req: Request, res: Response) => {
+  try {
+    const yearParam = req.query.year as string | undefined;
+    const monthParam = req.query.month as string | undefined; // 0-based, like /attendance/month
+ 
+    const now = new Date();
+    const year = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
+    const month0 = monthParam !== undefined ? parseInt(monthParam, 10) : now.getMonth();
+ 
+    if (Number.isNaN(year) || Number.isNaN(month0) || month0 < 0 || month0 > 11) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid year or month" });
+    }
+ 
+    const { start, end } = monthRange(year, month0);
+    const daysInMonth = new Date(year, month0 + 1, 0).getDate();
+ 
+    const entries = await prisma.fillingEntry.findMany({
+      where: {
+        CREATEDAT: { gte: start, lte: end },
+      },
+      select: {
+        ITMCD: true,
+        ITMNM: true,
+        ITMSUBCAT: true,
+        FILLING: true,
+        CREATEDAT: true,
+      },
+      orderBy: { CREATEDAT: "asc" },
+    });
+ 
+    // Group by ITMCD, building a fixed-length days[] array per item.
+    // Using a Map (not a plain object) to avoid any surprises if an ITMCD
+    // ever collided with an Object.prototype key.
+    type Row = {
+      itmcd: string;
+      itmnm: string;
+      itmsubcat: string | null;
+      days: (number | null)[];
+      total: number;
+    };
+    const byItem = new Map<string, Row>();
+ 
+    for (const entry of entries) {
+      let row = byItem.get(entry.ITMCD);
+      if (!row) {
+        row = {
+          itmcd: entry.ITMCD,
+          itmnm: entry.ITMNM,
+          itmsubcat: entry.ITMSUBCAT ?? null,
+          days: new Array(daysInMonth).fill(null),
+          total: 0,
+        };
+        byItem.set(entry.ITMCD, row);
+      }
+ 
+      // entries are ordered CREATEDAT asc, so the last write here for a
+      // given ITMCD is naturally the most recent name — no extra sort needed.
+      row.itmnm = entry.ITMNM;
+      row.itmsubcat = entry.ITMSUBCAT ?? row.itmsubcat;
+ 
+      // CREATEDAT is a full timestamp; convert to a 1..daysInMonth day index.
+      // Using getDate() on the raw Date is correct here because CREATEDAT
+      // was written in server-local time by submitFillingEntries (it reused
+      // dayRange's `start`, which is itself server-local midnight) — so no
+      // timezone conversion is needed to recover "which day of the month"
+      // from it. This mirrors how submitFillingEntries wrote it in the
+      // first place.
+      const dayIndex = entry.CREATEDAT.getDate() - 1; // 0-based
+      if (dayIndex >= 0 && dayIndex < daysInMonth) {
+        const amount = Number(entry.FILLING);
+        row.days[dayIndex] = amount;
+        row.total += amount;
+      }
+    }
+ 
+    const items = Array.from(byItem.values()).sort((a, b) =>
+      a.itmnm.localeCompare(b.itmnm),
+    );
+ 
+    res.json({
+      success: true,
+      data: { year, month: month0, daysInMonth, items },
+    });
+  } catch (error) {
+    console.error("getFillingMonthlyHistory error", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch monthly history" });
   }
 };

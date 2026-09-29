@@ -13,10 +13,16 @@ const ensureDir = (dir: string) => {
 
 ensureDir(path.join(UPLOADS_DIR, 'profiles'));
 ensureDir(path.join(UPLOADS_DIR, 'attendance'));
+ensureDir(path.join(UPLOADS_DIR, 'visitors'));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const folder = req.path.includes('register') ? 'profiles' : 'attendance';
+    let folder = 'attendance';
+    if (req.path.includes('register')) {
+      folder = 'profiles';
+    } else if (req.path.includes('gate')) {
+      folder = 'visitors';
+    }
     const dir = path.join(UPLOADS_DIR, folder);
     ensureDir(dir);
     cb(null, dir);
@@ -24,8 +30,20 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname) || '.jpg';
     const timestamp = Date.now();
-    const empId = (req.body?.empId || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
-    cb(null, `${empId}_${timestamp}${ext}`);
+
+    // Gate uploads have no empId — visitors aren't employees. Key the
+    // filename off the visitor's name instead, same sanitize+fallback shape
+    // as the empId branch below. NOTE: this only works if the client puts
+    // the "name" text field before the "photo" file field in its FormData —
+    // multer parses the multipart stream in order, so req.body isn't fully
+    // populated yet when destination/filename fire if the file comes first.
+    const isGateUpload = req.path.includes('gate');
+    const rawKey = isGateUpload
+      ? (req.body?.name || 'visitor')
+      : (req.body?.empId || 'unknown');
+
+    const key = String(rawKey).replace(/[^a-zA-Z0-9]/g, '_');
+    cb(null, `${key}_${timestamp}${ext}`);
   },
 });
 

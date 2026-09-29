@@ -1,49 +1,77 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-import React from "react"
+import React from 'react';
+import { apiUrl } from './apiconfig';
 
 // ════════════════════════════════════════════════════════════════════════
-// Auth context — CLIENT-SIDE ONLY, hardcoded credentials.
+// Auth context — backend-verified, but still NOT real security.
 //
-// IMPORTANT — read before relying on this for anything real:
-// This is a UI gate, not real security. The username/password check happens
-// entirely in the browser (see ADMIN_USERNAME / ADMIN_PASSWORD below), so
-// anyone can read them out of the shipped JS bundle, open devtools and flip
-// localStorage directly, or just call setAuthed(true) from the console.
-// There is no server-side verification here — the backend's real
-// POST /admin/login endpoint (adminLogin controller) is NOT called by this
-// flow. This is meant as a placeholder speed-bump per explicit request, not
-// as access control. Swap in a real API-backed session (e.g. a token from
-// POST /admin/login stored and checked server-side on every request) before
-// this app holds anything that actually needs protecting.
+// Credentials are checked server-side now (POST /portal-users/login), so
+// this is no longer the hardcoded-in-JS admin/123 gate it used to be.
+// However, per explicit request there is still no token/session: a
+// successful login just gets the user's profile back from the server, and
+// that profile (including allowedScreens) is trusted and stored as-is in
+// localStorage. Nothing re-verifies it on later requests. Anyone who can
+// write to localStorage can still grant themselves access to any screen,
+// or flip isSuper to true, from devtools. This is a UI-level speed bump
+// for an internal tool, not access control against a hostile client.
+//
+// If this app ever needs to hold something that actually matters, the
+// missing piece is: issue a server-signed session/token on login, and have
+// every subsequent request (including screen access) re-checked against
+// that token server-side, rather than trusting a client-stored profile.
 // ════════════════════════════════════════════════════════════════════════
-
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = '123';
 
 const STORAGE_KEY = 'plant-attendance-auth';
 
+// Matches the backend's sanitize() shape in portalUser.controller.ts —
+// keep these in sync if that shape changes.
+export interface PortalUserProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  isSuper: boolean;
+  allowedScreens: string[];
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
+  user: PortalUserProfile | null;
+  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
+  /** True if the user can see this screen key — always true for isSuper. */
+  canAccessScreen: (screenKey: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function readStoredAuth(): boolean {
+function readStoredUser(): PortalUserProfile | null {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Minimal shape check — if this doesn't look like a profile, fail
+    // closed rather than trust a malformed/tampered value.
+    if (
+      parsed &&
+      typeof parsed.id === 'string' &&
+      typeof parsed.username === 'string' &&
+      typeof parsed.isSuper === 'boolean' &&
+      Array.isArray(parsed.allowedScreens)
+    ) {
+      return parsed as PortalUserProfile;
+    }
+    return null;
   } catch {
     // localStorage can throw in some environments (privacy mode, disabled
     // storage, etc.) — fail closed rather than crash the app.
-    return false;
+    return null;
   }
 }
 
-function writeStoredAuth(value: boolean): void {
+function writeStoredUser(user: PortalUserProfile | null): void {
   try {
-    if (value) {
-      localStorage.setItem(STORAGE_KEY, 'true');
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -54,25 +82,48 @@ function writeStoredAuth(value: boolean): void {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => readStoredAuth());
+  const [user, setUser] = useState<PortalUserProfile | null>(() => readStoredUser());
 
-  const login = useCallback((username: string, password: string): boolean => {
-    const trimmedUsername = username.trim();
-    const ok = trimmedUsername === ADMIN_USERNAME && password === ADMIN_PASSWORD;
-    if (ok) {
-      setIsAuthenticated(true);
-      writeStoredAuth(true);
+  const login = useCallback(async (username: string, password: string) => {
+    try {
+      const res = await fetch(apiUrl('/portal-users/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return { ok: false, error: body.error ?? 'Invalid username or password' };
+      }
+
+      const body = await res.json();
+      setUser(body.user);
+      writeStoredUser(body.user);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'Could not reach the server. Please try again.' };
     }
-    return ok;
   }, []);
 
   const logout = useCallback(() => {
-    setIsAuthenticated(false);
-    writeStoredAuth(false);
+    setUser(null);
+    writeStoredUser(null);
   }, []);
 
+  const canAccessScreen = useCallback(
+    (screenKey: string) => {
+      if (!user) return false;
+      if (user.isSuper) return true;
+      return user.allowedScreens.includes(screenKey);
+    },
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated: user !== null, user, login, logout, canAccessScreen }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -58,6 +58,16 @@ export type DispatchEmptyItem = Prisma.DispatchEmptyItemModel
  */
 export type DispatchLoadingEntry = Prisma.DispatchLoadingEntryModel
 /**
+ * Model PortalUser
+ * 
+ */
+export type PortalUser = Prisma.PortalUserModel
+/**
+ * Model VisitorLog
+ * 
+ */
+export type VisitorLog = Prisma.VisitorLogModel
+/**
  * Model mstitm
  * 
  */

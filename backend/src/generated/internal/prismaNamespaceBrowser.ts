@@ -57,6 +57,8 @@ export const ModelName = {
   DispatchItem: 'DispatchItem',
   DispatchEmptyItem: 'DispatchEmptyItem',
   DispatchLoadingEntry: 'DispatchLoadingEntry',
+  PortalUser: 'PortalUser',
+  VisitorLog: 'VisitorLog',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
   mstunit: 'mstunit'
@@ -209,6 +211,35 @@ export const DispatchLoadingEntryScalarFieldEnum = {
 } as const
 
 export type DispatchLoadingEntryScalarFieldEnum = (typeof DispatchLoadingEntryScalarFieldEnum)[keyof typeof DispatchLoadingEntryScalarFieldEnum]
+
+
+export const PortalUserScalarFieldEnum = {
+  USER_ID: 'USER_ID',
+  USERNAME: 'USERNAME',
+  PASSWORD: 'PASSWORD',
+  DISPLAY_NAME: 'DISPLAY_NAME',
+  IS_SUPER: 'IS_SUPER',
+  ALLOWED_SCREENS: 'ALLOWED_SCREENS',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type PortalUserScalarFieldEnum = (typeof PortalUserScalarFieldEnum)[keyof typeof PortalUserScalarFieldEnum]
+
+
+export const VisitorLogScalarFieldEnum = {
+  LOG_ID: 'LOG_ID',
+  ENTRY_TYPE: 'ENTRY_TYPE',
+  NAME: 'NAME',
+  VEHICLE_NO: 'VEHICLE_NO',
+  PURPOSE: 'PURPOSE',
+  PHOTO: 'PHOTO',
+  ENTRY_AT: 'ENTRY_AT',
+  EXIT_AT: 'EXIT_AT',
+  LOGGED_BY: 'LOGGED_BY',
+  EXIT_LOGGED_BY: 'EXIT_LOGGED_BY'
+} as const
+
+export type VisitorLogScalarFieldEnum = (typeof VisitorLogScalarFieldEnum)[keyof typeof VisitorLogScalarFieldEnum]
 
 
 export const MstitmScalarFieldEnum = {

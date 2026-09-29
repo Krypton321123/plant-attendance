@@ -1,38 +1,46 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './Layout';
 import AttendancePage from './DashboardPage';
-import PlaceholderPage from './PlaceholderPage';
-import { AuthProvider } from './Auth/AuthContext';
+import { AuthProvider, useAuth } from './Auth/AuthContext';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import LoginPage from './Login';
 import SalaryChart from './SalaryChart';
 import Attendance from './Attendance';
+import UserManagement from './UserManagement';
+import FillingRegister from './FillingRegister';
+import WastageRegister from './WastageRegister';
 
 /**
  * App.tsx — React Router v6 root.
  *
  * Structure:
- *   /login               → LoginPage       (public — no auth required)
- *   /                    → redirect to /attendance
- *   /attendance          → AttendancePage  (your existing dashboard, attendance view)
- *   /payroll             → PayrollPage     (your existing dashboard, payroll view) [placeholder for now]
- *   /employees           → EmployeesPage   [placeholder]
- *   /departments         → DepartmentsPage [placeholder]
- *   /activity            → ActivityPage    [placeholder]
- *   /settings            → SettingsPage    [placeholder]
+ *   /login               → LoginPage        (public — no auth required)
+ *   /                    → redirect to /dashboard
+ *   /dashboard           → AttendancePage    (screen key: "dashboard")
+ *   /attendance          → Attendance        (screen key: "attendance")
+ *   /payroll             → SalaryChart       (screen key: "payroll")
+ *   /users               → UserManagement    (super users only, no screen key —
+ *                                              gated on isSuper directly, not
+ *                                              on allowedScreens, since a
+ *                                              non-super user should never be
+ *                                              able to grant themselves this
+ *                                              regardless of what's in their
+ *                                              allowedScreens list)
  *
- * Everything under the Layout route is now gated by <ProtectedRoute />: if
- * you're not "logged in" (see auth/AuthContext.tsx), you're bounced to
- * /login and sent back to wherever you were trying to go once you sign in.
+ * Each real screen is now wrapped in its OWN <ProtectedRoute screen="...">,
+ * rather than one shared wrapper for the whole Layout tree — this is what
+ * lets different portal users see different subsets of the sidebar/routes.
+ * Placeholder pages (Employees, Departments, Activity, Settings) have been
+ * removed entirely, along with PlaceholderPage — they were never real
+ * screens and had no business being in the access-control list.
  *
- * AUTH NOTE: login is currently client-side only, hardcoded to admin/123,
- * and persisted in localStorage. It does NOT call the backend's real
- * POST /admin/login endpoint. This is a placeholder gate, not real security
- * — see the comment at the top of auth/AuthContext.tsx for details and what
- * to swap in later.
+ * Screen keys used in `screen="..."` props below must match SCREENS in
+ * screens.ts, which is also what UserManagement's checkbox list reads from.
  *
- * To add a real page: create the component in /pages/, import it here,
- * and swap out the matching <PlaceholderPage />.
+ * AUTH NOTE: login now calls the real backend (POST /portal-users/login,
+ * portalLogin controller). Passwords are plaintext and there is no
+ * token/session — see the comment block at the top of Auth/AuthContext.tsx
+ * for exactly what that does and doesn't protect against.
  */
 export default function App() {
   return (
@@ -42,74 +50,89 @@ export default function App() {
           {/* Public — no auth required to view the login screen itself */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Everything below this line requires being "logged in" */}
-          <Route element={<ProtectedRoute />}>
-            {/* The Layout route wraps everything — sidebar lives here */}
-            <Route
-              element={
-                <Layout
-                  supervisorName="Rajesh Singh"
-                  supervisorRole="Line Supervisor"
-                  // employeeCount={employees.length} ← wire from context once you have auth
-                />
-              }
-            >
-              {/* Default redirect */}
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              {/* Live pages */}
+          {/* Every route below requires being logged in AND (except /users,
+              which checks isSuper itself) having that specific screen. */}
+          <Route element={<AuthedLayout />}>
+            {/* Default redirect */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+
+            <Route element={<ProtectedRoute screen="dashboard" />}>
               <Route path="/dashboard" element={<AttendancePage />} />
-              <Route path="/attendance" element={<Attendance />} />
-              {/* Placeholders — replace one by one as you build each page */}
-              <Route
-                path="/payroll"
-                element={
-                 <SalaryChart /> 
-                }
-              />
-              <Route
-                path="/employees"
-                element={
-                  <PlaceholderPage
-                    title="Employees"
-                    description="Full roster management. Wire up an EmployeesPage component here."
-                  />
-                }
-              />
-              <Route
-                path="/departments"
-                element={
-                  <PlaceholderPage
-                    title="Departments"
-                    description="Department and team structure."
-                  />
-                }
-              />
-              <Route
-                path="/activity"
-                element={
-                  <PlaceholderPage
-                    title="Activity Log"
-                    description="Audit trail of attendance marks and changes."
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <PlaceholderPage
-                    title="Settings"
-                    description="App configuration, shift timings, notifications."
-                  />
-                }
-              />
-              {/* Catch-all — still inside the protected tree, so an unknown
-                  authenticated path lands back on /attendance rather than
-                  leaking through to a public 404 */}
-              <Route path="*" element={<Navigate to="/attendance" replace />} />
             </Route>
+
+            <Route element={<ProtectedRoute screen="attendance" />}>
+              <Route path="/attendance" element={<Attendance />} />
+            </Route>
+
+            <Route element={<ProtectedRoute screen="payroll" />}>
+              <Route path="/payroll" element={<SalaryChart />} />
+            </Route>
+            <Route element={<ProtectedRoute screen="filling" />}>
+  <Route path="/filling" element={<FillingRegister />} />
+</Route>
+<Route element={<ProtectedRoute screen="wastage" />}>
+  <Route path="/wastage" element={<WastageRegister />} />
+</Route>
+
+            {/* No `screen` prop — UserManagement checks req.user.isSuper on
+                the backend for every request it makes, and the route itself
+                is additionally hidden from the sidebar for non-super users
+                in Sidebar.tsx. A non-super user landing here directly by URL
+                still can't do anything, since the API calls it makes will
+                be rejected server-side — but for a cleaner UX we should
+                still bounce them; see SuperOnlyRoute below. */}
+            <Route element={<SuperOnlyRoute />}>
+              <Route path="/users" element={<UserManagement />} />
+            </Route>
+
+            {/* Catch-all — still inside the authed tree, so an unknown path
+                lands on /dashboard rather than leaking through to a public
+                404 */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+/**
+ * Wraps the Layout route: requires login (no specific screen — just "are
+ * you logged in at all"), then renders Layout with the real logged-in
+ * user's name, replacing the old hardcoded "Rajesh Singh" / "Line
+ * Supervisor" props.
+ */
+function AuthedLayout() {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return <LayoutWithUser />;
+}
+
+function LayoutWithUser() {
+  const { user } = useAuth();
+  return (
+    <Layout
+      supervisorName={user?.displayName ?? 'User'}
+      supervisorRole={user?.isSuper ? 'Administrator' : 'Team Member'}
+      // employeeCount={employees.length} ← wire from context once you have it
+    />
+  );
+}
+
+/**
+ * Same idea as ProtectedRoute, but checks isSuper directly instead of a
+ * screen key — User Management is never granted via allowedScreens, only
+ * via the IS_SUPER flag, so this is intentionally a separate small
+ * component rather than reusing ProtectedRoute with a fake "users" screen
+ * key that would then need to show up in screens.ts and the checkbox list,
+ * which would be misleading (you can't actually grant it that way).
+ */
+function SuperOnlyRoute() {
+  const { user } = useAuth();
+  if (!user?.isSuper) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Outlet />;
 }

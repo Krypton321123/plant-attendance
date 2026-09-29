@@ -15,10 +15,17 @@ import {
   getMyAttendance,
   setOtStatus,
 } from './controllers/attendance.controller';
+import {
+  createVisitorEntry,
+  markVisitorExit,
+  getActiveGateLog,
+  getGateHistory,
+} from './controllers/gate.controller';
 import { upload } from './util/multer';
 import {
   getFillingHistory,
   getFillingItems,
+  getFillingMonthlyHistory,
   getOperators,
   getTodayFillingEntries,
   submitFillingEntries,
@@ -27,6 +34,7 @@ import {
   getTodayWastageEntries,
   getWastageHistory,
   getWastageItems,
+  getWastageMonthlyHistory,
   submitWastageEntries,
 } from './controllers/wastage.controller';
 import {
@@ -42,6 +50,15 @@ import {
   updateDispatchSession,
 } from './controllers/dispatch.controller';
 import prisma from './util/prisma';
+  import {
+    portalLogin,
+    getAllPortalUsers,
+    createPortalUser,
+    updatePortalUser,
+    deletePortalUser,
+  } from './controllers/portalUser.controller';
+
+
 const router = Router();
 
 // ── Auth Routes ───────────────────────────────────────────────────
@@ -61,17 +78,24 @@ router.get('/attendance/today',             getTodayAttendance);
 router.get('/attendance/month',             getMonthlyAttendance);
 router.get('/attendance/my/:empId',         getMyAttendance);
 router.get('/attendance/:empId/today',      getTodayAttendanceByEmp);
+// ── Gate Routes ──────────────────────────────────────────────────
+router.post('/gate/entry',                  upload.single('photo'), createVisitorEntry);
+router.patch('/gate/exit',                  markVisitorExit);
+router.get('/gate/active',                  getActiveGateLog);
+router.get('/gate/history',                 getGateHistory);
 // ── Filling Routes ───────────────────────────────────────────────
 router.get('/filling/items',                getFillingItems);
 router.get('/filling/operators',            getOperators);
 router.post('/filling/submit',              submitFillingEntries);
 router.get('/filling/history',              getFillingHistory);
 router.get('/filling/today-entries',        getTodayFillingEntries);
+ router.get('/filling/monthly-history',      getFillingMonthlyHistory);
 // ── Wastage Routes ───────────────────────────────────────────────
 router.get('/wastage/items',                getWastageItems);
 router.post('/wastage/submit',              submitWastageEntries);
 router.get('/wastage/today-entries',        getTodayWastageEntries);
 router.get('/wastage/history',              getWastageHistory);
+router.get('/wastage/monthly-history',      getWastageMonthlyHistory);
 // ── Dispatch Routes ──────────────────────────────────────────────
 router.get('/dispatch/items',                              getDispatchItems);
 router.get('/dispatch/parties',                            getParties);
@@ -83,4 +107,11 @@ router.put('/dispatch/sessions/:sessionId',                updateDispatchSession
 router.patch('/dispatch/sessions/:sessionId/send',         sendDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/complete',     completeDispatchSession);
 router.patch('/dispatch/sessions/:sessionId/finalize',     finalizeDispatchSession);
+
+
+router.post('/portal-users/login',              portalLogin);
+router.get('/portal-users',                      getAllPortalUsers);
+router.post('/portal-users',                     createPortalUser);
+router.patch('/portal-users/:userId',            updatePortalUser);
+router.delete('/portal-users/:userId',           deletePortalUser);
 export default router;

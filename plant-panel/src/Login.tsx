@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from './Auth/AuthContext';
@@ -17,24 +17,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
-    // Synchronous today (no API call, per current setup) — the isSubmitting
-    // state is still here so this is a one-line swap later if login() ever
-    // becomes an async call to the backend's real /admin/login endpoint.
-    const ok = login(username, password);
+    // login() now hits POST /api/portal-users/login (see AuthContext.tsx)
+    // and returns { ok, error? } instead of a plain boolean — this is the
+    // async version that comment used to say was "later".
+    const result = await login(username, password);
     setIsSubmitting(false);
 
-    if (!ok) {
-      setError('Incorrect username or password.');
+    if (!result.ok) {
+      setError(result.error ?? 'Incorrect username or password.');
       return;
     }
 
     const state = location.state as LocationState | null;
-    const redirectTo = state?.from?.pathname || '/attendance';
+    // /attendance was the old default route; /dashboard is what App.tsx
+    // actually redirects to now, so unauthenticated visits and post-login
+    // redirects land in the same place.
+    const redirectTo = state?.from?.pathname || '/dashboard';
     navigate(redirectTo, { replace: true });
   };
 
@@ -105,11 +108,6 @@ export default function LoginPage() {
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-[11px] text-zinc-300">
-          Placeholder credentials for now — username <span className="font-mono">admin</span>, password{' '}
-          <span className="font-mono">123</span>.
-        </p>
       </div>
     </div>
   );

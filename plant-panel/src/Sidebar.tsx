@@ -3,16 +3,27 @@ import { useState } from 'react';
 import {
   LayoutDashboard,
   Wallet,
-  Users,
-  Settings,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
-  Building2,
-  Activity,
+  Droplets,
+  Trash2,
 } from 'lucide-react';
+import { useAuth } from './Auth/AuthContext';
+import { SCREENS } from './Auth/screens';
 
 // ─── Nav structure ───────────────────────────────────────────────────────────
-// Add new pages here — `path` must match the route in your router config.
+// Screen keys/labels/paths come from screens.ts (SCREENS) — the same list
+// UserManagement.tsx reads to build its checkbox list — so the two can never
+// drift apart. Only icon assignment lives here, since screens.ts is shared
+// with the backend-shaped world and shouldn't import a UI library.
+//
+// The standalone "User Management" link below is deliberately NOT in
+// screens.ts (see App.tsx's SuperOnlyRoute comment) and is shown/hidden on
+// isSuper directly, not on allowedScreens.
+//
+// Placeholder entries (Employees, Departments, Activity, Settings) have
+// been removed — those were never real screens.
 
 interface NavItem {
   key: string;
@@ -22,28 +33,25 @@ interface NavItem {
   badge?: number; // optional notification dot/count
 }
 
+const SCREEN_ICONS: Record<string, typeof LayoutDashboard> = {
+  dashboard: LayoutDashboard,
+  attendance: LayoutDashboard,
+  payroll: Wallet,
+  filling: Droplets,
+  wastage: Trash2
+};
+
 const NAV_GROUPS: { group: string; items: NavItem[] }[] = [
   {
     group: 'Operations',
-    items: [
-        { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-      { key: 'attendance', label: 'Attendance', path: '/attendance', icon: LayoutDashboard },
-      { key: 'payroll',    label: 'Payroll',    path: '/payroll',    icon: Wallet },
-    ],
-  },
-  {
-    group: 'People',
-    items: [
-      { key: 'employees',    label: 'Employees',    path: '/employees',    icon: Users },
-      { key: 'departments',  label: 'Departments',  path: '/departments',  icon: Building2 },
-    ],
-  },
-  {
-    group: 'System',
-    items: [
-      { key: 'activity', label: 'Activity',  path: '/activity', icon: Activity },
-      { key: 'settings', label: 'Settings',  path: '/settings', icon: Settings },
-    ],
+    items: SCREENS.map((s) => ({
+      key: s.key,
+      label: s.label,
+      path: s.path,
+      // Fall back to LayoutDashboard for any screen added to screens.ts
+      // without a matching icon here, rather than crashing on undefined.
+      icon: SCREEN_ICONS[s.key] ?? LayoutDashboard,
+    })),
   },
 ];
 
@@ -80,6 +88,17 @@ export default function Sidebar({
   supervisorRole = 'Line Supervisor',
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const { user, canAccessScreen } = useAuth();
+
+  // Filter every group down to items the current user can actually see;
+  // drop any group that ends up empty so we don't render a header with
+  // nothing under it.
+  const visibleGroups = NAV_GROUPS.map((g) => ({
+    group: g.group,
+    items: g.items.filter((item) => canAccessScreen(item.key)),
+  })).filter((g) => g.items.length > 0);
+
+  const flatVisibleItems = visibleGroups.flatMap((g) => g.items);
 
   return (
     <>
@@ -119,7 +138,7 @@ export default function Sidebar({
 
         {/* Nav groups */}
         <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-2">
-          {NAV_GROUPS.map(({ group, items }) => (
+          {visibleGroups.map(({ group, items }) => (
             <div key={group}>
               {!collapsed && (
                 <div className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-400">
@@ -170,6 +189,48 @@ export default function Sidebar({
               </div>
             </div>
           ))}
+
+          {/* User Management — super users only. Deliberately outside the
+              screens.ts / allowedScreens system; gated on isSuper directly. */}
+          {user?.isSuper && (
+            <div>
+              {!collapsed && (
+                <div className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-zinc-400">
+                  Admin
+                </div>
+              )}
+              <div className="flex flex-col gap-0.5">
+                <NavLink
+                  to="/users"
+                  className={({ isActive }) =>
+                    `group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors
+                    ${collapsed ? 'justify-center px-0 py-2.5' : ''}
+                    ${
+                      isActive
+                        ? 'bg-zinc-900 text-white'
+                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                    }`
+                  }
+                  title={collapsed ? 'User Management' : undefined}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <ShieldCheck
+                        size={15}
+                        className={isActive ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-600'}
+                      />
+                      {!collapsed && <span className="truncate">User Management</span>}
+                      {collapsed && (
+                        <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-zinc-800 shadow-md group-hover:flex">
+                          User Management
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Collapse toggle */}
@@ -205,26 +266,23 @@ export default function Sidebar({
 
       {/* ── Mobile bottom tab bar ── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-zinc-200 bg-white sm:hidden">
-        {/* Show only first 4 items flat on mobile */}
-        {NAV_GROUPS.flatMap((g) => g.items)
-          .slice(0, 4)
-          .map(({ key, label, path, icon: Icon }) => (
-            <NavLink
-              key={key}
-              to={path}
-              className={({ isActive }) =>
-                `flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors
-                ${isActive ? 'text-zinc-900' : 'text-zinc-400'}`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={18} className={isActive ? 'text-zinc-900' : 'text-zinc-400'} />
-                  <span>{label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+        {flatVisibleItems.slice(0, 4).map(({ key, label, path, icon: Icon }) => (
+          <NavLink
+            key={key}
+            to={path}
+            className={({ isActive }) =>
+              `flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors
+              ${isActive ? 'text-zinc-900' : 'text-zinc-400'}`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={18} className={isActive ? 'text-zinc-900' : 'text-zinc-400'} />
+                <span>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
       </nav>
     </>
   );

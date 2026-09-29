@@ -305,6 +305,8 @@ export type EmployeeWhereInput = {
   fillingAsSupervisor?: Prisma.FillingEntryListRelationFilter
   wastageEntries?: Prisma.WastageEntryListRelationFilter
   dispatchSession?: Prisma.DispatchSessionListRelationFilter
+  visitorLogsCreated?: Prisma.VisitorLogListRelationFilter
+  visitorLogsExited?: Prisma.VisitorLogListRelationFilter
 }
 
 export type EmployeeOrderByWithRelationInput = {
@@ -328,6 +330,8 @@ export type EmployeeOrderByWithRelationInput = {
   fillingAsSupervisor?: Prisma.FillingEntryOrderByRelationAggregateInput
   wastageEntries?: Prisma.WastageEntryOrderByRelationAggregateInput
   dispatchSession?: Prisma.DispatchSessionOrderByRelationAggregateInput
+  visitorLogsCreated?: Prisma.VisitorLogOrderByRelationAggregateInput
+  visitorLogsExited?: Prisma.VisitorLogOrderByRelationAggregateInput
 }
 
 export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
@@ -354,6 +358,8 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   fillingAsSupervisor?: Prisma.FillingEntryListRelationFilter
   wastageEntries?: Prisma.WastageEntryListRelationFilter
   dispatchSession?: Prisma.DispatchSessionListRelationFilter
+  visitorLogsCreated?: Prisma.VisitorLogListRelationFilter
+  visitorLogsExited?: Prisma.VisitorLogListRelationFilter
 }, "EMP_ID">
 
 export type EmployeeOrderByWithAggregationInput = {
@@ -421,6 +427,8 @@ export type EmployeeCreateInput = {
   fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateInput = {
@@ -444,6 +452,8 @@ export type EmployeeUncheckedCreateInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUpdateInput = {
@@ -467,6 +477,8 @@ export type EmployeeUpdateInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateInput = {
@@ -490,6 +502,8 @@ export type EmployeeUncheckedUpdateInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeCreateManyInput = {
@@ -615,6 +629,11 @@ export type EmployeeScalarRelationFilter = {
   isNot?: Prisma.EmployeeWhereInput
 }
 
+export type EmployeeNullableScalarRelationFilter = {
+  is?: Prisma.EmployeeWhereInput | null
+  isNot?: Prisma.EmployeeWhereInput | null
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -717,6 +736,36 @@ export type EmployeeUpdateOneRequiredWithoutDispatchSessionNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutDispatchSessionInput, Prisma.EmployeeUpdateWithoutDispatchSessionInput>, Prisma.EmployeeUncheckedUpdateWithoutDispatchSessionInput>
 }
 
+export type EmployeeCreateNestedOneWithoutVisitorLogsCreatedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsCreatedInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutVisitorLogsCreatedInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeCreateNestedOneWithoutVisitorLogsExitedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsExitedInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutVisitorLogsExitedInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutVisitorLogsCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsCreatedInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutVisitorLogsCreatedInput
+  upsert?: Prisma.EmployeeUpsertWithoutVisitorLogsCreatedInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutVisitorLogsCreatedInput, Prisma.EmployeeUpdateWithoutVisitorLogsCreatedInput>, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsCreatedInput>
+}
+
+export type EmployeeUpdateOneWithoutVisitorLogsExitedNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsExitedInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutVisitorLogsExitedInput
+  upsert?: Prisma.EmployeeUpsertWithoutVisitorLogsExitedInput
+  disconnect?: Prisma.EmployeeWhereInput | boolean
+  delete?: Prisma.EmployeeWhereInput | boolean
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutVisitorLogsExitedInput, Prisma.EmployeeUpdateWithoutVisitorLogsExitedInput>, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsExitedInput>
+}
+
 export type EmployeeCreateWithoutAttendancesInput = {
   EMP_ID?: string
   EMPNAME: string
@@ -737,6 +786,8 @@ export type EmployeeCreateWithoutAttendancesInput = {
   fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateWithoutAttendancesInput = {
@@ -759,6 +810,8 @@ export type EmployeeUncheckedCreateWithoutAttendancesInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeCreateOrConnectWithoutAttendancesInput = {
@@ -797,6 +850,8 @@ export type EmployeeUpdateWithoutAttendancesInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
@@ -819,6 +874,8 @@ export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeCreateWithoutFillingAsOperatorInput = {
@@ -841,6 +898,8 @@ export type EmployeeCreateWithoutFillingAsOperatorInput = {
   fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateWithoutFillingAsOperatorInput = {
@@ -863,6 +922,8 @@ export type EmployeeUncheckedCreateWithoutFillingAsOperatorInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeCreateOrConnectWithoutFillingAsOperatorInput = {
@@ -890,6 +951,8 @@ export type EmployeeCreateWithoutFillingAsSupervisorInput = {
   fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
   wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateWithoutFillingAsSupervisorInput = {
@@ -912,6 +975,8 @@ export type EmployeeUncheckedCreateWithoutFillingAsSupervisorInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
   wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeCreateOrConnectWithoutFillingAsSupervisorInput = {
@@ -950,6 +1015,8 @@ export type EmployeeUpdateWithoutFillingAsOperatorInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutFillingAsOperatorInput = {
@@ -972,6 +1039,8 @@ export type EmployeeUncheckedUpdateWithoutFillingAsOperatorInput = {
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUpsertWithoutFillingAsSupervisorInput = {
@@ -1005,6 +1074,8 @@ export type EmployeeUpdateWithoutFillingAsSupervisorInput = {
   fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
   wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput = {
@@ -1027,6 +1098,8 @@ export type EmployeeUncheckedUpdateWithoutFillingAsSupervisorInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
   wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeCreateWithoutWastageEntriesInput = {
@@ -1049,6 +1122,8 @@ export type EmployeeCreateWithoutWastageEntriesInput = {
   fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
   fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateWithoutWastageEntriesInput = {
@@ -1071,6 +1146,8 @@ export type EmployeeUncheckedCreateWithoutWastageEntriesInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
   dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeCreateOrConnectWithoutWastageEntriesInput = {
@@ -1109,6 +1186,8 @@ export type EmployeeUpdateWithoutWastageEntriesInput = {
   fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
   fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutWastageEntriesInput = {
@@ -1131,6 +1210,8 @@ export type EmployeeUncheckedUpdateWithoutWastageEntriesInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
   dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeCreateWithoutDispatchSessionInput = {
@@ -1153,6 +1234,8 @@ export type EmployeeCreateWithoutDispatchSessionInput = {
   fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
   fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeUncheckedCreateWithoutDispatchSessionInput = {
@@ -1175,6 +1258,8 @@ export type EmployeeUncheckedCreateWithoutDispatchSessionInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
   wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
 }
 
 export type EmployeeCreateOrConnectWithoutDispatchSessionInput = {
@@ -1213,6 +1298,8 @@ export type EmployeeUpdateWithoutDispatchSessionInput = {
   fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
   fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutDispatchSessionInput = {
@@ -1235,6 +1322,232 @@ export type EmployeeUncheckedUpdateWithoutDispatchSessionInput = {
   fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
   fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
   wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
+}
+
+export type EmployeeCreateWithoutVisitorLogsCreatedInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  SALARY?: number | null
+  LEAVE_APPLICABLE?: boolean | null
+  LEAVE_DAYS?: number
+  DEPARTMENT?: string | null
+  CREATEDAT?: Date | string
+  MPIN?: string | null
+  MOBILE?: string | null
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsExited?: Prisma.VisitorLogCreateNestedManyWithoutExitLoggedByInput
+}
+
+export type EmployeeUncheckedCreateWithoutVisitorLogsCreatedInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  SALARY?: number | null
+  LEAVE_APPLICABLE?: boolean | null
+  LEAVE_DAYS?: number
+  DEPARTMENT?: string | null
+  CREATEDAT?: Date | string
+  MPIN?: string | null
+  MOBILE?: string | null
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput
+}
+
+export type EmployeeCreateOrConnectWithoutVisitorLogsCreatedInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsCreatedInput>
+}
+
+export type EmployeeCreateWithoutVisitorLogsExitedInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  SALARY?: number | null
+  LEAVE_APPLICABLE?: boolean | null
+  LEAVE_DAYS?: number
+  DEPARTMENT?: string | null
+  CREATEDAT?: Date | string
+  MPIN?: string | null
+  MOBILE?: string | null
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogCreateNestedManyWithoutLoggedByInput
+}
+
+export type EmployeeUncheckedCreateWithoutVisitorLogsExitedInput = {
+  EMP_ID?: string
+  EMPNAME: string
+  EMPFNAME: string
+  EMPPROFILEPHOTO?: string | null
+  EMPDESG: string
+  DEVICEID?: string | null
+  STATUS?: string
+  EMPTYPE: string
+  SALARY?: number | null
+  LEAVE_APPLICABLE?: boolean | null
+  LEAVE_DAYS?: number
+  DEPARTMENT?: string | null
+  CREATEDAT?: Date | string
+  MPIN?: string | null
+  MOBILE?: string | null
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutOperatorInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedCreateNestedManyWithoutDoneByInput
+  wastageEntries?: Prisma.WastageEntryUncheckedCreateNestedManyWithoutDoneByInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedCreateNestedManyWithoutDoneByInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput
+}
+
+export type EmployeeCreateOrConnectWithoutVisitorLogsExitedInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsExitedInput>
+}
+
+export type EmployeeUpsertWithoutVisitorLogsCreatedInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsCreatedInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsCreatedInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutVisitorLogsCreatedInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutVisitorLogsCreatedInput, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsCreatedInput>
+}
+
+export type EmployeeUpdateWithoutVisitorLogsCreatedInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  SALARY?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  LEAVE_APPLICABLE?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  LEAVE_DAYS?: Prisma.IntFieldUpdateOperationsInput | number
+  DEPARTMENT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  MPIN?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUpdateManyWithoutExitLoggedByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutVisitorLogsCreatedInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  SALARY?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  LEAVE_APPLICABLE?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  LEAVE_DAYS?: Prisma.IntFieldUpdateOperationsInput | number
+  DEPARTMENT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  MPIN?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsExited?: Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput
+}
+
+export type EmployeeUpsertWithoutVisitorLogsExitedInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsExitedInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedCreateWithoutVisitorLogsExitedInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutVisitorLogsExitedInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutVisitorLogsExitedInput, Prisma.EmployeeUncheckedUpdateWithoutVisitorLogsExitedInput>
+}
+
+export type EmployeeUpdateWithoutVisitorLogsExitedInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  SALARY?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  LEAVE_APPLICABLE?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  LEAVE_DAYS?: Prisma.IntFieldUpdateOperationsInput | number
+  DEPARTMENT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  MPIN?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUpdateManyWithoutLoggedByNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutVisitorLogsExitedInput = {
+  EMP_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPFNAME?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPPROFILEPHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  EMPDESG?: Prisma.StringFieldUpdateOperationsInput | string
+  DEVICEID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  STATUS?: Prisma.StringFieldUpdateOperationsInput | string
+  EMPTYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  SALARY?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  LEAVE_APPLICABLE?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  LEAVE_DAYS?: Prisma.IntFieldUpdateOperationsInput | number
+  DEPARTMENT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  MPIN?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  fillingAsOperator?: Prisma.FillingEntryUncheckedUpdateManyWithoutOperatorNestedInput
+  fillingAsSupervisor?: Prisma.FillingEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  wastageEntries?: Prisma.WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput
+  dispatchSession?: Prisma.DispatchSessionUncheckedUpdateManyWithoutDoneByNestedInput
+  visitorLogsCreated?: Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput
 }
 
 
@@ -1248,6 +1561,8 @@ export type EmployeeCountOutputType = {
   fillingAsSupervisor: number
   wastageEntries: number
   dispatchSession: number
+  visitorLogsCreated: number
+  visitorLogsExited: number
 }
 
 export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1256,6 +1571,8 @@ export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   fillingAsSupervisor?: boolean | EmployeeCountOutputTypeCountFillingAsSupervisorArgs
   wastageEntries?: boolean | EmployeeCountOutputTypeCountWastageEntriesArgs
   dispatchSession?: boolean | EmployeeCountOutputTypeCountDispatchSessionArgs
+  visitorLogsCreated?: boolean | EmployeeCountOutputTypeCountVisitorLogsCreatedArgs
+  visitorLogsExited?: boolean | EmployeeCountOutputTypeCountVisitorLogsExitedArgs
 }
 
 /**
@@ -1303,6 +1620,20 @@ export type EmployeeCountOutputTypeCountDispatchSessionArgs<ExtArgs extends runt
   where?: Prisma.DispatchSessionWhereInput
 }
 
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountVisitorLogsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.VisitorLogWhereInput
+}
+
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountVisitorLogsExitedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.VisitorLogWhereInput
+}
+
 
 export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   EMP_ID?: boolean
@@ -1325,6 +1656,8 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   fillingAsSupervisor?: boolean | Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>
   wastageEntries?: boolean | Prisma.Employee$wastageEntriesArgs<ExtArgs>
   dispatchSession?: boolean | Prisma.Employee$dispatchSessionArgs<ExtArgs>
+  visitorLogsCreated?: boolean | Prisma.Employee$visitorLogsCreatedArgs<ExtArgs>
+  visitorLogsExited?: boolean | Prisma.Employee$visitorLogsExitedArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
@@ -1355,6 +1688,8 @@ export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   fillingAsSupervisor?: boolean | Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>
   wastageEntries?: boolean | Prisma.Employee$wastageEntriesArgs<ExtArgs>
   dispatchSession?: boolean | Prisma.Employee$dispatchSessionArgs<ExtArgs>
+  visitorLogsCreated?: boolean | Prisma.Employee$visitorLogsCreatedArgs<ExtArgs>
+  visitorLogsExited?: boolean | Prisma.Employee$visitorLogsExitedArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1366,6 +1701,8 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     fillingAsSupervisor: Prisma.$FillingEntryPayload<ExtArgs>[]
     wastageEntries: Prisma.$WastageEntryPayload<ExtArgs>[]
     dispatchSession: Prisma.$DispatchSessionPayload<ExtArgs>[]
+    visitorLogsCreated: Prisma.$VisitorLogPayload<ExtArgs>[]
+    visitorLogsExited: Prisma.$VisitorLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     EMP_ID: string
@@ -1728,6 +2065,8 @@ export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime
   fillingAsSupervisor<T extends Prisma.Employee$fillingAsSupervisorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$fillingAsSupervisorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillingEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   wastageEntries<T extends Prisma.Employee$wastageEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$wastageEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WastageEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   dispatchSession<T extends Prisma.Employee$dispatchSessionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$dispatchSessionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DispatchSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  visitorLogsCreated<T extends Prisma.Employee$visitorLogsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$visitorLogsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VisitorLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  visitorLogsExited<T extends Prisma.Employee$visitorLogsExitedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$visitorLogsExitedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VisitorLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2231,6 +2570,54 @@ export type Employee$dispatchSessionArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.DispatchSessionScalarFieldEnum | Prisma.DispatchSessionScalarFieldEnum[]
+}
+
+/**
+ * Employee.visitorLogsCreated
+ */
+export type Employee$visitorLogsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the VisitorLog
+   */
+  select?: Prisma.VisitorLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the VisitorLog
+   */
+  omit?: Prisma.VisitorLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VisitorLogInclude<ExtArgs> | null
+  where?: Prisma.VisitorLogWhereInput
+  orderBy?: Prisma.VisitorLogOrderByWithRelationInput | Prisma.VisitorLogOrderByWithRelationInput[]
+  cursor?: Prisma.VisitorLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.VisitorLogScalarFieldEnum | Prisma.VisitorLogScalarFieldEnum[]
+}
+
+/**
+ * Employee.visitorLogsExited
+ */
+export type Employee$visitorLogsExitedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the VisitorLog
+   */
+  select?: Prisma.VisitorLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the VisitorLog
+   */
+  omit?: Prisma.VisitorLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VisitorLogInclude<ExtArgs> | null
+  where?: Prisma.VisitorLogWhereInput
+  orderBy?: Prisma.VisitorLogOrderByWithRelationInput | Prisma.VisitorLogOrderByWithRelationInput[]
+  cursor?: Prisma.VisitorLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.VisitorLogScalarFieldEnum | Prisma.VisitorLogScalarFieldEnum[]
 }
 
 /**

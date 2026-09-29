@@ -21,6 +21,9 @@ export default function RootLayout() {
           <Stack.Screen name="supervisor/wastage-plant" />
           <Stack.Screen name="admin/home" />
           <Stack.Screen name="individual/home" />
+          <Stack.Screen name="gate/home" />
+          <Stack.Screen name="gate/new-entry" />
+          <Stack.Screen name="gate/capture" />
           <Stack.Screen name="camera/mark" />
         </Stack>
       </DrawerProvider>

@@ -128,6 +128,7 @@ export default function IndividualHomeScreen() {
   const isPresent     = activeRecord?.STATUS === "P";
   const dayRecord     = attendance?.dayRecord   ?? null;
   const nightRecord   = attendance?.nightRecord ?? null;
+  const isGuard       = employee?.EMPTYPE === "GUARD";
 
   const markedTime = activeRecord?.CREATEDAT
     ? new Date(activeRecord.CREATEDAT).toLocaleTimeString("en-IN", {
@@ -165,6 +166,26 @@ export default function IndividualHomeScreen() {
         <Ionicons name="calendar-outline" size={16} color={C.primary} />
         <Text style={styles.dateText}>{today}</Text>
       </View>
+
+      {/* Guard-only: link to the gate entry/exit log. Guards use the exact
+          same self-attendance flow below as any individual employee — this
+          is purely additive, not a replacement of anything on this screen. */}
+      {isGuard && (
+        <TouchableOpacity
+          style={styles.gateLinkCard}
+          onPress={() => router.push("/gate/home")}
+          activeOpacity={0.8}
+        >
+          <View style={styles.gateLinkIconWrap}>
+            <Ionicons name="shield-checkmark-outline" size={18} color={C.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gateLinkTitle}>Gate Entry Log</Text>
+            <Text style={styles.gateLinkSub}>Log visitors and vehicles at the gate</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+        </TouchableOpacity>
+      )}
 
       {/* Other-shift summary strip — only show if the OTHER shift has a record */}
       {currentShift === "NIGHT" && dayRecord && (
@@ -327,6 +348,18 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.primaryMuted, marginBottom: 8,
   },
   dateText: { color: C.textSecondary, fontSize: 14 },
+  gateLinkCard: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    marginHorizontal: 24, backgroundColor: C.cardBg,
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.border, marginBottom: 8,
+  },
+  gateLinkIconWrap: {
+    width: 34, height: 34, borderRadius: 9,
+    backgroundColor: C.primaryLight, borderWidth: 1, borderColor: C.primaryMuted,
+    justifyContent: "center", alignItems: "center",
+  },
+  gateLinkTitle: { color: C.textPrimary, fontSize: 14, fontWeight: "700" },
+  gateLinkSub:   { color: C.textMuted, fontSize: 12, marginTop: 1 },
   otherShiftStrip: {
     flexDirection: "row", alignItems: "center", gap: 6,
     marginHorizontal: 24, marginBottom: 16, marginTop: 8,

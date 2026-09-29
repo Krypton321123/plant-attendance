@@ -41,6 +41,11 @@ export default function IndexScreen() {
       case "KPSUPERVISOR":
       case "OFFICE":
         return "/supervisor/home";
+      case "GUARD":
+        // Guards use the same attendance flow as individual employees —
+        // their gate-log screen is reached from a button on that screen,
+        // not via a separate landing route.
+        return "/individual/home";
       default:
         return "/individual/home";
     }

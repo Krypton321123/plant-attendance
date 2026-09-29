@@ -398,6 +398,8 @@ export const ModelName = {
   DispatchItem: 'DispatchItem',
   DispatchEmptyItem: 'DispatchEmptyItem',
   DispatchLoadingEntry: 'DispatchLoadingEntry',
+  PortalUser: 'PortalUser',
+  VisitorLog: 'VisitorLog',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
   mstunit: 'mstunit'
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "dispatchLoadingEntry" | "mstitm" | "mstparty" | "mstunit"
+    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "dispatchLoadingEntry" | "portalUser" | "visitorLog" | "mstitm" | "mstparty" | "mstunit"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -948,6 +950,138 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PortalUser: {
+      payload: Prisma.$PortalUserPayload<ExtArgs>
+      fields: Prisma.PortalUserFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PortalUserFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PortalUserFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        findFirst: {
+          args: Prisma.PortalUserFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PortalUserFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        findMany: {
+          args: Prisma.PortalUserFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>[]
+        }
+        create: {
+          args: Prisma.PortalUserCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        createMany: {
+          args: Prisma.PortalUserCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PortalUserDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        update: {
+          args: Prisma.PortalUserUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        deleteMany: {
+          args: Prisma.PortalUserDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PortalUserUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PortalUserUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortalUserPayload>
+        }
+        aggregate: {
+          args: Prisma.PortalUserAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePortalUser>
+        }
+        groupBy: {
+          args: Prisma.PortalUserGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortalUserGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PortalUserCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortalUserCountAggregateOutputType> | number
+        }
+      }
+    }
+    VisitorLog: {
+      payload: Prisma.$VisitorLogPayload<ExtArgs>
+      fields: Prisma.VisitorLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VisitorLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VisitorLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        findFirst: {
+          args: Prisma.VisitorLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VisitorLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        findMany: {
+          args: Prisma.VisitorLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>[]
+        }
+        create: {
+          args: Prisma.VisitorLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        createMany: {
+          args: Prisma.VisitorLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.VisitorLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        update: {
+          args: Prisma.VisitorLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.VisitorLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VisitorLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.VisitorLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorLogPayload>
+        }
+        aggregate: {
+          args: Prisma.VisitorLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVisitorLog>
+        }
+        groupBy: {
+          args: Prisma.VisitorLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VisitorLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VisitorLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VisitorLogCountAggregateOutputType> | number
+        }
+      }
+    }
     mstitm: {
       payload: Prisma.$mstitmPayload<ExtArgs>
       fields: Prisma.mstitmFieldRefs
@@ -1210,6 +1344,35 @@ export const DispatchLoadingEntryScalarFieldEnum = {
 export type DispatchLoadingEntryScalarFieldEnum = (typeof DispatchLoadingEntryScalarFieldEnum)[keyof typeof DispatchLoadingEntryScalarFieldEnum]
 
 
+export const PortalUserScalarFieldEnum = {
+  USER_ID: 'USER_ID',
+  USERNAME: 'USERNAME',
+  PASSWORD: 'PASSWORD',
+  DISPLAY_NAME: 'DISPLAY_NAME',
+  IS_SUPER: 'IS_SUPER',
+  ALLOWED_SCREENS: 'ALLOWED_SCREENS',
+  CREATEDAT: 'CREATEDAT'
+} as const
+
+export type PortalUserScalarFieldEnum = (typeof PortalUserScalarFieldEnum)[keyof typeof PortalUserScalarFieldEnum]
+
+
+export const VisitorLogScalarFieldEnum = {
+  LOG_ID: 'LOG_ID',
+  ENTRY_TYPE: 'ENTRY_TYPE',
+  NAME: 'NAME',
+  VEHICLE_NO: 'VEHICLE_NO',
+  PURPOSE: 'PURPOSE',
+  PHOTO: 'PHOTO',
+  ENTRY_AT: 'ENTRY_AT',
+  EXIT_AT: 'EXIT_AT',
+  LOGGED_BY: 'LOGGED_BY',
+  EXIT_LOGGED_BY: 'EXIT_LOGGED_BY'
+} as const
+
+export type VisitorLogScalarFieldEnum = (typeof VisitorLogScalarFieldEnum)[keyof typeof VisitorLogScalarFieldEnum]
+
+
 export const MstitmScalarFieldEnum = {
   rowid: 'rowid',
   itmcd: 'itmcd',
@@ -1414,6 +1577,8 @@ export type GlobalOmitConfig = {
   dispatchItem?: Prisma.DispatchItemOmit
   dispatchEmptyItem?: Prisma.DispatchEmptyItemOmit
   dispatchLoadingEntry?: Prisma.DispatchLoadingEntryOmit
+  portalUser?: Prisma.PortalUserOmit
+  visitorLog?: Prisma.VisitorLogOmit
   mstitm?: Prisma.mstitmOmit
   mstparty?: Prisma.mstpartyOmit
   mstunit?: Prisma.mstunitOmit

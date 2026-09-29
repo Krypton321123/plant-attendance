@@ -31,6 +31,12 @@ model Employee {
   fillingAsSupervisor  FillingEntry[] @relation("FillingDoneBy")
   wastageEntries       WastageEntry[] @relation("WastageDoneBy")
   dispatchSession      DispatchSession[] @relation("DispatchDoneBy")
+  // Gate log relations. A guard (EMPTYPE = "GUARD") can appear on both sides
+  // of a VisitorLog row — the guard who logged the entry, and, separately,
+  // whichever guard later logged the exit (often a different guard, at a
+  // shift handoff), hence two distinct relation names.
+  visitorLogsCreated   VisitorLog[]   @relation("VisitorLoggedBy")
+  visitorLogsExited    VisitorLog[]   @relation("VisitorExitLoggedBy")
 
   @@map("employees")
 }
@@ -190,6 +196,45 @@ model DispatchLoadingEntry {
 
   @@map("dispatch_loading_entries")
 }
+
+model PortalUser {
+  USER_ID         String   @id @default(cuid())
+  USERNAME        String   @unique @db.VarChar(100)
+  PASSWORD        String   @db.VarChar(200)
+  DISPLAY_NAME    String   @db.VarChar(250)
+  IS_SUPER        Boolean  @default(false)
+  ALLOWED_SCREENS String   @default("[]") @db.NVarChar(2000)
+  CREATEDAT       DateTime @default(now())
+
+  @@map("portal_users")
+}
+
+// A gate-log entry for a person or vehicle passing through the factory gate.
+// Deliberately NOT modeled as an Attendance row: the subject being logged
+// (a visitor, a driver) is not an Employee and has no EMP_ID — NAME is free
+// text, not a foreign key. LOGGED_BY / EXIT_LOGGED_BY are the only FKs, and
+// both point at the guard(s) who handled the entry/exit, never the visitor.
+//
+// EXIT_AT null = still inside. This is the entire "open vs closed" state —
+// the "currently inside" list guards see is just WHERE EXIT_AT IS NULL.
+model VisitorLog {
+  LOG_ID          String    @id @default(cuid())
+  ENTRY_TYPE      String    // "PERSON" | "VEHICLE"
+  NAME            String    // visitor's name, or driver's name when ENTRY_TYPE = "VEHICLE"
+  VEHICLE_NO      String?   // set only when ENTRY_TYPE = "VEHICLE"
+  PURPOSE         String
+  PHOTO           String?   // same path-join pattern as Attendance.PHOTO
+  ENTRY_AT        DateTime  @default(now())
+  EXIT_AT         DateTime?
+  LOGGED_BY       String
+  EXIT_LOGGED_BY  String?
+
+  loggedBy        Employee  @relation("VisitorLoggedBy", fields: [LOGGED_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  exitLoggedBy    Employee? @relation("VisitorExitLoggedBy", fields: [EXIT_LOGGED_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("visitor_logs")
+}
+
 
 view mstitm {
   rowid     BigInt

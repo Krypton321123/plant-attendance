@@ -169,83 +169,24 @@ const entries = [
 ];
 
 async function main() {
-  console.log(`Seeding ${entries.length} attendance entries for August 2026...`);
-
-  let created = 0;
-  let updated = 0;
-
-  for (const entry of entries) {
-    const createdAt = createdAtFor(entry.day, entry.shift);
-
-    const result = await prisma.attendance.upsert({
-      where: {
-        EMP_ID_CREATEDAT: {
-          EMP_ID: entry.empId,
-          CREATEDAT: createdAt,
-        },
-      },
-      create: {
-        EMP_ID: entry.empId,
-        CREATEDAT: createdAt,
-        STATUS: 'P',
-        SHIFT: entry.shift,
-        PHOTO: null,
-        LOCATION: null,
-        LAT_VALUE: null,
-        LONG_VALUE: null,
-        MARKED_BY: null,
-        OT_STATUS: entry.ot ? 'OT' : null,
-      },
-      update: {
-        STATUS: 'P',
-        OT_STATUS: entry.ot ? 'OT' : undefined, // don't clobber an existing OT_STATUS if this entry has no OT marker
-      },
-    });
-
-    // Track create-vs-update purely for the summary log (upsert doesn't tell us which branch ran)
-    const wasJustCreated = result.CREATEDAT.getTime() === createdAt.getTime();
-    if (wasJustCreated) created++;
-    else updated++;
+    const existing = await prisma.portalUser.findUnique({ where: { USERNAME: 'admin' } });
+  if (existing) {
+    console.log('admin already exists, skipping.');
+    return;
   }
-
-  console.log(`Upserted ${entries.length} rows (${created} created/confirmed, ${updated} pre-existing rows touched).`);
-
-  // ── Special case: Vishnu (EMP00052) "OT REMOVE" on Aug 14 ────────────────────
-  // Per requester: this un-sets OT_STATUS back to null on his Aug 12 NIGHT row.
-  // It does NOT create or touch any Aug 14 row for Vishnu.
-  console.log('Applying Vishnu (EMP00052) OT removal on Aug 12 NIGHT row...');
-
-  const vishnuAug12Night = createdAtFor(12, 'NIGHT');
-
-  const vishnuRecord = await prisma.attendance.findUnique({
-    where: {
-      EMP_ID_CREATEDAT: {
-        EMP_ID: 'EMP00052',
-        CREATEDAT: vishnuAug12Night,
-      },
+ 
+  await prisma.portalUser.create({
+    data: {
+      USERNAME: 'admin',
+      PASSWORD: '123',
+      DISPLAY_NAME: 'Admin',
+      IS_SUPER: true,
+      ALLOWED_SCREENS: '[]', // irrelevant for super users — see controller
     },
   });
-
-  if (!vishnuRecord) {
-    console.warn(
-      'WARNING: Could not find Vishnu (EMP00052) Aug 12 NIGHT row to remove OT from — ' +
-        'this should not happen since it was upserted above. Skipping.',
-    );
-  } else {
-    await prisma.attendance.update({
-      where: {
-        EMP_ID_CREATEDAT: {
-          EMP_ID: 'EMP00052',
-          CREATEDAT: vishnuAug12Night,
-        },
-      },
-      data: { OT_STATUS: null },
-    });
-    console.log('Vishnu OT_STATUS unset on Aug 12 NIGHT row.');
-  }
-
-  console.log('Done.');
+  console.log('Created admin superuser (admin / 123).');
 }
+
 
 main()
   .catch((e) => {
