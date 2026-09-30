@@ -84,6 +84,7 @@ export const signup = async (req: Request, res: Response) => {
 
     // A device can only be tied to one account. Since MPIN/STATUS aren't set
     // yet at signup, we can't rely on the login uniqueness check — enforce it here.
+    console.log(deviceId);
     const existingDevice = await prisma.employee.findFirst({
       where: { DEVICEID: deviceId },
     });
