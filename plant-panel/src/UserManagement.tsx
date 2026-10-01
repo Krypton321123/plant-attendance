@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2, Pencil, Plus, X, ShieldCheck } from 'lucide-react';
 import { SCREENS } from './Auth/screens';
 import { apiUrl } from './Auth/apiconfig';
@@ -102,7 +102,7 @@ export default function UserManagement() {
     }));
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: any) {
     e.preventDefault();
     if (!editingId) return;
     setSaving(true);
