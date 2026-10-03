@@ -11,7 +11,7 @@ import {
   ServerCrash,
   Printer,
 } from "lucide-react";
-import SalaryReportPrint from "./Salaryreportprint";
+import SalaryReportPrint from "./SalaryReportPrint";
 // ════════════════════════════════════════════════════════════════════════
 // Types — mirrors the shapes already used on the Attendance dashboard so
 // both pages read the same API responses the same way.
