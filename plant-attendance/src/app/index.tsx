@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { API_URL, STORAGE_KEYS } from "../constants/config";
 import { getOrCreateDeviceId } from "../util/deviceid";
+import { markRealAdmin, routeForEmpType } from "../util/roles";
 import { C } from "../constants/theme";
 
 const PIN_LENGTH = 6;
@@ -30,26 +31,6 @@ export default function IndexScreen() {
   useEffect(() => {
     checkSession();
   }, []);
-
-  const routeForEmpType = (empType: string) => {
-    console.log(empType)
-    switch (empType) {
-      case "ADMIN":
-        return "/admin/home";
-      case "SUPERVISOR":
-      case "PPSUPERVISOR":
-      case "KPSUPERVISOR":
-      case "OFFICE":
-        return "/supervisor/home";
-      case "GUARD":
-        // Guards use the same attendance flow as individual employees —
-        // their gate-log screen is reached from a button on that screen,
-        // not via a separate landing route.
-        return "/individual/home";
-      default:
-        return "/individual/home";
-    }
-  };
 
   // If a session is already stored locally, skip straight to the right
   // screen. We don't need a network round-trip here — MPIN login already
@@ -105,8 +86,19 @@ export default function IndexScreen() {
         return;
       }
 
-      await AsyncStorage.setItem(STORAGE_KEYS.EMPLOYEE, JSON.stringify(data.data));
-      router.replace(routeForEmpType(data.data.EMPTYPE));
+      const employee = data.data;
+      const isAdmin = employee.EMPTYPE === "ADMIN";
+
+      // Admins skip the device check on the server and choose which role to
+      // log in as. markRealAdmin remembers they're an admin even after the
+      // picker overwrites EMPTYPE with the role they chose (see util/roles).
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.EMPLOYEE,
+        JSON.stringify(isAdmin ? markRealAdmin(employee) : employee)
+      );
+      router.replace(
+        isAdmin ? "/auth/select-role" : routeForEmpType(employee.EMPTYPE)
+      );
     } catch {
       setError("Network error. Try again.");
       setPin("");

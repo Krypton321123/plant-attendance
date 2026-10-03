@@ -13,6 +13,7 @@ export default function RootLayout() {
           <Stack.Screen name="auth/select-employee" />
           <Stack.Screen name="auth/admin-login" />
           <Stack.Screen name="auth/register-photo" />
+          <Stack.Screen name="auth/select-role" />
           <Stack.Screen name="auth/pending" />
           <Stack.Screen name="supervisor/home" />
           <Stack.Screen name="supervisor/report" />

@@ -1,11 +1,5 @@
-give search option in the present button
-DO print 
+# TODOS
 
-13-08-2026
-OFFICE WALE KE PAS JO DISPATCH NAHI HUE, WOH EDIT KAR SAKTE. 
-
-wastage me fresh carton wastage, leak carton wastage
-wastage me party select
-ek din me ek entry
-empty weight should not be necessary
-put net weight and gross weight in office screen as well
+- check usertype upon start for better testing 
+ -- if find admin, remove deviceID guard and just give the user an interface to select usertype right there
+- change guard screen selection from (person / vehicle) to (employee / visitor) ask mobile no, name, person to meet, purpose, number, address (1 liner optional), vehicle no (optional)

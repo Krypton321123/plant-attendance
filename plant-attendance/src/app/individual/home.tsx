@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { API_URL, STORAGE_KEYS } from "../../constants/config";
 import { C } from "../../constants/theme";
+import { isRealAdmin } from "../../util/roles";
 
 type ShiftRecord = {
   STATUS:    "P" | "A";
@@ -129,6 +130,7 @@ export default function IndividualHomeScreen() {
   const dayRecord     = attendance?.dayRecord   ?? null;
   const nightRecord   = attendance?.nightRecord ?? null;
   const isGuard       = employee?.EMPTYPE === "GUARD";
+  const canSwitchRole = isRealAdmin(employee);
 
   const markedTime = activeRecord?.CREATEDAT
     ? new Date(activeRecord.CREATEDAT).toLocaleTimeString("en-IN", {
@@ -182,6 +184,26 @@ export default function IndividualHomeScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.gateLinkTitle}>Gate Entry Log</Text>
             <Text style={styles.gateLinkSub}>Log visitors and vehicles at the gate</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+        </TouchableOpacity>
+      )}
+
+      {/* Admin-only: an admin testing as GUARD / INDIVIDUAL needs a way back
+          to the role picker, and this screen has no drawer. Reuses the
+          gate-link card styles so it matches the shortcut above. */}
+      {canSwitchRole && (
+        <TouchableOpacity
+          style={styles.gateLinkCard}
+          onPress={() => router.replace("/auth/select-role")}
+          activeOpacity={0.8}
+        >
+          <View style={styles.gateLinkIconWrap}>
+            <Ionicons name="swap-horizontal-outline" size={18} color={C.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gateLinkTitle}>Switch Role</Text>
+            <Text style={styles.gateLinkSub}>Currently {employee?.EMPTYPE}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
         </TouchableOpacity>

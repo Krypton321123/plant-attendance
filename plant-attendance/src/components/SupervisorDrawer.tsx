@@ -7,13 +7,14 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { STORAGE_KEYS } from "../constants/config";
 import { useDrawer } from "../context/DrawerContext";
+import { isRealAdmin } from "../util/roles";
 import { C } from "@/constants/theme";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.76;
@@ -76,6 +77,11 @@ export default function SupervisorDrawer({ supervisorName, empType }: Props) {
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
+  // Real admins (even while acting as another role) can jump back to the role
+  // picker. This is read from the cached session each time the drawer opens,
+  // so WithDrawer doesn't need to pass any extra props.
+  const [canSwitchRole, setCanSwitchRole] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       Animated.parallel([
@@ -110,9 +116,21 @@ export default function SupervisorDrawer({ supervisorName, empType }: Props) {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    AsyncStorage.getItem(STORAGE_KEYS.EMPLOYEE)
+      .then((raw) => setCanSwitchRole(isRealAdmin(raw ? JSON.parse(raw) : null)))
+      .catch(() => setCanSwitchRole(false));
+  }, [isOpen]);
+
   const handleNav = (route: string) => {
     close();
     setTimeout(() => router.push(route as any), DURATION + 20);
+  };
+
+  const handleSwitchRole = () => {
+    close();
+    setTimeout(() => router.replace("/auth/select-role"), DURATION + 20);
   };
 
   const handleLogout = async () => {
@@ -250,6 +268,24 @@ export default function SupervisorDrawer({ supervisorName, empType }: Props) {
         </View>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          {canSwitchRole && (
+            <TouchableOpacity
+              style={styles.logoutBtn}
+              onPress={handleSwitchRole}
+            >
+              <Ionicons
+                name="swap-horizontal-outline"
+                size={18}
+                color={C.primary}
+              />
+              <View>
+                <Text style={styles.switchRoleText}>Switch Role</Text>
+                {empType ? (
+                  <Text style={styles.switchRoleSub}>Currently {empType}</Text>
+                ) : null}
+              </View>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={18} color={C.textMuted} />
             <Text style={styles.logoutText}>Switch Account</Text>
@@ -413,4 +449,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   logoutText: { color: C.textMuted, fontSize: 14, fontWeight: "600" },
+  switchRoleText: { color: C.primary, fontSize: 14, fontWeight: "700" },
+  switchRoleSub: { color: C.textMuted, fontSize: 11.5, marginTop: 1 },
 });

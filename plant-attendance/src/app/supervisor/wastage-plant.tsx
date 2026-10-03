@@ -3,6 +3,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  FlatList,
   ActivityIndicator,
   StyleSheet,
   Alert,
@@ -28,6 +29,20 @@ type MstItem = {
   pcksz: number | null;
 };
 
+// Same shape the filling screen gets from GET /filling/operators.
+type Operator = {
+  EMP_ID: string;
+  EMPNAME: string;
+  EMPFNAME: string;
+  EMPDESG: string;
+};
+
+// From GET /wastage/parties (mstpackingsupp): ledcd = code, lednm = name.
+type Party = {
+  ledcd: string;
+  lednm: string | null;
+};
+
 type WastageRow = {
   itmcd: string;
   itmnm: string;
@@ -35,7 +50,17 @@ type WastageRow = {
   cartonWastage: string;
   pcsWastage: string;
   looseOil: string;
+  // Optional attribution — "" means "not chosen". A row only ever uses one
+  // of the two pairs: pouch ("PCH") items use operator*, every other item
+  // uses party*.
+  operatorId: string;
+  operatorName: string;
+  partyCd: string;
+  partyNm: string;
 };
+
+// The part of a row that is restored from a saved entry on the server.
+type SavedValues = Omit<WastageRow, "itmcd" | "itmnm" | "itmsubcat">;
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 // Same helpers as the filling screen — local-date (not UTC) "YYYY-MM-DD"
@@ -75,6 +100,169 @@ const formatFullDateLabel = (d: Date) =>
     month: "long",
     year: "numeric",
   });
+
+// ─── Operator / party helpers ─────────────────────────────────────────────────
+
+// Pouch items (name contains "PCH") get an OPERATOR picker; every other item
+// gets a PARTY picker. Plain case-insensitive substring match, kept in one
+// place so the rule is easy to change later.
+const isPouchItem = (name: string) => name.toLowerCase().includes("pch");
+
+// mstpackingsupp.lednm is nullable — fall back to the code so a party can
+// always be shown and picked.
+const partyName = (p: Party) => p.lednm?.trim() || p.ledcd;
+
+const getInitials = (text: string) =>
+  text
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase() || "?";
+
+// Both pickers are optional, so a failed operators/parties request must not
+// take the whole sheet down — it just leaves that picker with an empty list.
+async function fetchList<T>(url: string): Promise<T[]> {
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    return json.success ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Picker Modal ─────────────────────────────────────────────────────────────
+// One searchable bottom sheet used for BOTH the operator and the party picker
+// (same look as the operator picker on the filling screen). Choosing is
+// optional, so once something is selected a "Clear selection" row appears at
+// the top of the list.
+
+type PickerOption = { id: string; title: string; subtitle?: string };
+
+function PickerModal({
+  visible,
+  title,
+  searchPlaceholder,
+  emptyText,
+  options,
+  selectedId,
+  onSelect,
+  onClear,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  searchPlaceholder: string;
+  emptyText: string;
+  options: PickerOption[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  // Every opening starts with an empty search box.
+  useEffect(() => {
+    if (!visible) setSearch("");
+  }, [visible]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter(
+      (o) =>
+        o.title.toLowerCase().includes(q) ||
+        (o.subtitle ?? "").toLowerCase().includes(q)
+    );
+  }, [options, search]);
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={modalStyles.backdrop}>
+        <View style={modalStyles.sheet}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>{title}</Text>
+            <TouchableOpacity style={modalStyles.closeBtn} onPress={onClose}>
+              <Ionicons name="close" size={20} color={C.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={modalStyles.searchRow}>
+            <Ionicons name="search" size={16} color={C.textMuted} />
+            <TextInput
+              style={modalStyles.searchInput}
+              placeholder={searchPlaceholder}
+              placeholderTextColor={C.textMuted}
+              value={search}
+              onChangeText={setSearch}
+              autoFocus
+            />
+          </View>
+
+          <FlatList
+            data={filtered}
+            extraData={selectedId}
+            keyExtractor={(o) => o.id}
+            style={modalStyles.list}
+            // So a tap on a result registers while the search keyboard is up
+            // (otherwise the first tap only dismisses the keyboard).
+            keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={
+              selectedId ? (
+                <TouchableOpacity
+                  style={modalStyles.clearRow}
+                  onPress={() => {
+                    onClear();
+                    onClose();
+                  }}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color={C.textSecondary} />
+                  <Text style={modalStyles.clearText}>Clear selection</Text>
+                </TouchableOpacity>
+              ) : null
+            }
+            renderItem={({ item }) => {
+              const isSelected = item.id === selectedId;
+              return (
+                <TouchableOpacity
+                  style={[modalStyles.opRow, isSelected && modalStyles.opRowSelected]}
+                  onPress={() => {
+                    onSelect(item.id);
+                    onClose();
+                  }}
+                >
+                  <View style={[modalStyles.opAvatar, isSelected && modalStyles.opAvatarSelected]}>
+                    <Text
+                      style={[
+                        modalStyles.opAvatarText,
+                        isSelected && modalStyles.opAvatarTextSelected,
+                      ]}
+                    >
+                      {getInitials(item.title)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[modalStyles.opName, isSelected && modalStyles.opNameSelected]}>
+                      {item.title}
+                    </Text>
+                    {item.subtitle ? (
+                      <Text style={modalStyles.opDesg}>{item.subtitle}</Text>
+                    ) : null}
+                  </View>
+                  {isSelected && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+                </TouchableOpacity>
+              );
+            }}
+            ListEmptyComponent={<Text style={modalStyles.emptyText}>{emptyText}</Text>}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 // ─── Date Picker Modal ────────────────────────────────────────────────────────
 // Same component as the filling screen — quick-pick strip + month grid,
@@ -245,6 +433,13 @@ export default function WastagePlantScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [supervisorId, setSupervisorId] = useState<string>("");
 
+  // Optional pickers: operators (the same list the filling screen uses) for
+  // pouch rows, packing-supplier parties for every other row.
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [pickerType, setPickerType] = useState<"operator" | "party" | null>(null);
+  const [pickerIdx, setPickerIdx] = useState<number | null>(null);
+
   // Selected date for this entry sheet — defaults to today.
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
@@ -271,7 +466,7 @@ export default function WastagePlantScreen() {
 
   const buildEntriesFromSaved = (
     baseItems: MstItem[],
-    savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }>
+    savedMap: Record<string, SavedValues>
   ): WastageRow[] =>
     baseItems.map((item) => ({
       itmcd: item.itmcd,
@@ -280,6 +475,10 @@ export default function WastagePlantScreen() {
       cartonWastage: savedMap[item.itmcd]?.cartonWastage ?? "",
       pcsWastage: savedMap[item.itmcd]?.pcsWastage ?? "",
       looseOil: savedMap[item.itmcd]?.looseOil ?? "",
+      operatorId: savedMap[item.itmcd]?.operatorId ?? "",
+      operatorName: savedMap[item.itmcd]?.operatorName ?? "",
+      partyCd: savedMap[item.itmcd]?.partyCd ?? "",
+      partyNm: savedMap[item.itmcd]?.partyNm ?? "",
     }));
 
   const fetchSavedMapForDate = async (supId: string, date: Date) => {
@@ -289,7 +488,7 @@ export default function WastagePlantScreen() {
     );
     const todayData = await todayRes.json();
 
-    const savedMap: Record<string, { cartonWastage: string; pcsWastage: string; looseOil: string }> = {};
+    const savedMap: Record<string, SavedValues> = {};
     if (todayData.success) {
       for (const e of todayData.data) {
         if (!savedMap[e.ITMCD]) {
@@ -297,6 +496,12 @@ export default function WastagePlantScreen() {
             cartonWastage: e.CARTON_WASTAGE != null ? String(e.CARTON_WASTAGE) : "",
             pcsWastage: e.PCS_WASTAGE != null ? String(e.PCS_WASTAGE) : "",
             looseOil: e.LOOSE_OIL != null ? String(e.LOOSE_OIL) : "",
+            operatorId: e.OPERATOR_ID ?? "",
+            operatorName: e.operator
+              ? `${e.operator.EMPNAME} ${e.operator.EMPFNAME}`
+              : "",
+            partyCd: e.PARTY_CD ?? "",
+            partyNm: e.PARTY_NM ?? "",
           };
         }
       }
@@ -318,10 +523,16 @@ export default function WastagePlantScreen() {
       setSupervisorId(emp.EMP_ID);
 
       const initialDate = new Date();
-      const [itemsRes, savedMap] = await Promise.all([
+      const [itemsRes, savedMap, operatorList, partyList] = await Promise.all([
         fetch(`${API_URL}/wastage/items`).then((r) => r.json()),
         fetchSavedMapForDate(emp.EMP_ID, initialDate),
+        // Operators come from the same route the filling screen uses.
+        fetchList<Operator>(`${API_URL}/filling/operators`),
+        fetchList<Party>(`${API_URL}/wastage/parties`),
       ]);
+
+      setOperators(operatorList);
+      setParties(partyList);
 
       if (itemsRes.success) {
         setItems(itemsRes.data);
@@ -361,6 +572,49 @@ export default function WastagePlantScreen() {
     []
   );
 
+  // ── Optional operator / party selection ──
+  const openPicker = (idx: number, type: "operator" | "party") => {
+    setPickerIdx(idx);
+    setPickerType(type);
+  };
+
+  // pickerIdx is left as-is on close so the sheet keeps its highlighted row
+  // while it slides away.
+  const closePicker = () => setPickerType(null);
+
+  // An id that isn't in the list (e.g. "") clears the selection.
+  const applyOperator = (id: string) => {
+    if (pickerIdx === null) return;
+    const op = operators.find((o) => o.EMP_ID === id);
+    setEntries((prev) =>
+      prev.map((e, i) =>
+        i === pickerIdx
+          ? {
+              ...e,
+              operatorId: op ? op.EMP_ID : "",
+              operatorName: op ? `${op.EMPNAME} ${op.EMPFNAME}` : "",
+            }
+          : e
+      )
+    );
+  };
+
+  const applyParty = (code: string) => {
+    if (pickerIdx === null) return;
+    const party = parties.find((p) => p.ledcd === code);
+    setEntries((prev) =>
+      prev.map((e, i) =>
+        i === pickerIdx
+          ? {
+              ...e,
+              partyCd: party ? party.ledcd : "",
+              partyNm: party ? partyName(party) : "",
+            }
+          : e
+      )
+    );
+  };
+
   const onDateSelected = (d: Date) => {
     setSelectedDate(d);
     // loadEntriesForDate runs via the dateKey effect above.
@@ -378,6 +632,9 @@ export default function WastagePlantScreen() {
   };
 
   const handleSubmit = async () => {
+    // A row is submitted when it has at least one wastage value. The
+    // operator / party is optional extra info on top of that — choosing one
+    // without any value doesn't create an entry.
     const validEntries = entries.filter(
       (e) => e.cartonWastage.trim() || e.pcsWastage.trim() || e.looseOil.trim()
     );
@@ -432,6 +689,29 @@ export default function WastagePlantScreen() {
   ).length;
 
   const progress = entries.length > 0 ? touchedCount / entries.length : 0;
+
+  // Options for the two pickers (must stay above the early `loading` return
+  // so the hook order never changes between renders).
+  const operatorOptions = useMemo<PickerOption[]>(
+    () =>
+      operators.map((o) => ({
+        id: o.EMP_ID,
+        title: `${o.EMPNAME} ${o.EMPFNAME}`,
+        subtitle: o.EMPDESG,
+      })),
+    [operators]
+  );
+
+  const partyOptions = useMemo<PickerOption[]>(
+    () =>
+      parties.map((p) => ({
+        id: p.ledcd,
+        title: partyName(p),
+        // Show the code as a second line, unless the code IS the title.
+        subtitle: p.lednm?.trim() ? p.ledcd : undefined,
+      })),
+    [parties]
+  );
 
   if (loading) {
     return (
@@ -492,6 +772,10 @@ export default function WastagePlantScreen() {
           <Text style={[styles.colHeaderText, styles.colNum]}>Ctn Wastage</Text>
           <Text style={[styles.colHeaderText, styles.colNum]}>Pcs Wastage</Text>
           <Text style={[styles.colHeaderText, styles.colNum]}>Loose Oil</Text>
+          {/* Optional operator / party column (icon only — narrow) */}
+          <View style={styles.colAssign}>
+            <Ionicons name="people-outline" size={14} color={C.textMuted} />
+          </View>
         </View>
 
         {/* ── Table ── */}
@@ -516,6 +800,14 @@ export default function WastagePlantScreen() {
                   const isLast    = rowIdx === group.rows.length - 1;
                   const isTouched = entry.cartonWastage.trim() || entry.pcsWastage.trim() || entry.looseOil.trim();
 
+                  // Pouch ("PCH") rows pick an operator; every other row picks a party.
+                  const isPouch      = isPouchItem(entry.itmnm);
+                  const assignedId   = isPouch ? entry.operatorId : entry.partyCd;
+                  const assignedName = isPouch ? entry.operatorName : entry.partyNm;
+                  const assignIcon   = isPouch
+                    ? (assignedId ? "person" : "person-add-outline")
+                    : (assignedId ? "business" : "business-outline");
+
                   return (
                     <View
                       key={entry.itmcd}
@@ -525,7 +817,7 @@ export default function WastagePlantScreen() {
                         isTouched ? styles.tableRowDone : null,
                       ]}
                     >
-                      {/* Item name */}
+                      {/* Item name (+ the chosen operator / party, in full, underneath) */}
                       <View style={styles.colItem}>
                         <View style={styles.itemNameRow}>
                           {isTouched ? (
@@ -540,6 +832,17 @@ export default function WastagePlantScreen() {
                           )}
                           <Text style={styles.itemName}>{entry.itmnm}</Text>
                         </View>
+                        {assignedId ? (
+                          <View style={styles.assignedRow}>
+                            <Ionicons
+                              name={isPouch ? "person" : "business"}
+                              size={11}
+                              color={C.primary}
+                              style={styles.assignedIcon}
+                            />
+                            <Text style={styles.assignedText}>{assignedName || assignedId}</Text>
+                          </View>
+                        ) : null}
                       </View>
 
                       {/* Carton Wastage */}
@@ -579,6 +882,21 @@ export default function WastagePlantScreen() {
                           placeholderTextColor={C.textMuted}
                           returnKeyType="done"
                         />
+                      </View>
+
+                      {/* Optional: operator (pouch items) / party (everything else) */}
+                      <View style={styles.colAssign}>
+                        <TouchableOpacity
+                          style={[styles.assignBtn, assignedId ? styles.assignBtnFilled : null]}
+                          onPress={() => openPicker(idx, isPouch ? "operator" : "party")}
+                          accessibilityLabel={isPouch ? "Select operator" : "Select party"}
+                        >
+                          <Ionicons
+                            name={assignIcon}
+                            size={16}
+                            color={assignedId ? C.primary : C.textMuted}
+                          />
+                        </TouchableOpacity>
                       </View>
                     </View>
                   );
@@ -626,6 +944,32 @@ export default function WastagePlantScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* ── Operator Picker (pouch rows) ── */}
+      <PickerModal
+        visible={pickerType === "operator"}
+        title="Select Operator"
+        searchPlaceholder="Search operator..."
+        emptyText="No operators found"
+        options={operatorOptions}
+        selectedId={pickerIdx !== null ? (entries[pickerIdx]?.operatorId ?? "") : ""}
+        onSelect={applyOperator}
+        onClear={() => applyOperator("")}
+        onClose={closePicker}
+      />
+
+      {/* ── Party Picker (all other rows) ── */}
+      <PickerModal
+        visible={pickerType === "party"}
+        title="Select Party"
+        searchPlaceholder="Search party..."
+        emptyText="No parties found"
+        options={partyOptions}
+        selectedId={pickerIdx !== null ? (entries[pickerIdx]?.partyCd ?? "") : ""}
+        onSelect={applyParty}
+        onClear={() => applyParty("")}
+        onClose={closePicker}
+      />
 
       {/* ── Date Picker Modal ── */}
       <DatePickerModal
@@ -708,6 +1052,10 @@ const styles = StyleSheet.create({
   colItem: { flex: 4, paddingRight: 6 },
   colNum:  { flex: 2, paddingHorizontal: 3 },
 
+  // Optional operator / party column. Fixed width (not flex) so the three
+  // numeric columns keep their proportions; holds one 34px icon button.
+  colAssign: { width: 38, paddingLeft: 4, alignItems: "center" },
+
   scroll:        { flex: 1 },
   scrollContent: { paddingHorizontal: 14, paddingTop: 12 },
 
@@ -749,6 +1097,14 @@ const styles = StyleSheet.create({
     lineHeight: 18, flex: 1, flexWrap: "wrap",
   },
 
+  // Chosen operator / party — shown in full under the item name, so long
+  // party names are never cut off by the narrow button column.
+  assignedRow:  { flexDirection: "row", alignItems: "flex-start", gap: 4, marginTop: 4 },
+  assignedIcon: { marginTop: 2 },
+  assignedText: {
+    flex: 1, color: C.primary, fontSize: 11, fontWeight: "600", lineHeight: 15,
+  },
+
   numInput: {
     backgroundColor: C.inputBg,
     borderWidth: 1, borderColor: C.border, borderRadius: 8,
@@ -766,6 +1122,18 @@ const styles = StyleSheet.create({
     backgroundColor: C.amberBg,
     borderColor: C.amberLight,
     color: C.amber,
+  },
+
+  // Operator / party button — same look as the operator button on the
+  // filling screen; tinted once something is chosen.
+  assignBtn: {
+    width: 34, height: 34, borderRadius: 8,
+    backgroundColor: C.inputBg, borderWidth: 1, borderColor: C.border,
+    justifyContent: "center", alignItems: "center",
+  },
+  assignBtnFilled: {
+    backgroundColor: C.subtleBg,
+    borderColor: C.primaryMuted,
   },
 
   footer: {
@@ -788,7 +1156,7 @@ const styles = StyleSheet.create({
   submitBtnText:       { color: C.textInverse, fontSize: 14, fontWeight: "800" },
 });
 
-// ─── Date Modal Styles ────────────────────────────────────────────────────────
+// ─── Modal Styles (date picker + operator / party picker) ─────────────────────
 
 const modalStyles = StyleSheet.create({
   backdrop: {
@@ -830,6 +1198,98 @@ const modalStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
+  // ── Operator / party picker (same styles as the filling screen's
+  //    operator picker, plus the "Clear selection" row) ──
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    backgroundColor: C.inputBg,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: C.textPrimary,
+    fontSize: 14,
+  },
+  list: { paddingHorizontal: 12, paddingBottom: 24 },
+  clearRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 6,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  clearText: {
+    color: C.textSecondary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  opRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  opRowSelected: {
+    backgroundColor: C.primaryLight,
+  },
+  opAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.inputBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  opAvatarSelected: {
+    backgroundColor: C.primary,
+    borderColor: C.primaryDark,
+  },
+  opAvatarText: {
+    color: C.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  opAvatarTextSelected: {
+    color: C.textInverse,
+  },
+  opName: {
+    color: C.textPrimary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  opNameSelected: { color: C.primaryDark },
+  opDesg: {
+    color: C.textMuted,
+    fontSize: 12,
+    marginTop: 1,
+  },
+  emptyText: {
+    color: C.textMuted,
+    textAlign: "center",
+    marginTop: 24,
+    fontSize: 14,
+  },
+
+  // ── Date picker ──
   quickRow: {
     flexDirection: "row",
     gap: 8,

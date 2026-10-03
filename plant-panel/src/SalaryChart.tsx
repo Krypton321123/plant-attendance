@@ -9,8 +9,9 @@ import {
   AlertTriangle,
   IndianRupee,
   ServerCrash,
+  Printer,
 } from "lucide-react";
-
+import SalaryReportPrint from "./Salaryreportprint";
 // ════════════════════════════════════════════════════════════════════════
 // Types — mirrors the shapes already used on the Attendance dashboard so
 // both pages read the same API responses the same way.
@@ -1082,6 +1083,10 @@ export default function SalaryChart() {
   const hasBlockingError =
     connectionStatus === "unconfigured" || connectionStatus === "error";
   const showTableContent = !isLoadingTable && !hasBlockingError;
+  const canPrint =
+    connectionStatus === "live" &&
+    !rangeTruncated &&
+    sortedEmployees.length > 0;
 
   return (
     <div className="min-w-0 flex-1 p-8">
@@ -1119,6 +1124,14 @@ export default function SalaryChart() {
                   connectionStatus === "connecting" ? "animate-spin" : ""
                 }
               />
+            </button>
+            <button
+              onClick={() => window.print()}
+              disabled={!canPrint}
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Printer size={14} />
+              Print report
             </button>
           </div>
         </div>
@@ -1361,6 +1374,18 @@ export default function SalaryChart() {
             Connected to {getApiBaseUrl()}
           </span>
         </motion.div>
+      )}
+      {canPrint && (
+        <SalaryReportPrint
+          fromKey={fromKey}
+          toKey={toKey}
+          days={days}
+          groupedEmployees={groupedEmployees}
+          attendanceByEmpByDay={attendanceByEmpByDay}
+          employeeTotals={employeeTotals}
+          dayMultiplier={dayMultiplier}
+          dailyRate={dailyRate}
+        />
       )}
     </div>
   );

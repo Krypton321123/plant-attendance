@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, AlertTriangle, Search, X, Layers, Printer, Package, Boxes, Droplet } from 'lucide-react';
+import WastagePrintSheet from './WastagePrint';
 
 // ════════════════════════════════════════════════════════════════════════
-// Wastage Register — item × day-of-month grid.
+// Wastage Register — item × day-of-month grid, with a party-wise summary
+// table underneath it.
 //
 // Sibling page to FillingRegister.tsx (same loading states, same table
-// chrome, same four-edge sticky totals, same print handling). The real
+// chrome, same four-edge sticky totals, same print approach). The real
 // difference: wastage has THREE parallel metrics per item per day —
 // carton wastage, pcs wastage, and loose oil — instead of filling's single
 // FILLING number. So this page adds a metric switcher on top of the same
@@ -20,6 +22,18 @@ import { RefreshCw, AlertTriangle, Search, X, Layers, Printer, Package, Boxes, D
 // row exist with some metrics recorded and others still at their default
 // (0 for cartons/pcs, null for loose oil) — see that endpoint's comments
 // for exactly which "no value" cases map to null vs a real 0.
+//
+// The same response also carries `parties`: one row per packing party with
+// that party's month totals for the same three metrics, plus a last row with
+// no party for entries saved without one. It feeds the party-wise table under
+// the grid. That table always covers every item, so the item search above
+// the grid does not narrow it.
+//
+// Printing: the Print button hands off to WastagePrint.tsx, a purpose-built
+// A4-landscape report (the month-wise register plus the party-wise summary)
+// that is portaled into <body>, hidden on screen, and shown on its own when
+// printing. This page only decides when printing is available (canPrint) and
+// what the sheet is given, so it carries no print CSS of its own.
 //
 // Like FillingRegister.tsx, this page is API-only: no VITE_API_URL means a
 // clear configuration error, never a silent fallback to sample data.
@@ -46,6 +60,16 @@ interface WastageItemRow {
   looseOil: MetricSeries;
 }
 
+// One packing party's totals for the month. partyCd and partyNm both null
+// means "entries saved without a party" (always the last row, when present).
+interface PartyWastageRow {
+  partyCd: string | null;
+  partyNm: string | null;
+  cartonWastage: number;
+  pcsWastage: number;
+  looseOil: number;
+}
+
 interface GetMonthlyHistoryResponse {
   success: boolean;
   message?: string;
@@ -54,6 +78,7 @@ interface GetMonthlyHistoryResponse {
     month: number; // 0-based
     daysInMonth: number;
     items: WastageItemRow[];
+    parties: PartyWastageRow[];
   };
 }
 
@@ -332,6 +357,7 @@ export default function WastageRegister() {
   const [activeOnly, setActiveOnly] = useState(false);
 
   const [items, setItems] = useState<WastageItemRow[]>([]);
+  const [parties, setParties] = useState<PartyWastageRow[]>([]);
   const [daysInMonth, setDaysInMonth] = useState<number>(
     daysInMonthFallback(today.getMonth(), today.getFullYear()),
   );
@@ -351,6 +377,9 @@ export default function WastageRegister() {
     try {
       const data = await fetchMonthlyWastage(selectedYear, selectedMonthIdx);
       setItems(Array.isArray(data.items) ? data.items : []);
+      // `parties` arrived with the party-wise summary; a server that hasn't
+      // been updated yet simply sends none, and the summary stays hidden.
+      setParties(Array.isArray(data.parties) ? data.parties : []);
       setDaysInMonth(data.daysInMonth ?? daysInMonthFallback(selectedMonthIdx, selectedYear));
       setLoadState('loaded');
     } catch (err) {
@@ -402,43 +431,36 @@ export default function WastageRegister() {
     return result;
   }, [filteredItems]);
 
+  // Party-wise summary figures. Summed from every party row the server sent,
+  // never from filteredItems, so the footer always matches the rows above it.
+  const partyTotals = useMemo(() => {
+    const result: Record<RealMetricKey, number> = { cartonWastage: 0, pcsWastage: 0, looseOil: 0 };
+    for (const p of parties) {
+      for (const key of METRIC_ORDER) result[key] += p[key];
+    }
+    return result;
+  }, [parties]);
+
+  // Real parties only — the "no party recorded" row is not a party.
+  const namedPartyCount = useMemo(
+    () => parties.filter((p) => p.partyCd !== null || p.partyNm !== null).length,
+    [parties],
+  );
+
   const isLoading = loadState === 'loading';
   const isError = loadState === 'error';
   const isEmpty = loadState === 'loaded' && filteredItems.length === 0;
   const isFilteredEmpty = isEmpty && items.length > 0;
   const isAllMetrics = metric === 'all';
+  // Printing is offered once the grid has loaded and at least one row is
+  // visible. WastagePrintSheet drops lines with no wastage in the month on
+  // its own, so "Active only" doesn't change the printout; the search and
+  // the metric switch do.
+  const canPrint = loadState === 'loaded' && filteredItems.length > 0;
+  const showPartyTable = !isError && (isLoading || parties.length > 0);
 
   return (
     <div className="w-full p-8 bg-zinc-50 min-h-screen">
-
-      {/* Print stylesheet — identical approach to FillingRegister.tsx: one
-          rule flattens every sticky position inside the print area rather
-          than hunting down each `sticky` class occurrence individually. */}
-      <style>{`
-        @media print {
-          #wastage-register-print-area,
-          #wastage-register-print-area * {
-            position: static !important;
-            box-shadow: none !important;
-          }
-          #wastage-register-print-area table {
-            width: 100% !important;
-          }
-          #wastage-register-print-area thead {
-            display: table-header-group;
-          }
-          #wastage-register-print-area tfoot {
-            display: table-footer-group;
-          }
-          #wastage-register-print-area tr {
-            break-inside: avoid;
-          }
-        }
-        @page {
-          size: landscape;
-          margin: 12mm;
-        }
-      `}</style>
 
       {/* Header */}
       <motion.div
@@ -456,14 +478,15 @@ export default function WastageRegister() {
             {MONTHS[selectedMonthIdx].name} {selectedYear}
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Wastage</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.print()}
-              disabled={isLoading || isError || filteredItems.length === 0}
+              disabled={!canPrint}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-zinc-200 disabled:hover:text-zinc-600"
-              aria-label="Print this register" title="Print this register"
+              aria-label="Print wastage register"
+              title={canPrint ? 'Print, or save as PDF to share' : 'Nothing to print yet'}
             >
               <Printer size={14} />
               Print
@@ -478,24 +501,6 @@ export default function WastageRegister() {
           </div>
         </div>
       </motion.div>
-
-      {/* Print-only heading — states month/year, active metric, and any
-          filters in effect, since the interactive controls that currently
-          show this are hidden on paper. */}
-      <div className="hidden print:block print:mb-4">
-        <h1 className="text-xl font-semibold text-zinc-900">
-          Wastage Register — {MONTHS[selectedMonthIdx].name} {selectedYear}
-        </h1>
-        <p className="mt-1 text-xs text-zinc-500">
-          {isAllMetrics ? 'All 3 metrics' : METRICS[metric].label}
-          {' · '}
-          {filteredItems.length} item{filteredItems.length === 1 ? '' : 's'}
-          {search && ` · filtered by "${search}"`}
-          {activeOnly && ' · active only'}
-          {' · printed '}
-          {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
 
       {/* Error notice */}
       <AnimatePresence>
@@ -540,7 +545,7 @@ export default function WastageRegister() {
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-wrap items-end gap-3 mb-5 print:hidden"
+        className="flex flex-wrap items-end gap-3 mb-5"
       >
         <SelectField
           label="Month"
@@ -587,14 +592,13 @@ export default function WastageRegister() {
 
       {/* Table */}
       <motion.div
-        id="wastage-register-print-area"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        className="rounded-xl border border-zinc-200 bg-white overflow-auto max-h-[64vh] shadow-sm print:max-h-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none"
+        className="rounded-xl border border-zinc-200 bg-white overflow-auto max-h-[64vh] shadow-sm"
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#e4e4e7 transparent' }}
       >
-        <table className="border-collapse min-w-full text-sm print:text-[10px]">
+        <table className="border-collapse min-w-full text-sm">
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-20 bg-zinc-50 border-b border-r border-zinc-100 text-left px-5 py-3 text-[10px] font-medium tracking-widest uppercase text-zinc-400 min-w-[220px] whitespace-nowrap">
@@ -911,13 +915,153 @@ export default function WastageRegister() {
               <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-mono font-medium text-zinc-300">—</span>
               No entry that day
             </div>
-            <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-zinc-400 print:hidden">
+            <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-zinc-400">
               Wastage register · Connected to {getApiBaseUrl()}
             </span>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Party-wise summary — each packing party's wastage for the month, all
+          three metrics side by side. It comes from the same response as the
+          grid but is not narrowed by it: the search above filters items, not
+          the parties' month totals. Entries saved without a party sit in the
+          last row so the footer still adds up to everything recorded. */}
+      {showPartyTable && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-8 w-full max-w-4xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-zinc-900">Party-wise wastage</h2>
+              <p className="mt-0.5 text-[11px] text-zinc-400">
+                {MONTHS[selectedMonthIdx].name} {selectedYear} · all items
+                {search.trim() && ' · the search above does not apply here'}
+              </p>
+            </div>
+            {!isLoading && (
+              <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-mono text-zinc-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+                {namedPartyCount} part{namedPartyCount === 1 ? 'y' : 'ies'}
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-sm">
+              <thead>
+                <tr className="bg-zinc-50">
+                  <th className="border-b border-zinc-100 px-5 py-3 text-left text-[10px] font-medium tracking-widest uppercase text-zinc-400">
+                    Party
+                  </th>
+                  {METRIC_ORDER.map((key) => (
+                    <th
+                      key={key}
+                      className={`border-b border-l border-zinc-100 px-5 py-3 text-right text-[10px] font-medium tracking-widest uppercase whitespace-nowrap ${TEXT_600[METRICS[key].colorClass]}`}
+                    >
+                      {METRICS[key].label}
+                      <span className="mt-0.5 block text-[9px] font-normal normal-case tracking-normal text-zinc-300">
+                        {METRICS[key].unit}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={`psk-${i}`} className="border-b border-zinc-50">
+                        <td className="px-5 py-3">
+                          <div className="h-3 rounded bg-zinc-100 animate-pulse" style={{ width: 120 + (i % 3) * 36 }} />
+                        </td>
+                        {METRIC_ORDER.map((key) => (
+                          <td key={key} className="border-l border-zinc-50 px-5 py-3">
+                            <div className="ml-auto h-3 w-10 rounded bg-zinc-100 animate-pulse" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  : parties.map((p, index) => {
+                      const noParty = p.partyCd === null && p.partyNm === null;
+                      return (
+                        <motion.tr
+                          key={`${p.partyCd ?? ''}|${p.partyNm ?? ''}`}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.25, delay: index * 0.015, ease: [0.16, 1, 0.3, 1] }}
+                          className="border-b border-zinc-50 hover:bg-zinc-50/80 transition-colors"
+                        >
+                          <td className="px-5 py-2.5">
+                            {noParty ? (
+                              <div className="text-[13px] italic text-zinc-400">No party recorded</div>
+                            ) : (
+                              <>
+                                <div className="text-[13px] font-medium text-zinc-800">{p.partyNm ?? p.partyCd}</div>
+                                {p.partyNm && p.partyCd && (
+                                  <div className="font-mono text-[10px] text-zinc-400">{p.partyCd}</div>
+                                )}
+                              </>
+                            )}
+                          </td>
+                          {METRIC_ORDER.map((key) => {
+                            const value = p[key];
+                            return (
+                              <td
+                                key={key}
+                                className={`border-l border-zinc-50 px-5 py-2.5 text-right font-mono text-[13px] ${
+                                  value > 0 ? `${TEXT_600[METRICS[key].colorClass]} font-medium` : 'text-zinc-300'
+                                }`}
+                              >
+                                {value > 0 ? formatQty(value) : '—'}
+                              </td>
+                            );
+                          })}
+                        </motion.tr>
+                      );
+                    })}
+              </tbody>
+
+              {!isLoading && (
+                <tfoot>
+                  <tr className="border-t-2 border-zinc-200 bg-zinc-100">
+                    <td className="px-5 py-2.5 text-[10px] font-medium uppercase tracking-widest text-zinc-500">
+                      Total
+                    </td>
+                    {METRIC_ORDER.map((key) => (
+                      <td
+                        key={key}
+                        className="border-l border-zinc-200 px-5 py-2.5 text-right font-mono text-[13px] font-semibold text-zinc-800"
+                      >
+                        {formatQty(partyTotals[key])}
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </motion.section>
+      )}
+
+      {/* Print sheet — portaled into <body>, hidden on screen, and shown on
+          its own when printing (see WastagePrint.tsx). It prints the grid for
+          the metric chosen above plus the party-wise summary. Mounted only
+          when there is something to print, the same gate as the Print button. */}
+      {canPrint && (
+        <WastagePrintSheet
+          items={filteredItems}
+          parties={parties}
+          metric={metric}
+          year={selectedYear}
+          monthIdx0={selectedMonthIdx}
+          daysInMonth={daysInMonth}
+          search={search.trim()}
+        />
+      )}
     </div>
   );
 }

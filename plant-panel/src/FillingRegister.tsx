@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, AlertTriangle, Search, X, Layers, Printer } from 'lucide-react';
+import FillingPrintSheet from './FillingPrint';
 
 // ════════════════════════════════════════════════════════════════════════
 // Filling Register — item × day-of-month grid.
@@ -18,6 +19,12 @@ import { RefreshCw, AlertTriangle, Search, X, Layers, Printer } from 'lucide-rea
 // page just renders what it's given. Like Attendance.tsx, this page is
 // API-only: no VITE_API_URL means a clear configuration error, never a
 // silent fallback to sample data.
+//
+// Printing: the Print button hands off to FillingPrint.tsx, a purpose-built
+// A4-landscape sheet that is portaled into <body>, hidden on screen, and
+// shown on its own when printing. This page only decides when printing is
+// available (canPrint) and what the sheet is given, so it carries no print
+// CSS of its own.
 // ════════════════════════════════════════════════════════════════════════
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -271,48 +278,13 @@ export default function FillingRegister() {
   const isError = loadState === 'error';
   const isEmpty = loadState === 'loaded' && filteredItems.length === 0;
   const isFilteredEmpty = isEmpty && items.length > 0;
+  // Printing is offered once the grid has loaded and at least one row is
+  // visible. FillingPrintSheet drops items with no filling in the month on
+  // its own, so "Active only" doesn't change the printout; the search does.
+  const canPrint = loadState === 'loaded' && filteredItems.length > 0;
 
   return (
     <div className="w-full p-8 bg-zinc-50 min-h-screen">
-
-      {/* Print stylesheet, scoped to #filling-register-print-area.
-          Sticky positioning (used throughout the header/body/footer for
-          the pinned item column, day-total row, and totals column) has no
-          meaning on paper, and some print engines mis-render sticky
-          elements — repeating them once per printed page, or leaving gaps
-          where the sticky offset used to be. Flattening every sticky
-          position to static here, in one rule, is more reliable than
-          hunting down each of the dozen individual `sticky` class usages
-          above with Tailwind's print: variant, where missing even one
-          would leave a broken element on the page. The div-level
-          overflow/max-height clip is already handled via the print:
-          Tailwind classes on that element directly (see above) since
-          that's a single occurrence, not a dozen. */}
-      <style>{`
-        @media print {
-          #filling-register-print-area,
-          #filling-register-print-area * {
-            position: static !important;
-            box-shadow: none !important;
-          }
-          #filling-register-print-area table {
-            width: 100% !important;
-          }
-          #filling-register-print-area thead {
-            display: table-header-group; /* repeat column headers on every printed page */
-          }
-          #filling-register-print-area tfoot {
-            display: table-footer-group; /* keep totals as a real footer, not floating mid-page */
-          }
-          #filling-register-print-area tr {
-            break-inside: avoid; /* don't split a single item's row across two pages */
-          }
-        }
-        @page {
-          size: landscape;
-          margin: 12mm;
-        }
-      `}</style>
 
       {/* Header */}
       <motion.div
@@ -330,14 +302,15 @@ export default function FillingRegister() {
             {MONTHS[selectedMonthIdx].name} {selectedYear}
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Filling</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.print()}
-              disabled={isLoading || isError || filteredItems.length === 0}
+              disabled={!canPrint}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-zinc-200 disabled:hover:text-zinc-600"
-              aria-label="Print this register" title="Print this register"
+              aria-label="Print filling register"
+              title={canPrint ? 'Print, or save as PDF to share' : 'Nothing to print yet'}
             >
               <Printer size={14} />
               Print
@@ -352,22 +325,6 @@ export default function FillingRegister() {
           </div>
         </div>
       </motion.div>
-
-      {/* Print-only heading — the interactive header above is hidden on
-          paper (print:hidden), so this replaces it with a plain, static
-          title block that states exactly which month/year/filters produced
-          this printout. Buttons, refresh spinner, and live status chips
-          have no meaning on paper and are intentionally left out. */}
-      <div className="hidden print:block print:mb-4">
-        <h1 className="text-xl font-semibold text-zinc-900">Filling Register — {MONTHS[selectedMonthIdx].name} {selectedYear}</h1>
-        <p className="mt-1 text-xs text-zinc-500">
-          {filteredItems.length} item{filteredItems.length === 1 ? '' : 's'}
-          {search && ` · filtered by "${search}"`}
-          {activeOnly && ' · active only'}
-          {' · printed '}
-          {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
 
       {/* Error notice */}
       <AnimatePresence>
@@ -412,7 +369,7 @@ export default function FillingRegister() {
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-wrap items-end gap-3 mb-5 print:hidden"
+        className="flex flex-wrap items-end gap-3 mb-5"
       >
         <SelectField
           label="Month"
@@ -457,14 +414,13 @@ export default function FillingRegister() {
 
       {/* Table */}
       <motion.div
-        id="filling-register-print-area"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        className="rounded-xl border border-zinc-200 bg-white overflow-auto max-h-[64vh] shadow-sm print:max-h-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none"
+        className="rounded-xl border border-zinc-200 bg-white overflow-auto max-h-[64vh] shadow-sm"
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#e4e4e7 transparent' }}
       >
-        <table className="border-collapse min-w-full text-sm print:text-[10px]">
+        <table className="border-collapse min-w-full text-sm">
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-20 bg-zinc-50 border-b border-r border-zinc-100 text-left px-5 py-3 text-[10px] font-medium tracking-widest uppercase text-zinc-400 min-w-[220px] whitespace-nowrap">
@@ -643,13 +599,25 @@ export default function FillingRegister() {
               <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-mono font-medium text-zinc-300">—</span>
               No entry that day
             </div>
-            <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-zinc-400 print:hidden">
+            <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-zinc-400">
               Filling register · Connected to {getApiBaseUrl()}
             </span>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Print sheet — portaled into <body>, hidden on screen, and shown on
+          its own when printing (see FillingPrint.tsx). Mounted only when
+          there is something to print, the same gate as the Print button. */}
+      {canPrint && (
+        <FillingPrintSheet
+          items={filteredItems}
+          year={selectedYear}
+          monthIdx0={selectedMonthIdx}
+          daysInMonth={daysInMonth}
+          search={search.trim()}
+        />
+      )}
     </div>
   );
 }
