@@ -222,8 +222,8 @@ export type VisitorLogWhereInput = {
   EXIT_AT?: Prisma.DateTimeNullableFilter<"VisitorLog"> | Date | string | null
   LOGGED_BY?: Prisma.StringFilter<"VisitorLog"> | string
   EXIT_LOGGED_BY?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
-  loggedBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
   exitLoggedBy?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
+  loggedBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }
 
 export type VisitorLogOrderByWithRelationInput = {
@@ -237,8 +237,8 @@ export type VisitorLogOrderByWithRelationInput = {
   EXIT_AT?: Prisma.SortOrderInput | Prisma.SortOrder
   LOGGED_BY?: Prisma.SortOrder
   EXIT_LOGGED_BY?: Prisma.SortOrderInput | Prisma.SortOrder
-  loggedBy?: Prisma.EmployeeOrderByWithRelationInput
   exitLoggedBy?: Prisma.EmployeeOrderByWithRelationInput
+  loggedBy?: Prisma.EmployeeOrderByWithRelationInput
 }
 
 export type VisitorLogWhereUniqueInput = Prisma.AtLeast<{
@@ -255,8 +255,8 @@ export type VisitorLogWhereUniqueInput = Prisma.AtLeast<{
   EXIT_AT?: Prisma.DateTimeNullableFilter<"VisitorLog"> | Date | string | null
   LOGGED_BY?: Prisma.StringFilter<"VisitorLog"> | string
   EXIT_LOGGED_BY?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
-  loggedBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
   exitLoggedBy?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
+  loggedBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }, "LOG_ID">
 
 export type VisitorLogOrderByWithAggregationInput = {
@@ -300,8 +300,8 @@ export type VisitorLogCreateInput = {
   PHOTO?: string | null
   ENTRY_AT?: Date | string
   EXIT_AT?: Date | string | null
-  loggedBy: Prisma.EmployeeCreateNestedOneWithoutVisitorLogsCreatedInput
   exitLoggedBy?: Prisma.EmployeeCreateNestedOneWithoutVisitorLogsExitedInput
+  loggedBy: Prisma.EmployeeCreateNestedOneWithoutVisitorLogsCreatedInput
 }
 
 export type VisitorLogUncheckedCreateInput = {
@@ -326,8 +326,8 @@ export type VisitorLogUpdateInput = {
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  loggedBy?: Prisma.EmployeeUpdateOneRequiredWithoutVisitorLogsCreatedNestedInput
   exitLoggedBy?: Prisma.EmployeeUpdateOneWithoutVisitorLogsExitedNestedInput
+  loggedBy?: Prisma.EmployeeUpdateOneRequiredWithoutVisitorLogsCreatedNestedInput
 }
 
 export type VisitorLogUncheckedUpdateInput = {
@@ -429,13 +429,6 @@ export type VisitorLogMinOrderByAggregateInput = {
   EXIT_LOGGED_BY?: Prisma.SortOrder
 }
 
-export type VisitorLogCreateNestedManyWithoutLoggedByInput = {
-  create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput> | Prisma.VisitorLogCreateWithoutLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput[]
-  connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput[]
-  createMany?: Prisma.VisitorLogCreateManyLoggedByInputEnvelope
-  connect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
-}
-
 export type VisitorLogCreateNestedManyWithoutExitLoggedByInput = {
   create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutExitLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutExitLoggedByInput> | Prisma.VisitorLogCreateWithoutExitLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutExitLoggedByInput[]
   connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutExitLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutExitLoggedByInput[]
@@ -443,7 +436,7 @@ export type VisitorLogCreateNestedManyWithoutExitLoggedByInput = {
   connect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
 }
 
-export type VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput = {
+export type VisitorLogCreateNestedManyWithoutLoggedByInput = {
   create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput> | Prisma.VisitorLogCreateWithoutLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput[]
   connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput[]
   createMany?: Prisma.VisitorLogCreateManyLoggedByInputEnvelope
@@ -457,18 +450,11 @@ export type VisitorLogUncheckedCreateNestedManyWithoutExitLoggedByInput = {
   connect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
 }
 
-export type VisitorLogUpdateManyWithoutLoggedByNestedInput = {
+export type VisitorLogUncheckedCreateNestedManyWithoutLoggedByInput = {
   create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput> | Prisma.VisitorLogCreateWithoutLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput[]
   connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput[]
-  upsert?: Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput | Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput[]
   createMany?: Prisma.VisitorLogCreateManyLoggedByInputEnvelope
-  set?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
-  disconnect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
-  delete?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
   connect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
-  update?: Prisma.VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput | Prisma.VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput[]
-  updateMany?: Prisma.VisitorLogUpdateManyWithWhereWithoutLoggedByInput | Prisma.VisitorLogUpdateManyWithWhereWithoutLoggedByInput[]
-  deleteMany?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
 }
 
 export type VisitorLogUpdateManyWithoutExitLoggedByNestedInput = {
@@ -485,7 +471,7 @@ export type VisitorLogUpdateManyWithoutExitLoggedByNestedInput = {
   deleteMany?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
 }
 
-export type VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput = {
+export type VisitorLogUpdateManyWithoutLoggedByNestedInput = {
   create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput> | Prisma.VisitorLogCreateWithoutLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput[]
   connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput[]
   upsert?: Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput | Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput[]
@@ -513,41 +499,22 @@ export type VisitorLogUncheckedUpdateManyWithoutExitLoggedByNestedInput = {
   deleteMany?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
 }
 
+export type VisitorLogUncheckedUpdateManyWithoutLoggedByNestedInput = {
+  create?: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput> | Prisma.VisitorLogCreateWithoutLoggedByInput[] | Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput[]
+  connectOrCreate?: Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput | Prisma.VisitorLogCreateOrConnectWithoutLoggedByInput[]
+  upsert?: Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput | Prisma.VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput[]
+  createMany?: Prisma.VisitorLogCreateManyLoggedByInputEnvelope
+  set?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
+  disconnect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
+  delete?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
+  connect?: Prisma.VisitorLogWhereUniqueInput | Prisma.VisitorLogWhereUniqueInput[]
+  update?: Prisma.VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput | Prisma.VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput[]
+  updateMany?: Prisma.VisitorLogUpdateManyWithWhereWithoutLoggedByInput | Prisma.VisitorLogUpdateManyWithWhereWithoutLoggedByInput[]
+  deleteMany?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
+}
+
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
-}
-
-export type VisitorLogCreateWithoutLoggedByInput = {
-  LOG_ID?: string
-  ENTRY_TYPE: string
-  NAME: string
-  VEHICLE_NO?: string | null
-  PURPOSE: string
-  PHOTO?: string | null
-  ENTRY_AT?: Date | string
-  EXIT_AT?: Date | string | null
-  exitLoggedBy?: Prisma.EmployeeCreateNestedOneWithoutVisitorLogsExitedInput
-}
-
-export type VisitorLogUncheckedCreateWithoutLoggedByInput = {
-  LOG_ID?: string
-  ENTRY_TYPE: string
-  NAME: string
-  VEHICLE_NO?: string | null
-  PURPOSE: string
-  PHOTO?: string | null
-  ENTRY_AT?: Date | string
-  EXIT_AT?: Date | string | null
-  EXIT_LOGGED_BY?: string | null
-}
-
-export type VisitorLogCreateOrConnectWithoutLoggedByInput = {
-  where: Prisma.VisitorLogWhereUniqueInput
-  create: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput>
-}
-
-export type VisitorLogCreateManyLoggedByInputEnvelope = {
-  data: Prisma.VisitorLogCreateManyLoggedByInput | Prisma.VisitorLogCreateManyLoggedByInput[]
 }
 
 export type VisitorLogCreateWithoutExitLoggedByInput = {
@@ -583,36 +550,37 @@ export type VisitorLogCreateManyExitLoggedByInputEnvelope = {
   data: Prisma.VisitorLogCreateManyExitLoggedByInput | Prisma.VisitorLogCreateManyExitLoggedByInput[]
 }
 
-export type VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput = {
+export type VisitorLogCreateWithoutLoggedByInput = {
+  LOG_ID?: string
+  ENTRY_TYPE: string
+  NAME: string
+  VEHICLE_NO?: string | null
+  PURPOSE: string
+  PHOTO?: string | null
+  ENTRY_AT?: Date | string
+  EXIT_AT?: Date | string | null
+  exitLoggedBy?: Prisma.EmployeeCreateNestedOneWithoutVisitorLogsExitedInput
+}
+
+export type VisitorLogUncheckedCreateWithoutLoggedByInput = {
+  LOG_ID?: string
+  ENTRY_TYPE: string
+  NAME: string
+  VEHICLE_NO?: string | null
+  PURPOSE: string
+  PHOTO?: string | null
+  ENTRY_AT?: Date | string
+  EXIT_AT?: Date | string | null
+  EXIT_LOGGED_BY?: string | null
+}
+
+export type VisitorLogCreateOrConnectWithoutLoggedByInput = {
   where: Prisma.VisitorLogWhereUniqueInput
-  update: Prisma.XOR<Prisma.VisitorLogUpdateWithoutLoggedByInput, Prisma.VisitorLogUncheckedUpdateWithoutLoggedByInput>
   create: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput>
 }
 
-export type VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput = {
-  where: Prisma.VisitorLogWhereUniqueInput
-  data: Prisma.XOR<Prisma.VisitorLogUpdateWithoutLoggedByInput, Prisma.VisitorLogUncheckedUpdateWithoutLoggedByInput>
-}
-
-export type VisitorLogUpdateManyWithWhereWithoutLoggedByInput = {
-  where: Prisma.VisitorLogScalarWhereInput
-  data: Prisma.XOR<Prisma.VisitorLogUpdateManyMutationInput, Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByInput>
-}
-
-export type VisitorLogScalarWhereInput = {
-  AND?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
-  OR?: Prisma.VisitorLogScalarWhereInput[]
-  NOT?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
-  LOG_ID?: Prisma.StringFilter<"VisitorLog"> | string
-  ENTRY_TYPE?: Prisma.StringFilter<"VisitorLog"> | string
-  NAME?: Prisma.StringFilter<"VisitorLog"> | string
-  VEHICLE_NO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
-  PURPOSE?: Prisma.StringFilter<"VisitorLog"> | string
-  PHOTO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
-  ENTRY_AT?: Prisma.DateTimeFilter<"VisitorLog"> | Date | string
-  EXIT_AT?: Prisma.DateTimeNullableFilter<"VisitorLog"> | Date | string | null
-  LOGGED_BY?: Prisma.StringFilter<"VisitorLog"> | string
-  EXIT_LOGGED_BY?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+export type VisitorLogCreateManyLoggedByInputEnvelope = {
+  data: Prisma.VisitorLogCreateManyLoggedByInput | Prisma.VisitorLogCreateManyLoggedByInput[]
 }
 
 export type VisitorLogUpsertWithWhereUniqueWithoutExitLoggedByInput = {
@@ -631,16 +599,36 @@ export type VisitorLogUpdateManyWithWhereWithoutExitLoggedByInput = {
   data: Prisma.XOR<Prisma.VisitorLogUpdateManyMutationInput, Prisma.VisitorLogUncheckedUpdateManyWithoutExitLoggedByInput>
 }
 
-export type VisitorLogCreateManyLoggedByInput = {
-  LOG_ID?: string
-  ENTRY_TYPE: string
-  NAME: string
-  VEHICLE_NO?: string | null
-  PURPOSE: string
-  PHOTO?: string | null
-  ENTRY_AT?: Date | string
-  EXIT_AT?: Date | string | null
-  EXIT_LOGGED_BY?: string | null
+export type VisitorLogScalarWhereInput = {
+  AND?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
+  OR?: Prisma.VisitorLogScalarWhereInput[]
+  NOT?: Prisma.VisitorLogScalarWhereInput | Prisma.VisitorLogScalarWhereInput[]
+  LOG_ID?: Prisma.StringFilter<"VisitorLog"> | string
+  ENTRY_TYPE?: Prisma.StringFilter<"VisitorLog"> | string
+  NAME?: Prisma.StringFilter<"VisitorLog"> | string
+  VEHICLE_NO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  PURPOSE?: Prisma.StringFilter<"VisitorLog"> | string
+  PHOTO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  ENTRY_AT?: Prisma.DateTimeFilter<"VisitorLog"> | Date | string
+  EXIT_AT?: Prisma.DateTimeNullableFilter<"VisitorLog"> | Date | string | null
+  LOGGED_BY?: Prisma.StringFilter<"VisitorLog"> | string
+  EXIT_LOGGED_BY?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+}
+
+export type VisitorLogUpsertWithWhereUniqueWithoutLoggedByInput = {
+  where: Prisma.VisitorLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.VisitorLogUpdateWithoutLoggedByInput, Prisma.VisitorLogUncheckedUpdateWithoutLoggedByInput>
+  create: Prisma.XOR<Prisma.VisitorLogCreateWithoutLoggedByInput, Prisma.VisitorLogUncheckedCreateWithoutLoggedByInput>
+}
+
+export type VisitorLogUpdateWithWhereUniqueWithoutLoggedByInput = {
+  where: Prisma.VisitorLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.VisitorLogUpdateWithoutLoggedByInput, Prisma.VisitorLogUncheckedUpdateWithoutLoggedByInput>
+}
+
+export type VisitorLogUpdateManyWithWhereWithoutLoggedByInput = {
+  where: Prisma.VisitorLogScalarWhereInput
+  data: Prisma.XOR<Prisma.VisitorLogUpdateManyMutationInput, Prisma.VisitorLogUncheckedUpdateManyWithoutLoggedByInput>
 }
 
 export type VisitorLogCreateManyExitLoggedByInput = {
@@ -655,40 +643,16 @@ export type VisitorLogCreateManyExitLoggedByInput = {
   LOGGED_BY: string
 }
 
-export type VisitorLogUpdateWithoutLoggedByInput = {
-  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
-  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
-  NAME?: Prisma.StringFieldUpdateOperationsInput | string
-  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
-  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  exitLoggedBy?: Prisma.EmployeeUpdateOneWithoutVisitorLogsExitedNestedInput
-}
-
-export type VisitorLogUncheckedUpdateWithoutLoggedByInput = {
-  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
-  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
-  NAME?: Prisma.StringFieldUpdateOperationsInput | string
-  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
-  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  EXIT_LOGGED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type VisitorLogUncheckedUpdateManyWithoutLoggedByInput = {
-  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
-  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
-  NAME?: Prisma.StringFieldUpdateOperationsInput | string
-  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
-  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  EXIT_LOGGED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+export type VisitorLogCreateManyLoggedByInput = {
+  LOG_ID?: string
+  ENTRY_TYPE: string
+  NAME: string
+  VEHICLE_NO?: string | null
+  PURPOSE: string
+  PHOTO?: string | null
+  ENTRY_AT?: Date | string
+  EXIT_AT?: Date | string | null
+  EXIT_LOGGED_BY?: string | null
 }
 
 export type VisitorLogUpdateWithoutExitLoggedByInput = {
@@ -727,6 +691,42 @@ export type VisitorLogUncheckedUpdateManyWithoutExitLoggedByInput = {
   LOGGED_BY?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
+export type VisitorLogUpdateWithoutLoggedByInput = {
+  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  NAME?: Prisma.StringFieldUpdateOperationsInput | string
+  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
+  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  exitLoggedBy?: Prisma.EmployeeUpdateOneWithoutVisitorLogsExitedNestedInput
+}
+
+export type VisitorLogUncheckedUpdateWithoutLoggedByInput = {
+  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  NAME?: Prisma.StringFieldUpdateOperationsInput | string
+  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
+  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  EXIT_LOGGED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type VisitorLogUncheckedUpdateManyWithoutLoggedByInput = {
+  LOG_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
+  NAME?: Prisma.StringFieldUpdateOperationsInput | string
+  VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
+  PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  EXIT_AT?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  EXIT_LOGGED_BY?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
 
 
 export type VisitorLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -740,8 +740,8 @@ export type VisitorLogSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   EXIT_AT?: boolean
   LOGGED_BY?: boolean
   EXIT_LOGGED_BY?: boolean
-  loggedBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
   exitLoggedBy?: boolean | Prisma.VisitorLog$exitLoggedByArgs<ExtArgs>
+  loggedBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["visitorLog"]>
 
 
@@ -761,15 +761,15 @@ export type VisitorLogSelectScalar = {
 
 export type VisitorLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"LOG_ID" | "ENTRY_TYPE" | "NAME" | "VEHICLE_NO" | "PURPOSE" | "PHOTO" | "ENTRY_AT" | "EXIT_AT" | "LOGGED_BY" | "EXIT_LOGGED_BY", ExtArgs["result"]["visitorLog"]>
 export type VisitorLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loggedBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
   exitLoggedBy?: boolean | Prisma.VisitorLog$exitLoggedByArgs<ExtArgs>
+  loggedBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
 
 export type $VisitorLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "VisitorLog"
   objects: {
-    loggedBy: Prisma.$EmployeePayload<ExtArgs>
     exitLoggedBy: Prisma.$EmployeePayload<ExtArgs> | null
+    loggedBy: Prisma.$EmployeePayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     LOG_ID: string
@@ -1122,8 +1122,8 @@ readonly fields: VisitorLogFieldRefs;
  */
 export interface Prisma__VisitorLogClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  loggedBy<T extends Prisma.EmployeeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeDefaultArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   exitLoggedBy<T extends Prisma.VisitorLog$exitLoggedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VisitorLog$exitLoggedByArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  loggedBy<T extends Prisma.EmployeeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeDefaultArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

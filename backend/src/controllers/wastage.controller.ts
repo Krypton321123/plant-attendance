@@ -40,11 +40,41 @@ export const getWastageItems = async (_req: Request, res: Response) => {
   }
 };
 
+// GET /wastage/parties
+// Returns all packing suppliers from the mstpackingsupp view, ordered by
+// name. ledcd = party code, lednm = party name. Feeds the OPTIONAL party
+// picker that the app shows on every non-pouch row of the wastage sheet.
+// (The OPTIONAL operator picker on pouch "PCH" rows has no endpoint of its
+// own — the app reuses GET /filling/operators.)
+export const getWastageParties = async (_req: Request, res: Response) => {
+  try {
+    const parties = await prisma.mstpackingsupp.findMany({
+      select: {
+        ledcd: true,
+        lednm: true,
+      },
+      orderBy: [{ lednm: "asc" }, { ledcd: "asc" }],
+    });
+    res.json({ success: true, data: parties });
+  } catch (error) {
+    console.error("getWastageParties error", error);
+    res.status(500).json({ success: false, message: "Failed to fetch parties" });
+  }
+};
+
 // POST /wastage/submit
-// Body: { doneBy: string, date?: "YYYY-MM-DD", entries: [{ itmcd, itmnm, itmsubcat, cartonWastage, pcsWastage, looseOil }] }
+// Body: { doneBy: string, date?: "YYYY-MM-DD", entries: [{ itmcd, itmnm, itmsubcat, cartonWastage, pcsWastage, looseOil, operatorId?, partyCd?, partyNm? }] }
 //
 // "date" is the calendar date the supervisor is recording wastage for
 // (defaults to today if omitted, so existing callers keep working).
+//
+// OPTIONAL ATTRIBUTION: an entry may also carry operatorId (the app uses it
+// for pouch "PCH" items) or partyCd + partyNm (used for every other item,
+// picked from mstpackingsupp). None of these are required — blank or
+// missing is stored as NULL. Which of the two applies to an item is decided
+// by the app from the item name; the server just stores what it is given.
+// The party is stored as code + name (a snapshot, same as ITMCD + ITMNM)
+// because mstpackingsupp is a view and can't be the target of a foreign key.
 //
 // SHARED-PER-DAY MODEL: a row's identity is (ITMCD, date) — NOT
 // (ITMCD, DONE_BY, date). Any PPSUPERVISOR can see and overwrite any other
@@ -110,6 +140,10 @@ export const submitWastageEntries = async (req: Request, res: Response) => {
           CARTON_WASTAGE: entry.cartonWastage !== "" ? Number(entry.cartonWastage) : 0,
           PCS_WASTAGE:    entry.pcsWastage    !== "" ? Number(entry.pcsWastage)    : 0,
           LOOSE_OIL:      entry.looseOil      !== "" ? Number(entry.looseOil)      : null,
+          // Optional — empty string / undefined from the app becomes NULL.
+          OPERATOR_ID:    entry.operatorId ? String(entry.operatorId) : null,
+          PARTY_CD:       entry.partyCd ? String(entry.partyCd).trim() : null,
+          PARTY_NM:       entry.partyNm ? String(entry.partyNm).trim() : null,
           DONE_BY:        doneBy,
           // Keep CREATEDAT inside the requested date's range rather than
           // "now", so an entry submitted for a past date still shows up
@@ -144,6 +178,9 @@ export const submitWastageEntries = async (req: Request, res: Response) => {
 // created it — same convention as filling's today-entries. supervisorId is
 // currently unused for filtering — accepted but ignored, kept only for
 // backward request-shape compatibility.
+//
+// Each row also carries its optional operator (name via the relation) and
+// party (PARTY_CD / PARTY_NM columns) so the sheet can show them again.
 export const getTodayWastageEntries = async (req: Request, res: Response) => {
   try {
     const { supervisorId, date } = req.query;
@@ -157,6 +194,9 @@ export const getTodayWastageEntries = async (req: Request, res: Response) => {
       where: {
         // NOTE: no DONE_BY filter here — this is the shared-per-day read.
         CREATEDAT: { gte: start, lte: end },
+      },
+      include: {
+        operator: { select: { EMPNAME: true, EMPFNAME: true } },
       },
       orderBy: { CREATEDAT: "desc" },
     });
@@ -176,7 +216,10 @@ export const getWastageHistory = async (req: Request, res: Response) => {
 
     const entries = await prisma.wastageEntry.findMany({
       where: { CREATEDAT: { gte: start, lte: end } },
-      include: { doneBy: { select: { EMPNAME: true, EMPFNAME: true } } },
+      include: {
+        operator: { select: { EMPNAME: true, EMPFNAME: true } },
+        doneBy: { select: { EMPNAME: true, EMPFNAME: true } },
+      },
       orderBy: { CREATEDAT: "desc" },
     });
 
@@ -188,24 +231,44 @@ export const getWastageHistory = async (req: Request, res: Response) => {
 
 };
 
+// GET /wastage/monthly-history?year=YYYY&month=M   (month is 0-based)
+//
+// Feeds the Wastage Register page. Two views of the same month, built from
+// ONE query so they can never disagree with each other:
+//
+//   items   — one row per item with three parallel { days, total } series
+//             (cartonWastage / pcsWastage / looseOil): the item × day grid.
+//   parties — one row per packing party with that party's month totals for
+//             the same three metrics: the party-wise summary table.
+//
+// PARTY ATTRIBUTION: PARTY_CD / PARTY_NM are optional on a saved row (see
+// submitWastageEntries), so entries are grouped by party code — falling back
+// to the name if only a name was stored — and the LAST snapshot name wins
+// (entries are read in CREATEDAT order), the same convention as ITMNM for
+// items. Entries with neither a code nor a name are collected in one extra,
+// final row whose partyCd and partyNm are both null; the page shows it as
+// "No party recorded". Keeping that row means every entry lands in exactly
+// one bucket, so the party totals add up to the item totals.
+// A bucket whose three totals are all zero is left out: it has no wastage to
+// report.
 export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
   try {
     const yearParam = req.query.year as string | undefined;
     const monthParam = req.query.month as string | undefined;
- 
+
     const now = new Date();
     const year = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
     const month0 = monthParam !== undefined ? parseInt(monthParam, 10) : now.getMonth();
- 
+
     if (Number.isNaN(year) || Number.isNaN(month0) || month0 < 0 || month0 > 11) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid year or month" });
     }
- 
+
     const { start, end } = monthRange(year, month0);
     const daysInMonth = new Date(year, month0 + 1, 0).getDate();
- 
+
     const entries = await prisma.wastageEntry.findMany({
       where: {
         CREATEDAT: { gte: start, lte: end },
@@ -217,11 +280,13 @@ export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
         CARTON_WASTAGE: true,
         PCS_WASTAGE: true,
         LOOSE_OIL: true,
+        PARTY_CD: true,
+        PARTY_NM: true,
         CREATEDAT: true,
       },
       orderBy: { CREATEDAT: "asc" },
     });
- 
+
     type MetricSeries = { days: (number | null)[]; total: number };
     type Row = {
       itmcd: string;
@@ -231,14 +296,23 @@ export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
       pcsWastage: MetricSeries;
       looseOil: MetricSeries;
     };
- 
+    type PartyRow = {
+      partyCd: string | null;
+      partyNm: string | null;
+      cartonWastage: number;
+      pcsWastage: number;
+      looseOil: number;
+    };
+
     const emptySeries = (): MetricSeries => ({
       days: new Array(daysInMonth).fill(null),
       total: 0,
     });
- 
+
     const byItem = new Map<string, Row>();
- 
+    const byParty = new Map<string, PartyRow>();
+    let noParty: PartyRow | null = null;
+
     for (const entry of entries) {
       let row = byItem.get(entry.ITMCD);
       if (!row) {
@@ -252,19 +326,19 @@ export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
         };
         byItem.set(entry.ITMCD, row);
       }
- 
+
       // entries are CREATEDAT asc, so the last write per ITMCD is the most
       // recent name — matches the same convention used for filling.
       row.itmnm = entry.ITMNM;
       row.itmsubcat = entry.ITMSUBCAT ?? row.itmsubcat;
- 
+
       // Same server-local-day derivation as filling's monthly-history:
       // CREATEDAT was written using dayRange's server-local `start`, so
       // getDate() recovers the intended day-of-month without any timezone
       // conversion.
       const dayIndex = entry.CREATEDAT.getDate() - 1;
       if (dayIndex < 0 || dayIndex >= daysInMonth) continue;
- 
+
       // CARTON_WASTAGE / PCS_WASTAGE are never null on a saved row (see
       // the file-level comment above), but Number(...) defensively handles
       // it anyway rather than assuming the invariant holds forever.
@@ -276,7 +350,7 @@ export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
       const oil = entry.LOOSE_OIL !== null && entry.LOOSE_OIL !== undefined
         ? Number(entry.LOOSE_OIL)
         : null;
- 
+
       if (cartons !== null) {
         row.cartonWastage.days[dayIndex] = cartons;
         row.cartonWastage.total += cartons;
@@ -289,15 +363,54 @@ export const getWastageMonthlyHistory = async (req: Request, res: Response) => {
         row.looseOil.days[dayIndex] = oil;
         row.looseOil.total += oil;
       }
+
+      // ── Party buckets ──────────────────────────────────────────────
+      // Added after the day-range guard above, so a party can never count
+      // an entry that the item grid skipped. Unlike the item series, the
+      // party figures are plain sums, so a null metric simply adds 0.
+      const partyCd = entry.PARTY_CD?.trim() || null;
+      const partyNm = entry.PARTY_NM?.trim() || null;
+      const partyKey = partyCd ?? partyNm;
+
+      let bucket: PartyRow;
+      if (partyKey === null) {
+        if (noParty === null) {
+          noParty = { partyCd: null, partyNm: null, cartonWastage: 0, pcsWastage: 0, looseOil: 0 };
+        }
+        bucket = noParty;
+      } else {
+        let existing = byParty.get(partyKey);
+        if (!existing) {
+          existing = { partyCd, partyNm, cartonWastage: 0, pcsWastage: 0, looseOil: 0 };
+          byParty.set(partyKey, existing);
+        }
+        // Latest snapshot name wins (entries are CREATEDAT asc).
+        if (partyNm) existing.partyNm = partyNm;
+        bucket = existing;
+      }
+      bucket.cartonWastage += cartons ?? 0;
+      bucket.pcsWastage += pcs ?? 0;
+      bucket.looseOil += oil ?? 0;
     }
- 
+
     const items = Array.from(byItem.values()).sort((a, b) =>
       a.itmnm.localeCompare(b.itmnm),
     );
- 
+
+    const hasWastage = (p: PartyRow) =>
+      p.cartonWastage > 0 || p.pcsWastage > 0 || p.looseOil > 0;
+
+    // Named parties A–Z, then the "no party" row last (when it has wastage).
+    const parties: PartyRow[] = Array.from(byParty.values())
+      .filter(hasWastage)
+      .sort((a, b) =>
+        (a.partyNm ?? a.partyCd ?? "").localeCompare(b.partyNm ?? b.partyCd ?? ""),
+      );
+    if (noParty !== null && hasWastage(noParty)) parties.push(noParty);
+
     res.json({
       success: true,
-      data: { year, month: month0, daysInMonth, items },
+      data: { year, month: month0, daysInMonth, items, parties },
     });
   } catch (error) {
     console.error("getWastageMonthlyHistory error", error);

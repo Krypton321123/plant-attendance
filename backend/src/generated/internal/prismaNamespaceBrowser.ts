@@ -61,7 +61,8 @@ export const ModelName = {
   VisitorLog: 'VisitorLog',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
-  mstunit: 'mstunit'
+  mstunit: 'mstunit',
+  mstpackingsupp: 'mstpackingsupp'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -90,13 +91,13 @@ export const EmployeeScalarFieldEnum = {
   DEVICEID: 'DEVICEID',
   STATUS: 'STATUS',
   EMPTYPE: 'EMPTYPE',
-  SALARY: 'SALARY',
+  CREATEDAT: 'CREATEDAT',
   LEAVE_APPLICABLE: 'LEAVE_APPLICABLE',
   LEAVE_DAYS: 'LEAVE_DAYS',
   DEPARTMENT: 'DEPARTMENT',
-  CREATEDAT: 'CREATEDAT',
-  MPIN: 'MPIN',
-  MOBILE: 'MOBILE'
+  SALARY: 'SALARY',
+  MOBILE: 'MOBILE',
+  MPIN: 'MPIN'
 } as const
 
 export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
@@ -107,11 +108,11 @@ export const AttendanceScalarFieldEnum = {
   CREATEDAT: 'CREATEDAT',
   PHOTO: 'PHOTO',
   LOCATION: 'LOCATION',
-  SHIFT: 'SHIFT',
-  LONG_VALUE: 'LONG_VALUE',
-  LAT_VALUE: 'LAT_VALUE',
   STATUS: 'STATUS',
   MARKED_BY: 'MARKED_BY',
+  SHIFT: 'SHIFT',
+  LAT_VALUE: 'LAT_VALUE',
+  LONG_VALUE: 'LONG_VALUE',
   OT_STATUS: 'OT_STATUS'
 } as const
 
@@ -124,12 +125,12 @@ export const FillingEntryScalarFieldEnum = {
   ITMCD: 'ITMCD',
   ITMNM: 'ITMNM',
   ITMSUBCAT: 'ITMSUBCAT',
-  BATCH_NO: 'BATCH_NO',
   FILLING: 'FILLING',
   WASTAGE: 'WASTAGE',
   OPERATOR_ID: 'OPERATOR_ID',
   DONE_BY: 'DONE_BY',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  BATCH_NO: 'BATCH_NO'
 } as const
 
 export type FillingEntryScalarFieldEnum = (typeof FillingEntryScalarFieldEnum)[keyof typeof FillingEntryScalarFieldEnum]
@@ -145,6 +146,9 @@ export const WastageEntryScalarFieldEnum = {
   PCS_WASTAGE: 'PCS_WASTAGE',
   LOOSE_OIL: 'LOOSE_OIL',
   DONE_BY: 'DONE_BY',
+  OPERATOR_ID: 'OPERATOR_ID',
+  PARTY_CD: 'PARTY_CD',
+  PARTY_NM: 'PARTY_NM',
   CREATEDAT: 'CREATEDAT'
 } as const
 
@@ -157,20 +161,20 @@ export const DispatchSessionScalarFieldEnum = {
   PARTY_CD: 'PARTY_CD',
   PARTY_NM: 'PARTY_NM',
   VEHICLE_NO: 'VEHICLE_NO',
-  BILTY_NO: 'BILTY_NO',
   TRANSPORTER: 'TRANSPORTER',
   DRIVER_NAME: 'DRIVER_NAME',
   DRIVER_NO: 'DRIVER_NO',
   GRR_NO: 'GRR_NO',
-  GROSS_WT: 'GROSS_WT',
-  TARE_WT: 'TARE_WT',
-  TOTAL_WT: 'TOTAL_WT',
-  TOTAL_FREIGHT: 'TOTAL_FREIGHT',
-  ADVANCE: 'ADVANCE',
-  BALANCE: 'BALANCE',
   STATUS: 'STATUS',
   DONE_BY: 'DONE_BY',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  ADVANCE: 'ADVANCE',
+  BALANCE: 'BALANCE',
+  BILTY_NO: 'BILTY_NO',
+  GROSS_WT: 'GROSS_WT',
+  TARE_WT: 'TARE_WT',
+  TOTAL_FREIGHT: 'TOTAL_FREIGHT',
+  TOTAL_WT: 'TOTAL_WT'
 } as const
 
 export type DispatchSessionScalarFieldEnum = (typeof DispatchSessionScalarFieldEnum)[keyof typeof DispatchSessionScalarFieldEnum]
@@ -279,6 +283,16 @@ export const MstunitScalarFieldEnum = {
 } as const
 
 export type MstunitScalarFieldEnum = (typeof MstunitScalarFieldEnum)[keyof typeof MstunitScalarFieldEnum]
+
+
+export const MstpackingsuppScalarFieldEnum = {
+  ledcd: 'ledcd',
+  lednm: 'lednm',
+  ledadr1: 'ledadr1',
+  mobile: 'mobile'
+} as const
+
+export type MstpackingsuppScalarFieldEnum = (typeof MstpackingsuppScalarFieldEnum)[keyof typeof MstpackingsuppScalarFieldEnum]
 
 
 export const SortOrder = {

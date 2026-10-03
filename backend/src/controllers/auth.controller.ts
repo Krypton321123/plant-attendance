@@ -23,20 +23,27 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: 'Incorrect PIN' });
     }
 
-    if (!employee.DEVICEID) {
-      // Shouldn't normally happen since DEVICEID is bound at signup,
-      // but guard against employees created directly in the DB without one.
-      return res.status(403).json({
-        success: false,
-        message: 'This account has no device on file. Contact an admin.',
-      });
-    }
+    // Admins aren't tied to a device: they can sign in from any phone or
+    // emulator, and the app then lets them choose which role to use it as.
+    // Everyone else keeps the one-PIN-one-device rule below.
+    const isAdmin = employee.EMPTYPE === 'ADMIN';
 
-    if (employee.DEVICEID !== deviceId) {
-      return res.status(403).json({
-        success: false,
-        message: 'This PIN is already registered on a different device. Contact an admin if you need it reset.',
-      });
+    if (!isAdmin) {
+      if (!employee.DEVICEID) {
+        // Shouldn't normally happen since DEVICEID is bound at signup,
+        // but guard against employees created directly in the DB without one.
+        return res.status(403).json({
+          success: false,
+          message: 'This account has no device on file. Contact an admin.',
+        });
+      }
+
+      if (employee.DEVICEID !== deviceId) {
+        return res.status(403).json({
+          success: false,
+          message: 'This PIN is already registered on a different device. Contact an admin if you need it reset.',
+        });
+      }
     }
 
     if (employee.STATUS !== 'A') {

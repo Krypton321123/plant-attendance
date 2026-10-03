@@ -35,6 +35,7 @@ import {
   getWastageHistory,
   getWastageItems,
   getWastageMonthlyHistory,
+  getWastageParties,
   submitWastageEntries,
 } from './controllers/wastage.controller';
 import {
@@ -96,6 +97,7 @@ router.post('/wastage/submit',              submitWastageEntries);
 router.get('/wastage/today-entries',        getTodayWastageEntries);
 router.get('/wastage/history',              getWastageHistory);
 router.get('/wastage/monthly-history',      getWastageMonthlyHistory);
+router.get('/wastage/parties', getWastageParties);
 // ── Dispatch Routes ──────────────────────────────────────────────
 router.get('/dispatch/items',                              getDispatchItems);
 router.get('/dispatch/parties',                            getParties);

@@ -402,7 +402,8 @@ export const ModelName = {
   VisitorLog: 'VisitorLog',
   mstitm: 'mstitm',
   mstparty: 'mstparty',
-  mstunit: 'mstunit'
+  mstunit: 'mstunit',
+  mstpackingsupp: 'mstpackingsupp'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "dispatchLoadingEntry" | "portalUser" | "visitorLog" | "mstitm" | "mstparty" | "mstunit"
+    modelProps: "employee" | "attendance" | "fillingEntry" | "wastageEntry" | "dispatchSession" | "dispatchItem" | "dispatchEmptyItem" | "dispatchLoadingEntry" | "portalUser" | "visitorLog" | "mstitm" | "mstparty" | "mstunit" | "mstpackingsupp"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1172,6 +1173,36 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    mstpackingsupp: {
+      payload: Prisma.$mstpackingsuppPayload<ExtArgs>
+      fields: Prisma.mstpackingsuppFieldRefs
+      operations: {
+        findFirst: {
+          args: Prisma.mstpackingsuppFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$mstpackingsuppPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.mstpackingsuppFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$mstpackingsuppPayload>
+        }
+        findMany: {
+          args: Prisma.mstpackingsuppFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$mstpackingsuppPayload>[]
+        }
+        aggregate: {
+          args: Prisma.MstpackingsuppAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMstpackingsupp>
+        }
+        groupBy: {
+          args: Prisma.mstpackingsuppGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MstpackingsuppGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.mstpackingsuppCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MstpackingsuppCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1221,13 +1252,13 @@ export const EmployeeScalarFieldEnum = {
   DEVICEID: 'DEVICEID',
   STATUS: 'STATUS',
   EMPTYPE: 'EMPTYPE',
-  SALARY: 'SALARY',
+  CREATEDAT: 'CREATEDAT',
   LEAVE_APPLICABLE: 'LEAVE_APPLICABLE',
   LEAVE_DAYS: 'LEAVE_DAYS',
   DEPARTMENT: 'DEPARTMENT',
-  CREATEDAT: 'CREATEDAT',
-  MPIN: 'MPIN',
-  MOBILE: 'MOBILE'
+  SALARY: 'SALARY',
+  MOBILE: 'MOBILE',
+  MPIN: 'MPIN'
 } as const
 
 export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
@@ -1238,11 +1269,11 @@ export const AttendanceScalarFieldEnum = {
   CREATEDAT: 'CREATEDAT',
   PHOTO: 'PHOTO',
   LOCATION: 'LOCATION',
-  SHIFT: 'SHIFT',
-  LONG_VALUE: 'LONG_VALUE',
-  LAT_VALUE: 'LAT_VALUE',
   STATUS: 'STATUS',
   MARKED_BY: 'MARKED_BY',
+  SHIFT: 'SHIFT',
+  LAT_VALUE: 'LAT_VALUE',
+  LONG_VALUE: 'LONG_VALUE',
   OT_STATUS: 'OT_STATUS'
 } as const
 
@@ -1255,12 +1286,12 @@ export const FillingEntryScalarFieldEnum = {
   ITMCD: 'ITMCD',
   ITMNM: 'ITMNM',
   ITMSUBCAT: 'ITMSUBCAT',
-  BATCH_NO: 'BATCH_NO',
   FILLING: 'FILLING',
   WASTAGE: 'WASTAGE',
   OPERATOR_ID: 'OPERATOR_ID',
   DONE_BY: 'DONE_BY',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  BATCH_NO: 'BATCH_NO'
 } as const
 
 export type FillingEntryScalarFieldEnum = (typeof FillingEntryScalarFieldEnum)[keyof typeof FillingEntryScalarFieldEnum]
@@ -1276,6 +1307,9 @@ export const WastageEntryScalarFieldEnum = {
   PCS_WASTAGE: 'PCS_WASTAGE',
   LOOSE_OIL: 'LOOSE_OIL',
   DONE_BY: 'DONE_BY',
+  OPERATOR_ID: 'OPERATOR_ID',
+  PARTY_CD: 'PARTY_CD',
+  PARTY_NM: 'PARTY_NM',
   CREATEDAT: 'CREATEDAT'
 } as const
 
@@ -1288,20 +1322,20 @@ export const DispatchSessionScalarFieldEnum = {
   PARTY_CD: 'PARTY_CD',
   PARTY_NM: 'PARTY_NM',
   VEHICLE_NO: 'VEHICLE_NO',
-  BILTY_NO: 'BILTY_NO',
   TRANSPORTER: 'TRANSPORTER',
   DRIVER_NAME: 'DRIVER_NAME',
   DRIVER_NO: 'DRIVER_NO',
   GRR_NO: 'GRR_NO',
-  GROSS_WT: 'GROSS_WT',
-  TARE_WT: 'TARE_WT',
-  TOTAL_WT: 'TOTAL_WT',
-  TOTAL_FREIGHT: 'TOTAL_FREIGHT',
-  ADVANCE: 'ADVANCE',
-  BALANCE: 'BALANCE',
   STATUS: 'STATUS',
   DONE_BY: 'DONE_BY',
-  CREATEDAT: 'CREATEDAT'
+  CREATEDAT: 'CREATEDAT',
+  ADVANCE: 'ADVANCE',
+  BALANCE: 'BALANCE',
+  BILTY_NO: 'BILTY_NO',
+  GROSS_WT: 'GROSS_WT',
+  TARE_WT: 'TARE_WT',
+  TOTAL_FREIGHT: 'TOTAL_FREIGHT',
+  TOTAL_WT: 'TOTAL_WT'
 } as const
 
 export type DispatchSessionScalarFieldEnum = (typeof DispatchSessionScalarFieldEnum)[keyof typeof DispatchSessionScalarFieldEnum]
@@ -1412,6 +1446,16 @@ export const MstunitScalarFieldEnum = {
 export type MstunitScalarFieldEnum = (typeof MstunitScalarFieldEnum)[keyof typeof MstunitScalarFieldEnum]
 
 
+export const MstpackingsuppScalarFieldEnum = {
+  ledcd: 'ledcd',
+  lednm: 'lednm',
+  ledadr1: 'ledadr1',
+  mobile: 'mobile'
+} as const
+
+export type MstpackingsuppScalarFieldEnum = (typeof MstpackingsuppScalarFieldEnum)[keyof typeof MstpackingsuppScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1442,9 +1486,9 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'DateTime'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
     
 
 
@@ -1456,9 +1500,9 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'DateTime'
+ * Reference to a field of type 'Int'
  */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 
@@ -1582,6 +1626,7 @@ export type GlobalOmitConfig = {
   mstitm?: Prisma.mstitmOmit
   mstparty?: Prisma.mstpartyOmit
   mstunit?: Prisma.mstunitOmit
+  mstpackingsupp?: Prisma.mstpackingsuppOmit
 }
 
 /* Types for Logging */

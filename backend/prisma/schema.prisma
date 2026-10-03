@@ -11,48 +11,44 @@ datasource db {
 }
 
 model Employee {
-  EMP_ID              String         @id @default(cuid())
-  EMPNAME              String
-  EMPFNAME             String
-  EMPPROFILEPHOTO      String?
-  EMPDESG              String
-  DEVICEID             String?           
-  STATUS               String         @default("NA")
-  EMPTYPE              String
-  SALARY               Int?
-  LEAVE_APPLICABLE     Boolean?
-  LEAVE_DAYS           Int            @default(0)
-  DEPARTMENT           String?        @default("")
-  CREATEDAT            DateTime       @default(now())
-  MPIN                 String?           
-  MOBILE               String?                  
-  attendances          Attendance[]
-  fillingAsOperator    FillingEntry[] @relation("FillingOperator")
-  fillingAsSupervisor  FillingEntry[] @relation("FillingDoneBy")
-  wastageEntries       WastageEntry[] @relation("WastageDoneBy")
-  dispatchSession      DispatchSession[] @relation("DispatchDoneBy")
-  // Gate log relations. A guard (EMPTYPE = "GUARD") can appear on both sides
-  // of a VisitorLog row — the guard who logged the entry, and, separately,
-  // whichever guard later logged the exit (often a different guard, at a
-  // shift handoff), hence two distinct relation names.
-  visitorLogsCreated   VisitorLog[]   @relation("VisitorLoggedBy")
-  visitorLogsExited    VisitorLog[]   @relation("VisitorExitLoggedBy")
+  EMP_ID              String            @id @default(cuid())
+  EMPNAME             String
+  EMPFNAME            String
+  EMPPROFILEPHOTO     String?
+  EMPDESG             String
+  DEVICEID            String?
+  STATUS              String            @default("NA")
+  EMPTYPE             String
+  CREATEDAT           DateTime          @default(now())
+  LEAVE_APPLICABLE    Boolean?
+  LEAVE_DAYS          Int               @default(0)
+  DEPARTMENT          String?           @default("")
+  SALARY              Int?
+  MOBILE              String?
+  MPIN                String?
+  attendances         Attendance[]
+  dispatchSession     DispatchSession[] @relation("DispatchDoneBy")
+  fillingAsSupervisor FillingEntry[]    @relation("FillingDoneBy")
+  fillingAsOperator   FillingEntry[]    @relation("FillingOperator")
+  visitorLogsExited   VisitorLog[]      @relation("VisitorExitLoggedBy")
+  visitorLogsCreated  VisitorLog[]      @relation("VisitorLoggedBy")
+  wastageEntries      WastageEntry[]    @relation("WastageDoneBy")
+  wastageAsOperator   WastageEntry[]    @relation("WastageOperator")
 
   @@map("employees")
 }
-
 
 model Attendance {
   EMP_ID     String
   CREATEDAT  DateTime @default(now())
   PHOTO      String?
   LOCATION   String?
-  SHIFT      String?
-  LONG_VALUE String?
-  LAT_VALUE  String?
   STATUS     String
   MARKED_BY  String?
-  OT_STATUS  String?  // "OT" | "HALF_OT" | "NO_OT" — set once by supervisor, nullable until chosen
+  SHIFT      String?
+  LAT_VALUE  String?
+  LONG_VALUE String?
+  OT_STATUS  String?
   employee   Employee @relation(fields: [EMP_ID], references: [EMP_ID])
 
   @@id([EMP_ID, CREATEDAT])
@@ -65,105 +61,75 @@ model FillingEntry {
   ITMCD       String   @db.VarChar(50)
   ITMNM       String   @db.VarChar(250)
   ITMSUBCAT   String?  @db.VarChar(50)
-  BATCH_NO    String?  @db.VarChar(100)
   FILLING     Decimal  @db.Decimal(18, 3)
   WASTAGE     Decimal  @db.Decimal(18, 3)
   OPERATOR_ID String
   DONE_BY     String
   CREATEDAT   DateTime @default(now())
-
-  operator Employee @relation("FillingOperator", fields: [OPERATOR_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
-  doneBy   Employee @relation("FillingDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  BATCH_NO    String?  @db.VarChar(100)
+  doneBy      Employee @relation("FillingDoneBy", fields: [DONE_BY], references: [EMP_ID], onUpdate: NoAction)
+  operator    Employee @relation("FillingOperator", fields: [OPERATOR_ID], references: [EMP_ID], onUpdate: NoAction)
 
   @@map("filling_entries")
 }
 
 model WastageEntry {
-  ENTRY_ID       String   @id @default(cuid())
+  ENTRY_ID       String    @id @default(cuid())
   SESSION_ID     String
-  ITMCD          String   @db.VarChar(50)
-  ITMNM          String   @db.VarChar(250)
-  ITMSUBCAT      String?  @db.VarChar(50)
-  CARTON_WASTAGE Decimal  @db.Decimal(18, 3)
-  PCS_WASTAGE    Decimal  @db.Decimal(18, 3)
-  LOOSE_OIL      Decimal? @db.Decimal(18, 3)
+  ITMCD          String    @db.VarChar(50)
+  ITMNM          String    @db.VarChar(250)
+  ITMSUBCAT      String?   @db.VarChar(50)
+  CARTON_WASTAGE Decimal   @db.Decimal(18, 3)
+  PCS_WASTAGE    Decimal   @db.Decimal(18, 3)
+  LOOSE_OIL      Decimal?  @db.Decimal(18, 3)
   DONE_BY        String
-  CREATEDAT      DateTime @default(now())
-  doneBy         Employee @relation("WastageDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  OPERATOR_ID    String?
+  PARTY_CD       String?   @db.VarChar(250)
+  PARTY_NM       String?   @db.VarChar(250)
+  operator       Employee? @relation("WastageOperator", fields: [OPERATOR_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  CREATEDAT      DateTime  @default(now())
+  doneBy         Employee  @relation("WastageDoneBy", fields: [DONE_BY], references: [EMP_ID], onUpdate: NoAction)
 
   @@map("wastage_entries")
 }
 
-// STATUS lifecycle:
-//   DRAFT     — created by OFFICE, who fills Dispatch Details (party/depo +
-//                items) and Empty Material Details only. Fully editable by
-//                OFFICE. NOT visible to PPSUPERVISOR yet. Transporter and
-//                Weight/Freight fields are not collected at this stage and
-//                remain null.
-//   PENDING   — OFFICE has sent it (see the /send endpoint). Dispatch
-//                Details + Empty Material remain editable by OFFICE — right
-//                up until PPSUPERVISOR completes the session. Now visible in
-//                PPSUPERVISOR's queue for them to record loading entries.
-//   COMPLETED — PPSUPERVISOR has recorded loading entries (and avg weight
-//                per box) and completed their part. Dispatch Details + Empty
-//                Material are now frozen for OFFICE. OFFICE must now fill in
-//                Transporter Details and Weight/Freight Details for the
-//                first time (see the /finalize endpoint) — these fields do
-//                not exist before this point.
-//   FINALIZED — OFFICE has filled Transporter + Weight/Freight details and
-//                finalized the session. Locked for everyone.
 model DispatchSession {
-  SESSION_ID  String   @id @default(cuid())
-  DISPATCH_TO String   @db.VarChar(10)
-  PARTY_CD    String   @db.VarChar(250)
-  PARTY_NM    String   @db.VarChar(250)
-
-  // ── Transporter Details — filled by OFFICE at finalize time, i.e. only
-  // once STATUS is COMPLETED (after PPSUPERVISOR has finished loading).
-  // Always null before then. ──────────────────────────────────────────────
-  VEHICLE_NO  String?  @db.VarChar(100)
-  BILTY_NO    String?  @db.VarChar(100)
-  TRANSPORTER String?  @db.VarChar(250)
-  DRIVER_NAME String?  @db.VarChar(250)
-  DRIVER_NO   String?  @db.VarChar(50)
-  GRR_NO      String?  @db.VarChar(100)
-
-  // ── Weight & Freight Details — also filled by OFFICE at finalize time,
-  // alongside Transporter Details above. Always null before then. ─────────
-  GROSS_WT      Decimal? @db.Decimal(18, 3)
-  TARE_WT       Decimal? @db.Decimal(18, 3)
-  TOTAL_WT      Decimal? @db.Decimal(18, 3)
-  // Balance is always server-computed (TOTAL_FREIGHT - ADVANCE), never
-  // accepted directly from the client.
-  TOTAL_FREIGHT Decimal? @db.Decimal(18, 2)
-  ADVANCE       Decimal? @db.Decimal(18, 2)
-  BALANCE       Decimal? @db.Decimal(18, 2)
-
-  STATUS      String   @default("DRAFT")
-  DONE_BY     String
-  CREATEDAT   DateTime @default(now())
-  doneBy      Employee @relation("DispatchDoneBy", fields: [DONE_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
-  items       DispatchItem[]
-  emptyItems  DispatchEmptyItem[]
+  SESSION_ID    String              @id @default(cuid())
+  DISPATCH_TO   String              @db.VarChar(10)
+  PARTY_CD      String              @db.VarChar(250)
+  PARTY_NM      String              @db.VarChar(250)
+  VEHICLE_NO    String?             @db.VarChar(100)
+  TRANSPORTER   String?             @db.VarChar(250)
+  DRIVER_NAME   String?             @db.VarChar(250)
+  DRIVER_NO     String?             @db.VarChar(50)
+  GRR_NO        String?             @db.VarChar(100)
+  STATUS        String              @default("DRAFT")
+  DONE_BY       String
+  CREATEDAT     DateTime            @default(now())
+  ADVANCE       Decimal?            @db.Decimal(18, 2)
+  BALANCE       Decimal?            @db.Decimal(18, 2)
+  BILTY_NO      String?             @db.VarChar(100)
+  GROSS_WT      Decimal?            @db.Decimal(18, 3)
+  TARE_WT       Decimal?            @db.Decimal(18, 3)
+  TOTAL_FREIGHT Decimal?            @db.Decimal(18, 2)
+  TOTAL_WT      Decimal?            @db.Decimal(18, 3)
+  emptyItems    DispatchEmptyItem[]
+  items         DispatchItem[]
+  doneBy        Employee            @relation("DispatchDoneBy", fields: [DONE_BY], references: [EMP_ID], onUpdate: NoAction)
 
   @@map("dispatch_sessions")
 }
 
 model DispatchItem {
-  ITEM_ID         String                 @id @default(cuid())
-  SESSION_ID      String
-  ITMCD           String                 @db.VarChar(50)
-  ITMNM           String                 @db.VarChar(250)
-  QTY             Decimal                @db.Decimal(18, 3)
-  FULL_BOX_WT     Decimal?               @db.Decimal(18, 3)
-  // Actual measured average weight per box, entered by PPSUPERVISOR while
-  // recording loading entries (distinct from mstitm.wgtconv, which is a
-  // fixed catalog rate). Gross weight for the item = total boxes (from
-  // loadingEntries) * AVG_WT_PER_BOX. Nullable because it's only populated
-  // at complete-time, never at OFFICE create-time.
-  AVG_WT_PER_BOX  Decimal?               @db.Decimal(18, 3)
-  session         DispatchSession        @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
-  loadingEntries  DispatchLoadingEntry[]
+  ITEM_ID        String                 @id @default(cuid())
+  SESSION_ID     String
+  ITMCD          String                 @db.VarChar(50)
+  ITMNM          String                 @db.VarChar(250)
+  QTY            Decimal                @db.Decimal(18, 3)
+  FULL_BOX_WT    Decimal?               @db.Decimal(18, 3)
+  AVG_WT_PER_BOX Decimal?               @db.Decimal(18, 3)
+  session        DispatchSession        @relation(fields: [SESSION_ID], references: [SESSION_ID], onDelete: Cascade, onUpdate: NoAction)
+  loadingEntries DispatchLoadingEntry[]
 
   @@map("dispatch_items")
 }
@@ -179,11 +145,6 @@ model DispatchEmptyItem {
   @@map("dispatch_empty_items")
 }
 
-// One row per "stack arrangement" a supervisor records for a dispatch item.
-// Box count for the row = LENGTH * WIDTH * HEIGHT + EXTRA (EXTRA may be negative,
-// e.g. a stack that came up short of a full grid). An item's total box count is
-// the sum of this expression across all of its loading entries; total weight is
-// that box count multiplied by mstitm.wgtconv for the item.
 model DispatchLoadingEntry {
   ENTRY_ID  String       @id @default(cuid())
   ITEM_ID   String
@@ -209,32 +170,22 @@ model PortalUser {
   @@map("portal_users")
 }
 
-// A gate-log entry for a person or vehicle passing through the factory gate.
-// Deliberately NOT modeled as an Attendance row: the subject being logged
-// (a visitor, a driver) is not an Employee and has no EMP_ID — NAME is free
-// text, not a foreign key. LOGGED_BY / EXIT_LOGGED_BY are the only FKs, and
-// both point at the guard(s) who handled the entry/exit, never the visitor.
-//
-// EXIT_AT null = still inside. This is the entire "open vs closed" state —
-// the "currently inside" list guards see is just WHERE EXIT_AT IS NULL.
 model VisitorLog {
-  LOG_ID          String    @id @default(cuid())
-  ENTRY_TYPE      String    // "PERSON" | "VEHICLE"
-  NAME            String    // visitor's name, or driver's name when ENTRY_TYPE = "VEHICLE"
-  VEHICLE_NO      String?   // set only when ENTRY_TYPE = "VEHICLE"
-  PURPOSE         String
-  PHOTO           String?   // same path-join pattern as Attendance.PHOTO
-  ENTRY_AT        DateTime  @default(now())
-  EXIT_AT         DateTime?
-  LOGGED_BY       String
-  EXIT_LOGGED_BY  String?
-
-  loggedBy        Employee  @relation("VisitorLoggedBy", fields: [LOGGED_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
-  exitLoggedBy    Employee? @relation("VisitorExitLoggedBy", fields: [EXIT_LOGGED_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  LOG_ID         String    @id @default(cuid())
+  ENTRY_TYPE     String
+  NAME           String
+  VEHICLE_NO     String?
+  PURPOSE        String
+  PHOTO          String?
+  ENTRY_AT       DateTime  @default(now())
+  EXIT_AT        DateTime?
+  LOGGED_BY      String
+  EXIT_LOGGED_BY String?
+  exitLoggedBy   Employee? @relation("VisitorExitLoggedBy", fields: [EXIT_LOGGED_BY], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction)
+  loggedBy       Employee  @relation("VisitorLoggedBy", fields: [LOGGED_BY], references: [EMP_ID], onUpdate: NoAction)
 
   @@map("visitor_logs")
 }
-
 
 view mstitm {
   rowid     BigInt
@@ -264,4 +215,11 @@ view mstunit {
   untcd   String  @db.VarChar(50)
   untshnm String? @db.VarChar(50)
   untnm   String  @db.VarChar(250)
+}
+
+view mstpackingsupp {
+  ledcd   String  @db.VarChar(250)
+  lednm   String? @db.VarChar(250)
+  ledadr1 String? @db.VarChar(500)
+  mobile  String? @db.VarChar(100)
 }

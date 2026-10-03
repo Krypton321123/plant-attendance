@@ -82,3 +82,8 @@ export type mstparty = Prisma.mstpartyModel
  * 
  */
 export type mstunit = Prisma.mstunitModel
+/**
+ * Model mstpackingsupp
+ * 
+ */
+export type mstpackingsupp = Prisma.mstpackingsuppModel

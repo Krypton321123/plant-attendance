@@ -48,6 +48,9 @@ export type WastageEntryMinAggregateOutputType = {
   PCS_WASTAGE: runtime.Decimal | null
   LOOSE_OIL: runtime.Decimal | null
   DONE_BY: string | null
+  OPERATOR_ID: string | null
+  PARTY_CD: string | null
+  PARTY_NM: string | null
   CREATEDAT: Date | null
 }
 
@@ -61,6 +64,9 @@ export type WastageEntryMaxAggregateOutputType = {
   PCS_WASTAGE: runtime.Decimal | null
   LOOSE_OIL: runtime.Decimal | null
   DONE_BY: string | null
+  OPERATOR_ID: string | null
+  PARTY_CD: string | null
+  PARTY_NM: string | null
   CREATEDAT: Date | null
 }
 
@@ -74,6 +80,9 @@ export type WastageEntryCountAggregateOutputType = {
   PCS_WASTAGE: number
   LOOSE_OIL: number
   DONE_BY: number
+  OPERATOR_ID: number
+  PARTY_CD: number
+  PARTY_NM: number
   CREATEDAT: number
   _all: number
 }
@@ -101,6 +110,9 @@ export type WastageEntryMinAggregateInputType = {
   PCS_WASTAGE?: true
   LOOSE_OIL?: true
   DONE_BY?: true
+  OPERATOR_ID?: true
+  PARTY_CD?: true
+  PARTY_NM?: true
   CREATEDAT?: true
 }
 
@@ -114,6 +126,9 @@ export type WastageEntryMaxAggregateInputType = {
   PCS_WASTAGE?: true
   LOOSE_OIL?: true
   DONE_BY?: true
+  OPERATOR_ID?: true
+  PARTY_CD?: true
+  PARTY_NM?: true
   CREATEDAT?: true
 }
 
@@ -127,6 +142,9 @@ export type WastageEntryCountAggregateInputType = {
   PCS_WASTAGE?: true
   LOOSE_OIL?: true
   DONE_BY?: true
+  OPERATOR_ID?: true
+  PARTY_CD?: true
+  PARTY_NM?: true
   CREATEDAT?: true
   _all?: true
 }
@@ -227,6 +245,9 @@ export type WastageEntryGroupByOutputType = {
   PCS_WASTAGE: runtime.Decimal
   LOOSE_OIL: runtime.Decimal | null
   DONE_BY: string
+  OPERATOR_ID: string | null
+  PARTY_CD: string | null
+  PARTY_NM: string | null
   CREATEDAT: Date
   _count: WastageEntryCountAggregateOutputType | null
   _avg: WastageEntryAvgAggregateOutputType | null
@@ -263,7 +284,11 @@ export type WastageEntryWhereInput = {
   PCS_WASTAGE?: Prisma.DecimalFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.DecimalNullableFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringFilter<"WastageEntry"> | string
+  OPERATOR_ID?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_CD?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_NM?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
   CREATEDAT?: Prisma.DateTimeFilter<"WastageEntry"> | Date | string
+  operator?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
   doneBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }
 
@@ -277,7 +302,11 @@ export type WastageEntryOrderByWithRelationInput = {
   PCS_WASTAGE?: Prisma.SortOrder
   LOOSE_OIL?: Prisma.SortOrderInput | Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
+  OPERATOR_ID?: Prisma.SortOrderInput | Prisma.SortOrder
+  PARTY_CD?: Prisma.SortOrderInput | Prisma.SortOrder
+  PARTY_NM?: Prisma.SortOrderInput | Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
+  operator?: Prisma.EmployeeOrderByWithRelationInput
   doneBy?: Prisma.EmployeeOrderByWithRelationInput
 }
 
@@ -294,7 +323,11 @@ export type WastageEntryWhereUniqueInput = Prisma.AtLeast<{
   PCS_WASTAGE?: Prisma.DecimalFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.DecimalNullableFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringFilter<"WastageEntry"> | string
+  OPERATOR_ID?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_CD?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_NM?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
   CREATEDAT?: Prisma.DateTimeFilter<"WastageEntry"> | Date | string
+  operator?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
   doneBy?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }, "ENTRY_ID">
 
@@ -308,6 +341,9 @@ export type WastageEntryOrderByWithAggregationInput = {
   PCS_WASTAGE?: Prisma.SortOrder
   LOOSE_OIL?: Prisma.SortOrderInput | Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
+  OPERATOR_ID?: Prisma.SortOrderInput | Prisma.SortOrder
+  PARTY_CD?: Prisma.SortOrderInput | Prisma.SortOrder
+  PARTY_NM?: Prisma.SortOrderInput | Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
   _count?: Prisma.WastageEntryCountOrderByAggregateInput
   _avg?: Prisma.WastageEntryAvgOrderByAggregateInput
@@ -329,6 +365,9 @@ export type WastageEntryScalarWhereWithAggregatesInput = {
   PCS_WASTAGE?: Prisma.DecimalWithAggregatesFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.DecimalNullableWithAggregatesFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringWithAggregatesFilter<"WastageEntry"> | string
+  OPERATOR_ID?: Prisma.StringNullableWithAggregatesFilter<"WastageEntry"> | string | null
+  PARTY_CD?: Prisma.StringNullableWithAggregatesFilter<"WastageEntry"> | string | null
+  PARTY_NM?: Prisma.StringNullableWithAggregatesFilter<"WastageEntry"> | string | null
   CREATEDAT?: Prisma.DateTimeWithAggregatesFilter<"WastageEntry"> | Date | string
 }
 
@@ -341,7 +380,10 @@ export type WastageEntryCreateInput = {
   CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
+  operator?: Prisma.EmployeeCreateNestedOneWithoutWastageAsOperatorInput
   doneBy: Prisma.EmployeeCreateNestedOneWithoutWastageEntriesInput
 }
 
@@ -355,6 +397,9 @@ export type WastageEntryUncheckedCreateInput = {
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY: string
+  OPERATOR_ID?: string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
 }
 
@@ -367,7 +412,10 @@ export type WastageEntryUpdateInput = {
   CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  operator?: Prisma.EmployeeUpdateOneWithoutWastageAsOperatorNestedInput
   doneBy?: Prisma.EmployeeUpdateOneRequiredWithoutWastageEntriesNestedInput
 }
 
@@ -381,6 +429,9 @@ export type WastageEntryUncheckedUpdateInput = {
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
+  OPERATOR_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -394,6 +445,9 @@ export type WastageEntryCreateManyInput = {
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY: string
+  OPERATOR_ID?: string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
 }
 
@@ -406,6 +460,8 @@ export type WastageEntryUpdateManyMutationInput = {
   CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -419,6 +475,9 @@ export type WastageEntryUncheckedUpdateManyInput = {
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
+  OPERATOR_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -442,6 +501,9 @@ export type WastageEntryCountOrderByAggregateInput = {
   PCS_WASTAGE?: Prisma.SortOrder
   LOOSE_OIL?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
+  OPERATOR_ID?: Prisma.SortOrder
+  PARTY_CD?: Prisma.SortOrder
+  PARTY_NM?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
 }
 
@@ -461,6 +523,9 @@ export type WastageEntryMaxOrderByAggregateInput = {
   PCS_WASTAGE?: Prisma.SortOrder
   LOOSE_OIL?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
+  OPERATOR_ID?: Prisma.SortOrder
+  PARTY_CD?: Prisma.SortOrder
+  PARTY_NM?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
 }
 
@@ -474,6 +539,9 @@ export type WastageEntryMinOrderByAggregateInput = {
   PCS_WASTAGE?: Prisma.SortOrder
   LOOSE_OIL?: Prisma.SortOrder
   DONE_BY?: Prisma.SortOrder
+  OPERATOR_ID?: Prisma.SortOrder
+  PARTY_CD?: Prisma.SortOrder
+  PARTY_NM?: Prisma.SortOrder
   CREATEDAT?: Prisma.SortOrder
 }
 
@@ -490,10 +558,24 @@ export type WastageEntryCreateNestedManyWithoutDoneByInput = {
   connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
 }
 
+export type WastageEntryCreateNestedManyWithoutOperatorInput = {
+  create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput> | Prisma.WastageEntryCreateWithoutOperatorInput[] | Prisma.WastageEntryUncheckedCreateWithoutOperatorInput[]
+  connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutOperatorInput | Prisma.WastageEntryCreateOrConnectWithoutOperatorInput[]
+  createMany?: Prisma.WastageEntryCreateManyOperatorInputEnvelope
+  connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+}
+
 export type WastageEntryUncheckedCreateNestedManyWithoutDoneByInput = {
   create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutDoneByInput, Prisma.WastageEntryUncheckedCreateWithoutDoneByInput> | Prisma.WastageEntryCreateWithoutDoneByInput[] | Prisma.WastageEntryUncheckedCreateWithoutDoneByInput[]
   connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutDoneByInput | Prisma.WastageEntryCreateOrConnectWithoutDoneByInput[]
   createMany?: Prisma.WastageEntryCreateManyDoneByInputEnvelope
+  connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+}
+
+export type WastageEntryUncheckedCreateNestedManyWithoutOperatorInput = {
+  create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput> | Prisma.WastageEntryCreateWithoutOperatorInput[] | Prisma.WastageEntryUncheckedCreateWithoutOperatorInput[]
+  connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutOperatorInput | Prisma.WastageEntryCreateOrConnectWithoutOperatorInput[]
+  createMany?: Prisma.WastageEntryCreateManyOperatorInputEnvelope
   connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
 }
 
@@ -511,6 +593,20 @@ export type WastageEntryUpdateManyWithoutDoneByNestedInput = {
   deleteMany?: Prisma.WastageEntryScalarWhereInput | Prisma.WastageEntryScalarWhereInput[]
 }
 
+export type WastageEntryUpdateManyWithoutOperatorNestedInput = {
+  create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput> | Prisma.WastageEntryCreateWithoutOperatorInput[] | Prisma.WastageEntryUncheckedCreateWithoutOperatorInput[]
+  connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutOperatorInput | Prisma.WastageEntryCreateOrConnectWithoutOperatorInput[]
+  upsert?: Prisma.WastageEntryUpsertWithWhereUniqueWithoutOperatorInput | Prisma.WastageEntryUpsertWithWhereUniqueWithoutOperatorInput[]
+  createMany?: Prisma.WastageEntryCreateManyOperatorInputEnvelope
+  set?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  disconnect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  delete?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  update?: Prisma.WastageEntryUpdateWithWhereUniqueWithoutOperatorInput | Prisma.WastageEntryUpdateWithWhereUniqueWithoutOperatorInput[]
+  updateMany?: Prisma.WastageEntryUpdateManyWithWhereWithoutOperatorInput | Prisma.WastageEntryUpdateManyWithWhereWithoutOperatorInput[]
+  deleteMany?: Prisma.WastageEntryScalarWhereInput | Prisma.WastageEntryScalarWhereInput[]
+}
+
 export type WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput = {
   create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutDoneByInput, Prisma.WastageEntryUncheckedCreateWithoutDoneByInput> | Prisma.WastageEntryCreateWithoutDoneByInput[] | Prisma.WastageEntryUncheckedCreateWithoutDoneByInput[]
   connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutDoneByInput | Prisma.WastageEntryCreateOrConnectWithoutDoneByInput[]
@@ -522,6 +618,20 @@ export type WastageEntryUncheckedUpdateManyWithoutDoneByNestedInput = {
   connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
   update?: Prisma.WastageEntryUpdateWithWhereUniqueWithoutDoneByInput | Prisma.WastageEntryUpdateWithWhereUniqueWithoutDoneByInput[]
   updateMany?: Prisma.WastageEntryUpdateManyWithWhereWithoutDoneByInput | Prisma.WastageEntryUpdateManyWithWhereWithoutDoneByInput[]
+  deleteMany?: Prisma.WastageEntryScalarWhereInput | Prisma.WastageEntryScalarWhereInput[]
+}
+
+export type WastageEntryUncheckedUpdateManyWithoutOperatorNestedInput = {
+  create?: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput> | Prisma.WastageEntryCreateWithoutOperatorInput[] | Prisma.WastageEntryUncheckedCreateWithoutOperatorInput[]
+  connectOrCreate?: Prisma.WastageEntryCreateOrConnectWithoutOperatorInput | Prisma.WastageEntryCreateOrConnectWithoutOperatorInput[]
+  upsert?: Prisma.WastageEntryUpsertWithWhereUniqueWithoutOperatorInput | Prisma.WastageEntryUpsertWithWhereUniqueWithoutOperatorInput[]
+  createMany?: Prisma.WastageEntryCreateManyOperatorInputEnvelope
+  set?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  disconnect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  delete?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  connect?: Prisma.WastageEntryWhereUniqueInput | Prisma.WastageEntryWhereUniqueInput[]
+  update?: Prisma.WastageEntryUpdateWithWhereUniqueWithoutOperatorInput | Prisma.WastageEntryUpdateWithWhereUniqueWithoutOperatorInput[]
+  updateMany?: Prisma.WastageEntryUpdateManyWithWhereWithoutOperatorInput | Prisma.WastageEntryUpdateManyWithWhereWithoutOperatorInput[]
   deleteMany?: Prisma.WastageEntryScalarWhereInput | Prisma.WastageEntryScalarWhereInput[]
 }
 
@@ -542,7 +652,10 @@ export type WastageEntryCreateWithoutDoneByInput = {
   CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
+  operator?: Prisma.EmployeeCreateNestedOneWithoutWastageAsOperatorInput
 }
 
 export type WastageEntryUncheckedCreateWithoutDoneByInput = {
@@ -554,6 +667,9 @@ export type WastageEntryUncheckedCreateWithoutDoneByInput = {
   CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  OPERATOR_ID?: string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
 }
 
@@ -564,6 +680,45 @@ export type WastageEntryCreateOrConnectWithoutDoneByInput = {
 
 export type WastageEntryCreateManyDoneByInputEnvelope = {
   data: Prisma.WastageEntryCreateManyDoneByInput | Prisma.WastageEntryCreateManyDoneByInput[]
+}
+
+export type WastageEntryCreateWithoutOperatorInput = {
+  ENTRY_ID?: string
+  SESSION_ID: string
+  ITMCD: string
+  ITMNM: string
+  ITMSUBCAT?: string | null
+  CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
+  CREATEDAT?: Date | string
+  doneBy: Prisma.EmployeeCreateNestedOneWithoutWastageEntriesInput
+}
+
+export type WastageEntryUncheckedCreateWithoutOperatorInput = {
+  ENTRY_ID?: string
+  SESSION_ID: string
+  ITMCD: string
+  ITMNM: string
+  ITMSUBCAT?: string | null
+  CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  DONE_BY: string
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
+  CREATEDAT?: Date | string
+}
+
+export type WastageEntryCreateOrConnectWithoutOperatorInput = {
+  where: Prisma.WastageEntryWhereUniqueInput
+  create: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput>
+}
+
+export type WastageEntryCreateManyOperatorInputEnvelope = {
+  data: Prisma.WastageEntryCreateManyOperatorInput | Prisma.WastageEntryCreateManyOperatorInput[]
 }
 
 export type WastageEntryUpsertWithWhereUniqueWithoutDoneByInput = {
@@ -595,7 +750,26 @@ export type WastageEntryScalarWhereInput = {
   PCS_WASTAGE?: Prisma.DecimalFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.DecimalNullableFilter<"WastageEntry"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   DONE_BY?: Prisma.StringFilter<"WastageEntry"> | string
+  OPERATOR_ID?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_CD?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
+  PARTY_NM?: Prisma.StringNullableFilter<"WastageEntry"> | string | null
   CREATEDAT?: Prisma.DateTimeFilter<"WastageEntry"> | Date | string
+}
+
+export type WastageEntryUpsertWithWhereUniqueWithoutOperatorInput = {
+  where: Prisma.WastageEntryWhereUniqueInput
+  update: Prisma.XOR<Prisma.WastageEntryUpdateWithoutOperatorInput, Prisma.WastageEntryUncheckedUpdateWithoutOperatorInput>
+  create: Prisma.XOR<Prisma.WastageEntryCreateWithoutOperatorInput, Prisma.WastageEntryUncheckedCreateWithoutOperatorInput>
+}
+
+export type WastageEntryUpdateWithWhereUniqueWithoutOperatorInput = {
+  where: Prisma.WastageEntryWhereUniqueInput
+  data: Prisma.XOR<Prisma.WastageEntryUpdateWithoutOperatorInput, Prisma.WastageEntryUncheckedUpdateWithoutOperatorInput>
+}
+
+export type WastageEntryUpdateManyWithWhereWithoutOperatorInput = {
+  where: Prisma.WastageEntryScalarWhereInput
+  data: Prisma.XOR<Prisma.WastageEntryUpdateManyMutationInput, Prisma.WastageEntryUncheckedUpdateManyWithoutOperatorInput>
 }
 
 export type WastageEntryCreateManyDoneByInput = {
@@ -607,6 +781,24 @@ export type WastageEntryCreateManyDoneByInput = {
   CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  OPERATOR_ID?: string | null
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
+  CREATEDAT?: Date | string
+}
+
+export type WastageEntryCreateManyOperatorInput = {
+  ENTRY_ID?: string
+  SESSION_ID: string
+  ITMCD: string
+  ITMNM: string
+  ITMSUBCAT?: string | null
+  CARTON_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE: runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  DONE_BY: string
+  PARTY_CD?: string | null
+  PARTY_NM?: string | null
   CREATEDAT?: Date | string
 }
 
@@ -619,7 +811,10 @@ export type WastageEntryUpdateWithoutDoneByInput = {
   CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  operator?: Prisma.EmployeeUpdateOneWithoutWastageAsOperatorNestedInput
 }
 
 export type WastageEntryUncheckedUpdateWithoutDoneByInput = {
@@ -631,6 +826,9 @@ export type WastageEntryUncheckedUpdateWithoutDoneByInput = {
   CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  OPERATOR_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -643,6 +841,54 @@ export type WastageEntryUncheckedUpdateManyWithoutDoneByInput = {
   CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  OPERATOR_ID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type WastageEntryUpdateWithoutOperatorInput = {
+  ENTRY_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  SESSION_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  doneBy?: Prisma.EmployeeUpdateOneRequiredWithoutWastageEntriesNestedInput
+}
+
+export type WastageEntryUncheckedUpdateWithoutOperatorInput = {
+  ENTRY_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  SESSION_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type WastageEntryUncheckedUpdateManyWithoutOperatorInput = {
+  ENTRY_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  SESSION_ID?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMCD?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMNM?: Prisma.StringFieldUpdateOperationsInput | string
+  ITMSUBCAT?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  CARTON_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  PCS_WASTAGE?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  LOOSE_OIL?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  DONE_BY?: Prisma.StringFieldUpdateOperationsInput | string
+  PARTY_CD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PARTY_NM?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   CREATEDAT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -658,7 +904,11 @@ export type WastageEntrySelect<ExtArgs extends runtime.Types.Extensions.Internal
   PCS_WASTAGE?: boolean
   LOOSE_OIL?: boolean
   DONE_BY?: boolean
+  OPERATOR_ID?: boolean
+  PARTY_CD?: boolean
+  PARTY_NM?: boolean
   CREATEDAT?: boolean
+  operator?: boolean | Prisma.WastageEntry$operatorArgs<ExtArgs>
   doneBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["wastageEntry"]>
 
@@ -674,17 +924,22 @@ export type WastageEntrySelectScalar = {
   PCS_WASTAGE?: boolean
   LOOSE_OIL?: boolean
   DONE_BY?: boolean
+  OPERATOR_ID?: boolean
+  PARTY_CD?: boolean
+  PARTY_NM?: boolean
   CREATEDAT?: boolean
 }
 
-export type WastageEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ENTRY_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "ITMSUBCAT" | "CARTON_WASTAGE" | "PCS_WASTAGE" | "LOOSE_OIL" | "DONE_BY" | "CREATEDAT", ExtArgs["result"]["wastageEntry"]>
+export type WastageEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"ENTRY_ID" | "SESSION_ID" | "ITMCD" | "ITMNM" | "ITMSUBCAT" | "CARTON_WASTAGE" | "PCS_WASTAGE" | "LOOSE_OIL" | "DONE_BY" | "OPERATOR_ID" | "PARTY_CD" | "PARTY_NM" | "CREATEDAT", ExtArgs["result"]["wastageEntry"]>
 export type WastageEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  operator?: boolean | Prisma.WastageEntry$operatorArgs<ExtArgs>
   doneBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
 
 export type $WastageEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WastageEntry"
   objects: {
+    operator: Prisma.$EmployeePayload<ExtArgs> | null
     doneBy: Prisma.$EmployeePayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -697,6 +952,9 @@ export type $WastageEntryPayload<ExtArgs extends runtime.Types.Extensions.Intern
     PCS_WASTAGE: runtime.Decimal
     LOOSE_OIL: runtime.Decimal | null
     DONE_BY: string
+    OPERATOR_ID: string | null
+    PARTY_CD: string | null
+    PARTY_NM: string | null
     CREATEDAT: Date
   }, ExtArgs["result"]["wastageEntry"]>
   composites: {}
@@ -1038,6 +1296,7 @@ readonly fields: WastageEntryFieldRefs;
  */
 export interface Prisma__WastageEntryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  operator<T extends Prisma.WastageEntry$operatorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WastageEntry$operatorArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   doneBy<T extends Prisma.EmployeeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeDefaultArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1077,6 +1336,9 @@ export interface WastageEntryFieldRefs {
   readonly PCS_WASTAGE: Prisma.FieldRef<"WastageEntry", 'Decimal'>
   readonly LOOSE_OIL: Prisma.FieldRef<"WastageEntry", 'Decimal'>
   readonly DONE_BY: Prisma.FieldRef<"WastageEntry", 'String'>
+  readonly OPERATOR_ID: Prisma.FieldRef<"WastageEntry", 'String'>
+  readonly PARTY_CD: Prisma.FieldRef<"WastageEntry", 'String'>
+  readonly PARTY_NM: Prisma.FieldRef<"WastageEntry", 'String'>
   readonly CREATEDAT: Prisma.FieldRef<"WastageEntry", 'DateTime'>
 }
     
@@ -1417,6 +1679,25 @@ export type WastageEntryDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many WastageEntries to delete.
    */
   limit?: number
+}
+
+/**
+ * WastageEntry.operator
+ */
+export type WastageEntry$operatorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Employee
+   */
+  select?: Prisma.EmployeeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Employee
+   */
+  omit?: Prisma.EmployeeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EmployeeInclude<ExtArgs> | null
+  where?: Prisma.EmployeeWhereInput
 }
 
 /**
