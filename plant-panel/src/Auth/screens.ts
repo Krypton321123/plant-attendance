@@ -25,7 +25,8 @@ export const SCREENS: ScreenDef[] = [
   { key: 'attendance', label: 'Attendance', path: '/attendance' },
   { key: 'payroll', label: 'Payroll', path: '/payroll' },
   { key: 'filling', label: 'Filling', path: '/filling' },
-  { key: 'wastage', label: 'Wastage', path: '/wastage' }
+  { key: 'wastage', label: 'Wastage', path: '/wastage' },
+  { key: 'visitors', label: 'Visitors', path: '/visitors'}
 ];
 
 export function isValidScreenKey(key: string): boolean {

@@ -235,6 +235,8 @@ export const VisitorLogScalarFieldEnum = {
   ENTRY_TYPE: 'ENTRY_TYPE',
   NAME: 'NAME',
   VEHICLE_NO: 'VEHICLE_NO',
+  PERSON_TO_MEET: 'PERSON_TO_MEET',
+  MOBILE: 'MOBILE',
   PURPOSE: 'PURPOSE',
   PHOTO: 'PHOTO',
   ENTRY_AT: 'ENTRY_AT',

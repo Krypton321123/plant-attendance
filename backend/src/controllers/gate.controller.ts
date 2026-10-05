@@ -4,10 +4,15 @@ import path from 'path';
 
 
 // ─── POST /gate/entry ─────────────────────────────────────────────────────────
-// Creates a new visitor/vehicle gate-entry log. The acting guard is `loggedBy`.
+// Creates a new gate-entry log. The acting guard is `loggedBy`.
 // Mirrors markAttendance's approved-actor check, but here EMPTYPE must also be
 // GUARD — gate logging is a guard-specific privilege. Remove the EMPTYPE check
 // below if you'd rather let any approved employee log entries.
+//
+// entryType is one of:
+//   EMPLOYEE — generic entry: name + purpose (+ photo).
+//   VISITOR  — name, personToMeet, purpose, 10-digit mobile, and an optional
+//              vehicleNo (+ photo). These extra columns stay null on EMPLOYEE rows.
 
 const getTodayRange = () => {
   const IST_OFFSET = 5.5 * 60 * 60 * 1000;
@@ -24,9 +29,18 @@ const getTodayRange = () => {
   return { start, end };
 };
 
+// Multipart text fields arrive as strings; anything else is treated as empty.
+const clean = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+
 export const createVisitorEntry = async (req: Request, res: Response) => {
   try {
-    const { entryType, name, vehicleNo, purpose, loggedBy } = req.body;
+    const entryType    = clean(req.body.entryType);
+    const name         = clean(req.body.name);
+    const purpose      = clean(req.body.purpose);
+    const loggedBy     = clean(req.body.loggedBy);
+    const personToMeet = clean(req.body.personToMeet);
+    const mobile       = clean(req.body.mobile);
+    const vehicleNo    = clean(req.body.vehicleNo).toUpperCase();
     const photo = req.file;
 
     if (!entryType || !name || !purpose || !loggedBy) {
@@ -35,11 +49,16 @@ export const createVisitorEntry = async (req: Request, res: Response) => {
         message: 'entryType, name, purpose, and loggedBy are required',
       });
     }
-    if (!['PERSON', 'VEHICLE'].includes(entryType)) {
-      return res.status(400).json({ success: false, message: 'entryType must be PERSON or VEHICLE' });
+    if (!['EMPLOYEE', 'VISITOR'].includes(entryType)) {
+      return res.status(400).json({ success: false, message: 'entryType must be EMPLOYEE or VISITOR' });
     }
-    if (entryType === 'VEHICLE' && !vehicleNo) {
-      return res.status(400).json({ success: false, message: 'vehicleNo is required for VEHICLE entries' });
+
+    const isVisitor = entryType === 'VISITOR';
+    if (isVisitor && !personToMeet) {
+      return res.status(400).json({ success: false, message: 'personToMeet is required for VISITOR entries' });
+    }
+    if (isVisitor && !/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ success: false, message: 'A valid 10-digit mobile number is required for VISITOR entries' });
     }
 
     const guard = await prisma.employee.findUnique({ where: { EMP_ID: loggedBy } });
@@ -49,7 +68,7 @@ export const createVisitorEntry = async (req: Request, res: Response) => {
     if (guard.STATUS !== 'A') {
       return res.status(403).json({ success: false, message: 'Guard not approved' });
     }
-    if (guard.EMPTYPE !== 'GUARD') {
+    if (guard.EMPTYPE !== 'ADMIN' && guard.EMPTYPE !== 'GUARD') {
       return res.status(403).json({ success: false, message: 'Only guards can log gate entries' });
     }
 
@@ -57,14 +76,16 @@ export const createVisitorEntry = async (req: Request, res: Response) => {
 
     const record = await prisma.visitorLog.create({
       data: {
-        ENTRY_TYPE: entryType,
-        NAME:       name,
-        VEHICLE_NO: entryType === 'VEHICLE' ? vehicleNo : null,
-        PURPOSE:    purpose,
-        PHOTO:      photoPath,
-        LOGGED_BY:  loggedBy,
-        ENTRY_AT:   new Date(),
-        EXIT_AT:    null,
+        ENTRY_TYPE:     entryType,
+        NAME:           name,
+        PERSON_TO_MEET: isVisitor ? personToMeet : null,
+        MOBILE:         isVisitor ? mobile : null,
+        VEHICLE_NO:     isVisitor && vehicleNo ? vehicleNo : null,
+        PURPOSE:        purpose,
+        PHOTO:          photoPath,
+        LOGGED_BY:      loggedBy,
+        ENTRY_AT:       new Date(),
+        EXIT_AT:        null,
       },
     });
 
@@ -99,7 +120,7 @@ export const markVisitorExit = async (req: Request, res: Response) => {
     if (guard.STATUS !== 'A') {
       return res.status(403).json({ success: false, message: 'Guard not approved' });
     }
-    if (guard.EMPTYPE !== 'GUARD') {
+    if (guard.EMPTYPE !== 'ADMIN' && guard.EMPTYPE !== 'GUARD') {
       return res.status(403).json({ success: false, message: 'Only guards can mark gate exits' });
     }
 
@@ -137,16 +158,18 @@ export const getActiveGateLog = async (_req: Request, res: Response) => {
     const records = await prisma.visitorLog.findMany({
       where: { EXIT_AT: null },
       select: {
-        LOG_ID:     true,
-        ENTRY_TYPE: true,
-        NAME:       true,
-        VEHICLE_NO: true,
-        PURPOSE:    true,
-        PHOTO:      true,
-        ENTRY_AT:   true,
-        EXIT_AT:    true,
-        LOGGED_BY:  true,
-        loggedBy:   { select: { EMPNAME: true } },
+        LOG_ID:         true,
+        ENTRY_TYPE:     true,
+        NAME:           true,
+        PERSON_TO_MEET: true,
+        MOBILE:         true,
+        VEHICLE_NO:     true,
+        PURPOSE:        true,
+        PHOTO:          true,
+        ENTRY_AT:       true,
+        EXIT_AT:        true,
+        LOGGED_BY:      true,
+        loggedBy:       { select: { EMPNAME: true } },
       },
       orderBy: { ENTRY_AT: 'desc' },
     });
@@ -159,13 +182,68 @@ export const getActiveGateLog = async (_req: Request, res: Response) => {
 };
 
 // ─── GET /gate/history ────────────────────────────────────────────────────────
-// Today's full gate log — entered and already-exited both. Uses the same IST
-// day-boundary helper as attendance, so "today" means the same thing across
-// the whole app. (attendance.controller.ts now exports getTodayRange for this.)
+// Full gate log — entered and already-exited both — for a date range.
+// Query: ?from=YYYY-MM-DD&to=YYYY-MM-DD. Both ends are inclusive and read as
+// IST calendar days, so "a day" means the same thing here as in getTodayRange
+// (and across the rest of the app). If only one end is given it's treated as a
+// single day; with neither, this returns today's log exactly as it did before
+// ranges were supported. Ranges are capped (MAX_RANGE_DAYS) so one request
+// can't pull the whole table.
 
-export const getGateHistory = async (_req: Request, res: Response) => {
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const MAX_RANGE_DAYS = 92;
+
+// 'YYYY-MM-DD' → the instant that IST day starts (or ends, to the millisecond).
+// Null when the string is malformed or isn't a real calendar date (2026-02-31).
+const parseIstDay = (ymd: string, endOfDay: boolean): Date | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) return null;
+
+  const y  = Number(m[1]);
+  const mo = Number(m[2]);
+  const d  = Number(m[3]);
+
+  const probe = new Date(Date.UTC(y, mo - 1, d));
+  if (
+    probe.getUTCFullYear() !== y ||
+    probe.getUTCMonth() !== mo - 1 ||
+    probe.getUTCDate() !== d
+  ) {
+    return null;
+  }
+
+  const utcMs = endOfDay ? Date.UTC(y, mo - 1, d, 23, 59, 59, 999) : probe.getTime();
+  return new Date(utcMs - IST_OFFSET_MS);
+};
+
+export const getGateHistory = async (req: Request, res: Response) => {
   try {
-    const { start, end } = getTodayRange();
+    const fromRaw = clean(req.query.from);
+    const toRaw   = clean(req.query.to);
+
+    // One end alone means a single day; neither means today.
+    const fromDay = fromRaw || toRaw;
+    const toDay   = toRaw || fromRaw;
+    const today   = getTodayRange();
+
+    const start = fromDay ? parseIstDay(fromDay, false) : today.start;
+    const end   = toDay   ? parseIstDay(toDay, true)    : today.end;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        success: false,
+        message: 'from and to must be valid dates in YYYY-MM-DD format',
+      });
+    }
+    if (start.getTime() > end.getTime()) {
+      return res.status(400).json({ success: false, message: '"from" must not be after "to"' });
+    }
+    if (end.getTime() - start.getTime() > MAX_RANGE_DAYS * 24 * 60 * 60 * 1000) {
+      return res.status(400).json({
+        success: false,
+        message: `Date range cannot exceed ${MAX_RANGE_DAYS} days`,
+      });
+    }
 
     const records = await prisma.visitorLog.findMany({
       where: { ENTRY_AT: { gte: start, lte: end } },
@@ -173,6 +251,8 @@ export const getGateHistory = async (_req: Request, res: Response) => {
         LOG_ID:         true,
         ENTRY_TYPE:     true,
         NAME:           true,
+        PERSON_TO_MEET: true,
+        MOBILE:         true,
         VEHICLE_NO:     true,
         PURPOSE:        true,
         PHOTO:          true,
@@ -181,6 +261,7 @@ export const getGateHistory = async (_req: Request, res: Response) => {
         LOGGED_BY:      true,
         EXIT_LOGGED_BY: true,
         loggedBy:       { select: { EMPNAME: true } },
+        exitLoggedBy:   { select: { EMPNAME: true } },
       },
       orderBy: { ENTRY_AT: 'desc' },
     });

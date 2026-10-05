@@ -175,6 +175,8 @@ model VisitorLog {
   ENTRY_TYPE     String
   NAME           String
   VEHICLE_NO     String?
+  PERSON_TO_MEET String?
+  MOBILE         String?
   PURPOSE        String
   PHOTO          String?
   ENTRY_AT       DateTime  @default(now())

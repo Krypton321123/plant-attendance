@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Droplets,
   Trash2,
+  PersonStanding,
 } from 'lucide-react';
 import { useAuth } from './Auth/AuthContext';
 import { SCREENS } from './Auth/screens';
@@ -38,7 +39,8 @@ const SCREEN_ICONS: Record<string, typeof LayoutDashboard> = {
   attendance: LayoutDashboard,
   payroll: Wallet,
   filling: Droplets,
-  wastage: Trash2
+  wastage: Trash2,
+  visitors: PersonStanding
 };
 
 const NAV_GROUPS: { group: string; items: NavItem[] }[] = [

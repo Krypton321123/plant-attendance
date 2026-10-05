@@ -1,5 +1,12 @@
 import {
-  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Alert, Image,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useState } from "react";
@@ -11,8 +18,10 @@ import { C } from "../../constants/theme";
 
 type VisitorLogRecord = {
   LOG_ID: string;
-  ENTRY_TYPE: "PERSON" | "VEHICLE";
+  ENTRY_TYPE: "EMPLOYEE" | "VISITOR";
   NAME: string;
+  PERSON_TO_MEET: string | null;
+  MOBILE: string | null;
   VEHICLE_NO: string | null;
   PURPOSE: string;
   PHOTO: string | null;
@@ -24,13 +33,15 @@ type VisitorLogRecord = {
 
 export default function GateHomeScreen() {
   const router = useRouter();
-  const [employee,  setEmployee]  = useState<any>(null);
-  const [records,   setRecords]   = useState<VisitorLogRecord[]>([]);
-  const [loading,   setLoading]   = useState(true);
+  const [employee, setEmployee] = useState<any>(null);
+  const [records, setRecords] = useState<VisitorLogRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [exitingId, setExitingId] = useState<string | null>(null);
 
   useFocusEffect(
-    useCallback(() => { loadData(); }, [])
+    useCallback(() => {
+      loadData();
+    }, []),
   );
 
   const loadData = async () => {
@@ -38,7 +49,7 @@ export default function GateHomeScreen() {
       const raw = await AsyncStorage.getItem(STORAGE_KEYS.EMPLOYEE);
       if (raw) setEmployee(JSON.parse(raw));
 
-      const res  = await fetch(`${API_URL}/gate/active`);
+      const res = await fetch(`${API_URL}/gate/active`);
       const data = await res.json();
       if (data.success) setRecords(data.data);
     } catch (err) {
@@ -49,24 +60,27 @@ export default function GateHomeScreen() {
   };
 
   const confirmExit = (record: VisitorLogRecord) => {
-    Alert.alert(
-      "Mark Exit",
-      `Mark ${record.NAME} as exited?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Mark Exit", style: "destructive", onPress: () => markExit(record) },
-      ]
-    );
+    Alert.alert("Mark Exit", `Mark ${record.NAME} as exited?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Mark Exit",
+        style: "destructive",
+        onPress: () => markExit(record),
+      },
+    ]);
   };
 
   const markExit = async (record: VisitorLogRecord) => {
     if (!employee) return;
     setExitingId(record.LOG_ID);
     try {
-      const res  = await fetch(`${API_URL}/gate/exit`, {
-        method:  "PATCH",
+      const res = await fetch(`${API_URL}/gate/exit`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ logId: record.LOG_ID, exitLoggedBy: employee.EMP_ID }),
+        body: JSON.stringify({
+          logId: record.LOG_ID,
+          exitLoggedBy: employee.EMP_ID,
+        }),
       });
       const data = await res.json();
 
@@ -88,71 +102,111 @@ export default function GateHomeScreen() {
   };
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-  const renderItem = ({ item }: { item: VisitorLogRecord }) => (
-    <View style={styles.row}>
-      {item.PHOTO ? (
-        // Assumes UPLOADS_DIR is served statically at "/uploads" on the API
-        // host (e.g. app.use('/uploads', express.static(UPLOADS_DIR))).
-        // Adjust this base path if your server serves uploads differently.
-        <Image source={{ uri: `${API_URL}/uploads/${item.PHOTO}` }} style={styles.rowPhoto} />
-      ) : (
-        <View style={styles.rowPhotoPlaceholder}>
-          <Ionicons
-            name={item.ENTRY_TYPE === "VEHICLE" ? "car-outline" : "person-outline"}
-            size={22}
-            color={C.textMuted}
+  const renderItem = ({ item }: { item: VisitorLogRecord }) => {
+    const isVisitor = item.ENTRY_TYPE === "VISITOR";
+    const typeIcon = isVisitor ? "people-outline" : "briefcase-outline";
+    // Mobile and vehicle share one line; either may be missing.
+    const contactLine = [item.MOBILE, item.VEHICLE_NO]
+      .filter(Boolean)
+      .join("  ·  ");
+
+    return (
+      <View style={styles.row}>
+        {item.PHOTO ? (
+          // Assumes UPLOADS_DIR is served statically at "/uploads" on the API
+          // host (e.g. app.use('/uploads', express.static(UPLOADS_DIR))).
+          // Adjust this base path if your server serves uploads differently.
+          <Image
+            source={{
+              uri: `${API_URL.replace(/\/api\/?$/, "")}/uploads/${item.PHOTO}`,
+            }}
+            style={styles.rowPhoto}
           />
-        </View>
-      )}
+        ) : (
+          <View style={styles.rowPhotoPlaceholder}>
+            <Ionicons name={typeIcon} size={22} color={C.textMuted} />
+          </View>
+        )}
 
-      <View style={{ flex: 1 }}>
-        <View style={styles.rowTopLine}>
-          <Text style={styles.rowName} numberOfLines={1}>{item.NAME}</Text>
-          <View style={[styles.typeBadge, item.ENTRY_TYPE === "VEHICLE" && styles.typeBadgeVehicle]}>
-            <Ionicons
-              name={item.ENTRY_TYPE === "VEHICLE" ? "car-outline" : "person-outline"}
-              size={11}
-              color={item.ENTRY_TYPE === "VEHICLE" ? "#818CF8" : C.primary}
-            />
-            <Text style={[styles.typeBadgeText, item.ENTRY_TYPE === "VEHICLE" && styles.typeBadgeTextVehicle]}>
-              {item.ENTRY_TYPE}
+        <View style={{ flex: 1 }}>
+          <View style={styles.rowTopLine}>
+            <Text style={styles.rowName} numberOfLines={1}>
+              {item.NAME}
             </Text>
+            <View
+              style={[styles.typeBadge, isVisitor && styles.typeBadgeVisitor]}
+            >
+              <Ionicons
+                name={typeIcon}
+                size={11}
+                color={isVisitor ? "#818CF8" : C.primary}
+              />
+              <Text
+                style={[
+                  styles.typeBadgeText,
+                  isVisitor && styles.typeBadgeTextVisitor,
+                ]}
+              >
+                {item.ENTRY_TYPE}
+              </Text>
+            </View>
+          </View>
+
+          {isVisitor && item.PERSON_TO_MEET ? (
+            <Text style={styles.rowMeta} numberOfLines={1}>
+              To meet: {item.PERSON_TO_MEET}
+            </Text>
+          ) : null}
+          <Text style={styles.rowMeta} numberOfLines={1}>
+            {item.PURPOSE}
+          </Text>
+          {contactLine ? (
+            <Text style={styles.rowMeta} numberOfLines={1}>
+              {contactLine}
+            </Text>
+          ) : null}
+
+          <View style={styles.rowBottomLine}>
+            <Ionicons name="time-outline" size={12} color={C.textMuted} />
+            <Text style={styles.rowTime}>
+              Entered {formatTime(item.ENTRY_AT)}
+            </Text>
+            {item.loggedBy?.EMPNAME && (
+              <Text style={styles.rowTime}>· {item.loggedBy.EMPNAME}</Text>
+            )}
           </View>
         </View>
 
-        {item.VEHICLE_NO && <Text style={styles.rowMeta}>{item.VEHICLE_NO}</Text>}
-        <Text style={styles.rowMeta} numberOfLines={1}>{item.PURPOSE}</Text>
-
-        <View style={styles.rowBottomLine}>
-          <Ionicons name="time-outline" size={12} color={C.textMuted} />
-          <Text style={styles.rowTime}>Entered {formatTime(item.ENTRY_AT)}</Text>
-          {item.loggedBy?.EMPNAME && (
-            <Text style={styles.rowTime}>·  {item.loggedBy.EMPNAME}</Text>
+        <TouchableOpacity
+          style={styles.exitBtn}
+          onPress={() => confirmExit(item)}
+          disabled={exitingId === item.LOG_ID}
+        >
+          {exitingId === item.LOG_ID ? (
+            <ActivityIndicator size="small" color={C.red} />
+          ) : (
+            <Text style={styles.exitBtnText}>Mark Exit</Text>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
+    );
+  };
 
-      <TouchableOpacity
-        style={styles.exitBtn}
-        onPress={() => confirmExit(item)}
-        disabled={exitingId === item.LOG_ID}
-      >
-        {exitingId === item.LOG_ID ? (
-          <ActivityIndicator size="small" color={C.red} />
-        ) : (
-          <Text style={styles.exitBtnText}>Mark Exit</Text>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-
-  if (loading) return (
-    <SafeAreaView style={styles.container}>
-      <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 80 }} />
-    </SafeAreaView>
-  );
+  if (loading)
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator
+          size="large"
+          color={C.primary}
+          style={{ marginTop: 80 }}
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -162,11 +216,16 @@ export default function GateHomeScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Gate Entry Log</Text>
-          <Text style={styles.headerSub}>{records.length} currently inside</Text>
+          <Text style={styles.headerSub}>
+            {records.length} currently inside
+          </Text>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.newEntryBtn} onPress={() => router.push("/gate/new-entry")}>
+      <TouchableOpacity
+        style={styles.newEntryBtn}
+        onPress={() => router.push("/gate/new-entry")}
+      >
         <Ionicons name="add-circle-outline" size={20} color={C.textInverse} />
         <Text style={styles.newEntryBtnText}>New Entry</Text>
       </TouchableOpacity>
@@ -178,7 +237,11 @@ export default function GateHomeScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done-circle-outline" size={40} color={C.textMuted} />
+            <Ionicons
+              name="checkmark-done-circle-outline"
+              size={40}
+              color={C.textMuted}
+            />
             <Text style={styles.emptyStateText}>No one currently inside</Text>
           </View>
         }
@@ -190,50 +253,116 @@ export default function GateHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.pageBg },
   header: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   backBtn: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: C.cardBg, borderWidth: 1, borderColor: C.border,
-    justifyContent: "center", alignItems: "center",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.cardBg,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerTitle: { color: C.textPrimary, fontSize: 19, fontWeight: "800", letterSpacing: -0.3 },
-  headerSub:   { color: C.textMuted, fontSize: 13, marginTop: 2 },
+  headerTitle: {
+    color: C.textPrimary,
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  headerSub: { color: C.textMuted, fontSize: 13, marginTop: 2 },
   newEntryBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: C.primary, borderRadius: 14, paddingVertical: 15,
-    marginHorizontal: 20, marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: C.primary,
+    borderRadius: 14,
+    paddingVertical: 15,
+    marginHorizontal: 20,
+    marginBottom: 16,
   },
   newEntryBtnText: { color: C.textInverse, fontSize: 15, fontWeight: "800" },
   listContent: { paddingHorizontal: 20, paddingBottom: 24, flexGrow: 1 },
   row: {
-    flexDirection: "row", gap: 12, alignItems: "center",
-    backgroundColor: C.cardBg, borderRadius: 14, borderWidth: 1, borderColor: C.border,
-    padding: 12, marginBottom: 10,
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    backgroundColor: C.cardBg,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 12,
+    marginBottom: 10,
   },
-  rowPhoto: { width: 48, height: 48, borderRadius: 10, backgroundColor: C.inputBg },
+  rowPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+  },
   rowPhotoPlaceholder: {
-    width: 48, height: 48, borderRadius: 10, backgroundColor: C.inputBg,
-    justifyContent: "center", alignItems: "center",
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: C.inputBg,
+    justifyContent: "center",
+    alignItems: "center",
   },
   rowTopLine: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowName: { color: C.textPrimary, fontSize: 15, fontWeight: "700", flexShrink: 1 },
-  typeBadge: {
-    flexDirection: "row", alignItems: "center", gap: 3,
-    backgroundColor: C.primaryLight, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+  rowName: {
+    color: C.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
+    flexShrink: 1,
   },
-  typeBadgeVehicle: { backgroundColor: "#EEF2FF" },
-  typeBadgeText: { color: C.primary, fontSize: 9, fontWeight: "800", letterSpacing: 0.4 },
-  typeBadgeTextVehicle: { color: "#818CF8" },
+  typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: C.primaryLight,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  typeBadgeVisitor: { backgroundColor: "#EEF2FF" },
+  typeBadgeText: {
+    color: C.primary,
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  typeBadgeTextVisitor: { color: "#818CF8" },
   rowMeta: { color: C.textSecondary, fontSize: 12.5, marginTop: 2 },
-  rowBottomLine: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
+  rowBottomLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
   rowTime: { color: C.textMuted, fontSize: 11.5 },
   exitBtn: {
-    backgroundColor: C.redBg, borderWidth: 1, borderColor: C.redLight,
-    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, minWidth: 84, alignItems: "center",
+    backgroundColor: C.redBg,
+    borderWidth: 1,
+    borderColor: C.redLight,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    minWidth: 84,
+    alignItems: "center",
   },
   exitBtnText: { color: C.red, fontSize: 12.5, fontWeight: "700" },
-  emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 60, gap: 10 },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 60,
+    gap: 10,
+  },
   emptyStateText: { color: C.textMuted, fontSize: 14, fontWeight: "500" },
 });

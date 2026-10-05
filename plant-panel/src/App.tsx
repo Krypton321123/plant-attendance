@@ -9,6 +9,7 @@ import Attendance from './Attendance';
 import UserManagement from './UserManagement';
 import FillingRegister from './FillingRegister';
 import WastageRegister from './WastageRegister';
+import GateRegister from './VisitorRegister';
 
 /**
  * App.tsx — React Router v6 root.
@@ -73,6 +74,10 @@ export default function App() {
 <Route element={<ProtectedRoute screen="wastage" />}>
   <Route path="/wastage" element={<WastageRegister />} />
 </Route>
+<Route element={<ProtectedRoute screen="visitors" />}>
+  <Route path="/visitors" element={<GateRegister />} />
+</Route>
+
 
             {/* No `screen` prop — UserManagement checks req.user.isSuper on
                 the backend for every request it makes, and the route itself

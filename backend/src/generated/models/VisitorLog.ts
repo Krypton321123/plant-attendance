@@ -29,6 +29,8 @@ export type VisitorLogMinAggregateOutputType = {
   ENTRY_TYPE: string | null
   NAME: string | null
   VEHICLE_NO: string | null
+  PERSON_TO_MEET: string | null
+  MOBILE: string | null
   PURPOSE: string | null
   PHOTO: string | null
   ENTRY_AT: Date | null
@@ -42,6 +44,8 @@ export type VisitorLogMaxAggregateOutputType = {
   ENTRY_TYPE: string | null
   NAME: string | null
   VEHICLE_NO: string | null
+  PERSON_TO_MEET: string | null
+  MOBILE: string | null
   PURPOSE: string | null
   PHOTO: string | null
   ENTRY_AT: Date | null
@@ -55,6 +59,8 @@ export type VisitorLogCountAggregateOutputType = {
   ENTRY_TYPE: number
   NAME: number
   VEHICLE_NO: number
+  PERSON_TO_MEET: number
+  MOBILE: number
   PURPOSE: number
   PHOTO: number
   ENTRY_AT: number
@@ -70,6 +76,8 @@ export type VisitorLogMinAggregateInputType = {
   ENTRY_TYPE?: true
   NAME?: true
   VEHICLE_NO?: true
+  PERSON_TO_MEET?: true
+  MOBILE?: true
   PURPOSE?: true
   PHOTO?: true
   ENTRY_AT?: true
@@ -83,6 +91,8 @@ export type VisitorLogMaxAggregateInputType = {
   ENTRY_TYPE?: true
   NAME?: true
   VEHICLE_NO?: true
+  PERSON_TO_MEET?: true
+  MOBILE?: true
   PURPOSE?: true
   PHOTO?: true
   ENTRY_AT?: true
@@ -96,6 +106,8 @@ export type VisitorLogCountAggregateInputType = {
   ENTRY_TYPE?: true
   NAME?: true
   VEHICLE_NO?: true
+  PERSON_TO_MEET?: true
+  MOBILE?: true
   PURPOSE?: true
   PHOTO?: true
   ENTRY_AT?: true
@@ -182,6 +194,8 @@ export type VisitorLogGroupByOutputType = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO: string | null
+  PERSON_TO_MEET: string | null
+  MOBILE: string | null
   PURPOSE: string
   PHOTO: string | null
   ENTRY_AT: Date
@@ -216,6 +230,8 @@ export type VisitorLogWhereInput = {
   ENTRY_TYPE?: Prisma.StringFilter<"VisitorLog"> | string
   NAME?: Prisma.StringFilter<"VisitorLog"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  PERSON_TO_MEET?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  MOBILE?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   PURPOSE?: Prisma.StringFilter<"VisitorLog"> | string
   PHOTO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   ENTRY_AT?: Prisma.DateTimeFilter<"VisitorLog"> | Date | string
@@ -231,6 +247,8 @@ export type VisitorLogOrderByWithRelationInput = {
   ENTRY_TYPE?: Prisma.SortOrder
   NAME?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  PERSON_TO_MEET?: Prisma.SortOrderInput | Prisma.SortOrder
+  MOBILE?: Prisma.SortOrderInput | Prisma.SortOrder
   PURPOSE?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrderInput | Prisma.SortOrder
   ENTRY_AT?: Prisma.SortOrder
@@ -249,6 +267,8 @@ export type VisitorLogWhereUniqueInput = Prisma.AtLeast<{
   ENTRY_TYPE?: Prisma.StringFilter<"VisitorLog"> | string
   NAME?: Prisma.StringFilter<"VisitorLog"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  PERSON_TO_MEET?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  MOBILE?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   PURPOSE?: Prisma.StringFilter<"VisitorLog"> | string
   PHOTO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   ENTRY_AT?: Prisma.DateTimeFilter<"VisitorLog"> | Date | string
@@ -264,6 +284,8 @@ export type VisitorLogOrderByWithAggregationInput = {
   ENTRY_TYPE?: Prisma.SortOrder
   NAME?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrderInput | Prisma.SortOrder
+  PERSON_TO_MEET?: Prisma.SortOrderInput | Prisma.SortOrder
+  MOBILE?: Prisma.SortOrderInput | Prisma.SortOrder
   PURPOSE?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrderInput | Prisma.SortOrder
   ENTRY_AT?: Prisma.SortOrder
@@ -283,6 +305,8 @@ export type VisitorLogScalarWhereWithAggregatesInput = {
   ENTRY_TYPE?: Prisma.StringWithAggregatesFilter<"VisitorLog"> | string
   NAME?: Prisma.StringWithAggregatesFilter<"VisitorLog"> | string
   VEHICLE_NO?: Prisma.StringNullableWithAggregatesFilter<"VisitorLog"> | string | null
+  PERSON_TO_MEET?: Prisma.StringNullableWithAggregatesFilter<"VisitorLog"> | string | null
+  MOBILE?: Prisma.StringNullableWithAggregatesFilter<"VisitorLog"> | string | null
   PURPOSE?: Prisma.StringWithAggregatesFilter<"VisitorLog"> | string
   PHOTO?: Prisma.StringNullableWithAggregatesFilter<"VisitorLog"> | string | null
   ENTRY_AT?: Prisma.DateTimeWithAggregatesFilter<"VisitorLog"> | Date | string
@@ -296,6 +320,8 @@ export type VisitorLogCreateInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -309,6 +335,8 @@ export type VisitorLogUncheckedCreateInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -322,6 +350,8 @@ export type VisitorLogUpdateInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -335,6 +365,8 @@ export type VisitorLogUncheckedUpdateInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -348,6 +380,8 @@ export type VisitorLogCreateManyInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -361,6 +395,8 @@ export type VisitorLogUpdateManyMutationInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -372,6 +408,8 @@ export type VisitorLogUncheckedUpdateManyInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -395,6 +433,8 @@ export type VisitorLogCountOrderByAggregateInput = {
   ENTRY_TYPE?: Prisma.SortOrder
   NAME?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  PERSON_TO_MEET?: Prisma.SortOrder
+  MOBILE?: Prisma.SortOrder
   PURPOSE?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   ENTRY_AT?: Prisma.SortOrder
@@ -408,6 +448,8 @@ export type VisitorLogMaxOrderByAggregateInput = {
   ENTRY_TYPE?: Prisma.SortOrder
   NAME?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  PERSON_TO_MEET?: Prisma.SortOrder
+  MOBILE?: Prisma.SortOrder
   PURPOSE?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   ENTRY_AT?: Prisma.SortOrder
@@ -421,6 +463,8 @@ export type VisitorLogMinOrderByAggregateInput = {
   ENTRY_TYPE?: Prisma.SortOrder
   NAME?: Prisma.SortOrder
   VEHICLE_NO?: Prisma.SortOrder
+  PERSON_TO_MEET?: Prisma.SortOrder
+  MOBILE?: Prisma.SortOrder
   PURPOSE?: Prisma.SortOrder
   PHOTO?: Prisma.SortOrder
   ENTRY_AT?: Prisma.SortOrder
@@ -522,6 +566,8 @@ export type VisitorLogCreateWithoutExitLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -534,6 +580,8 @@ export type VisitorLogUncheckedCreateWithoutExitLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -555,6 +603,8 @@ export type VisitorLogCreateWithoutLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -567,6 +617,8 @@ export type VisitorLogUncheckedCreateWithoutLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -607,6 +659,8 @@ export type VisitorLogScalarWhereInput = {
   ENTRY_TYPE?: Prisma.StringFilter<"VisitorLog"> | string
   NAME?: Prisma.StringFilter<"VisitorLog"> | string
   VEHICLE_NO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  PERSON_TO_MEET?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
+  MOBILE?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   PURPOSE?: Prisma.StringFilter<"VisitorLog"> | string
   PHOTO?: Prisma.StringNullableFilter<"VisitorLog"> | string | null
   ENTRY_AT?: Prisma.DateTimeFilter<"VisitorLog"> | Date | string
@@ -636,6 +690,8 @@ export type VisitorLogCreateManyExitLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -648,6 +704,8 @@ export type VisitorLogCreateManyLoggedByInput = {
   ENTRY_TYPE: string
   NAME: string
   VEHICLE_NO?: string | null
+  PERSON_TO_MEET?: string | null
+  MOBILE?: string | null
   PURPOSE: string
   PHOTO?: string | null
   ENTRY_AT?: Date | string
@@ -660,6 +718,8 @@ export type VisitorLogUpdateWithoutExitLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -672,6 +732,8 @@ export type VisitorLogUncheckedUpdateWithoutExitLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -684,6 +746,8 @@ export type VisitorLogUncheckedUpdateManyWithoutExitLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -696,6 +760,8 @@ export type VisitorLogUpdateWithoutLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -708,6 +774,8 @@ export type VisitorLogUncheckedUpdateWithoutLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -720,6 +788,8 @@ export type VisitorLogUncheckedUpdateManyWithoutLoggedByInput = {
   ENTRY_TYPE?: Prisma.StringFieldUpdateOperationsInput | string
   NAME?: Prisma.StringFieldUpdateOperationsInput | string
   VEHICLE_NO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  PERSON_TO_MEET?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  MOBILE?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   PURPOSE?: Prisma.StringFieldUpdateOperationsInput | string
   PHOTO?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ENTRY_AT?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -734,6 +804,8 @@ export type VisitorLogSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   ENTRY_TYPE?: boolean
   NAME?: boolean
   VEHICLE_NO?: boolean
+  PERSON_TO_MEET?: boolean
+  MOBILE?: boolean
   PURPOSE?: boolean
   PHOTO?: boolean
   ENTRY_AT?: boolean
@@ -751,6 +823,8 @@ export type VisitorLogSelectScalar = {
   ENTRY_TYPE?: boolean
   NAME?: boolean
   VEHICLE_NO?: boolean
+  PERSON_TO_MEET?: boolean
+  MOBILE?: boolean
   PURPOSE?: boolean
   PHOTO?: boolean
   ENTRY_AT?: boolean
@@ -759,7 +833,7 @@ export type VisitorLogSelectScalar = {
   EXIT_LOGGED_BY?: boolean
 }
 
-export type VisitorLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"LOG_ID" | "ENTRY_TYPE" | "NAME" | "VEHICLE_NO" | "PURPOSE" | "PHOTO" | "ENTRY_AT" | "EXIT_AT" | "LOGGED_BY" | "EXIT_LOGGED_BY", ExtArgs["result"]["visitorLog"]>
+export type VisitorLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"LOG_ID" | "ENTRY_TYPE" | "NAME" | "VEHICLE_NO" | "PERSON_TO_MEET" | "MOBILE" | "PURPOSE" | "PHOTO" | "ENTRY_AT" | "EXIT_AT" | "LOGGED_BY" | "EXIT_LOGGED_BY", ExtArgs["result"]["visitorLog"]>
 export type VisitorLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   exitLoggedBy?: boolean | Prisma.VisitorLog$exitLoggedByArgs<ExtArgs>
   loggedBy?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
@@ -776,6 +850,8 @@ export type $VisitorLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
     ENTRY_TYPE: string
     NAME: string
     VEHICLE_NO: string | null
+    PERSON_TO_MEET: string | null
+    MOBILE: string | null
     PURPOSE: string
     PHOTO: string | null
     ENTRY_AT: Date
@@ -1157,6 +1233,8 @@ export interface VisitorLogFieldRefs {
   readonly ENTRY_TYPE: Prisma.FieldRef<"VisitorLog", 'String'>
   readonly NAME: Prisma.FieldRef<"VisitorLog", 'String'>
   readonly VEHICLE_NO: Prisma.FieldRef<"VisitorLog", 'String'>
+  readonly PERSON_TO_MEET: Prisma.FieldRef<"VisitorLog", 'String'>
+  readonly MOBILE: Prisma.FieldRef<"VisitorLog", 'String'>
   readonly PURPOSE: Prisma.FieldRef<"VisitorLog", 'String'>
   readonly PHOTO: Prisma.FieldRef<"VisitorLog", 'String'>
   readonly ENTRY_AT: Prisma.FieldRef<"VisitorLog", 'DateTime'>
