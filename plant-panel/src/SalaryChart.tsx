@@ -10,6 +10,7 @@ import {
   IndianRupee,
   ServerCrash,
   Printer,
+  Filter,
 } from "lucide-react";
 import SalaryReportPrint from "./SalaryReportPrint";
 // ════════════════════════════════════════════════════════════════════════
@@ -32,6 +33,8 @@ interface Employee {
   STATUS: ApprovalStatus;
   EMPPROFILEPHOTO: string | null;
   SALARY?: number | null;
+  // Free-text department from the employees table; null or blank when unset.
+  DEPARTMENT?: string | null;
 }
 
 interface AttendanceRecord {
@@ -186,6 +189,66 @@ function formatINR(amount: number | null | undefined): string {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Department filter helpers
+// ════════════════════════════════════════════════════════════════════════
+//
+// DEPARTMENT is free text on the employees table (nullable, defaults to ""),
+// so the dropdown is built from the distinct values the roster actually
+// contains instead of a hard-coded list. Employees with no department get
+// their own "No department" choice — otherwise they'd become unreachable
+// the moment any department is selected.
+
+// Sentinel <option> values for the two non-department choices. Deliberately
+// not something anyone would type into the DEPARTMENT field.
+const DEPT_ALL = "__ALL__";
+const DEPT_NONE = "__NONE__";
+
+interface DepartmentOptions {
+  names: string[]; // distinct, trimmed, non-empty, sorted A→Z
+  hasUnassigned: boolean; // at least one employee has no department
+}
+
+type HasDepartment = { DEPARTMENT?: string | null };
+
+function departmentOf(emp: HasDepartment): string {
+  return emp.DEPARTMENT?.trim() ?? "";
+}
+
+function buildDepartmentOptions(employees: HasDepartment[]): DepartmentOptions {
+  const names = new Set<string>();
+  let hasUnassigned = false;
+  for (const emp of employees) {
+    const dept = departmentOf(emp);
+    if (dept) names.add(dept);
+    else hasUnassigned = true;
+  }
+  return {
+    names: Array.from(names).sort((a, b) => a.localeCompare(b)),
+    hasUnassigned,
+  };
+}
+
+/** The selection to actually apply. If the chosen department no longer
+ *  exists in the roster (e.g. after a refresh or a failed reload), fall back
+ *  to "All" rather than leaving the page filtered down to nothing. */
+function resolveDepartment(
+  selected: string,
+  options: DepartmentOptions,
+): string {
+  if (selected === DEPT_ALL) return DEPT_ALL;
+  if (selected === DEPT_NONE) {
+    return options.hasUnassigned ? DEPT_NONE : DEPT_ALL;
+  }
+  return options.names.includes(selected) ? selected : DEPT_ALL;
+}
+
+function matchesDepartment(emp: HasDepartment, selected: string): boolean {
+  if (selected === DEPT_ALL) return true;
+  const dept = departmentOf(emp);
+  return selected === DEPT_NONE ? dept === "" : dept === selected;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -646,6 +709,88 @@ function RangeControls({ fromKey, toKey, onFrom, onTo }: RangeControlsProps) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// Row filters — department + payable only
+// ════════════════════════════════════════════════════════════════════════
+
+function DepartmentSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: DepartmentOptions;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">
+        Department
+      </span>
+      <div className="relative w-48">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={options.names.length === 0}
+          aria-label="Filter by department"
+          className="w-full cursor-pointer appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-8 font-mono text-sm text-zinc-800 transition-all hover:border-zinc-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value={DEPT_ALL}>All departments</option>
+          {options.names.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {options.hasUnassigned && (
+            <option value={DEPT_NONE}>No department</option>
+          )}
+        </select>
+        <svg
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// Same pill toggle as the Attendance page's "Present only". Hides anyone
+// with nothing payable for the range — a ₹0 total, or no salary on file.
+function PayableOnlyToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">
+        Rows
+      </span>
+      <button
+        onClick={() => onChange(!checked)}
+        aria-pressed={checked}
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] font-mono font-medium transition-colors ${
+          checked
+            ? "border-emerald-200 bg-emerald-50 text-emerald-600"
+            : "border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400 hover:text-zinc-600"
+        }`}
+      >
+        <Filter size={13} strokeWidth={2.5} />
+        Payable only
+      </button>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // Loading / empty / error states
 // ════════════════════════════════════════════════════════════════════════
 
@@ -681,9 +826,14 @@ function SkeletonRows({ dayCount }: { dayCount: number }) {
   );
 }
 
-/** Shown when the request succeeded but returned zero employees for this
- *  range — a genuinely empty result, distinct from EmptyStateError below. */
-function EmptyState() {
+/** Shown when the request succeeded but there are no rows to display: either
+ *  zero employees for this range, or "Payable only" hiding all of them.
+ *  Distinct from EmptyStateError below. */
+function EmptyState({
+  hiddenByPayableFilter = false,
+}: {
+  hiddenByPayableFilter?: boolean;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -692,8 +842,15 @@ function EmptyState() {
     >
       <Users size={22} className="mb-1 text-zinc-300" />
       <p className="text-sm font-medium text-zinc-400">
-        No employees to show for this range
+        {hiddenByPayableFilter
+          ? "No payable salary in this range"
+          : "No employees to show for this range"}
       </p>
+      {hiddenByPayableFilter && (
+        <p className="text-xs text-zinc-300">
+          {'Turn off "Payable only" to see everyone.'}
+        </p>
+      )}
     </motion.div>
   );
 }
@@ -864,6 +1021,11 @@ export default function SalaryChart() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
 
+  // Row filters. "Department" scopes the whole page (totals included);
+  // "Payable only" just hides rows that have nothing owed for the range.
+  const [department, setDepartment] = useState<string>(DEPT_ALL);
+  const [payableOnly, setPayableOnly] = useState<boolean>(false);
+
   const initialBounds = monthBoundsOf(getTodayISTKey());
   const [fromKey, setFromKey] = useState(initialBounds.from);
   const [toKey, setToKey] = useState(initialBounds.to);
@@ -929,6 +1091,23 @@ export default function SalaryChart() {
     return map;
   }, [records]);
 
+  // Dropdown options are the distinct DEPARTMENT values across the whole
+  // roster (not the filtered one), so picking a department never shrinks
+  // the list you're choosing from.
+  const departmentOptions = useMemo(
+    () => buildDepartmentOptions(employees),
+    [employees],
+  );
+  const activeDepartment = resolveDepartment(department, departmentOptions);
+
+  // The employees in scope for the chosen department. Totals, headcounts and
+  // the roster stat are all derived from this, so every figure on the page
+  // describes the department that's on screen.
+  const scopedEmployees = useMemo(
+    () => employees.filter((emp) => matchesDepartment(emp, activeDepartment)),
+    [employees, activeDepartment],
+  );
+
   // Per-employee total, computed once and reused for both the row totals
   // and the sortable header — this is the same figure that used to live in
   // the standalone EmployeeWiseSummary widget; folding it in here means the
@@ -936,7 +1115,7 @@ export default function SalaryChart() {
   // reading the same map instead of two separate calculations.
   const employeeTotals = useMemo(() => {
     const map = new Map<string, number | null>();
-    employees.forEach((emp) => {
+    scopedEmployees.forEach((emp) => {
       const noSalaryOnFile = emp.SALARY === null || emp.SALARY === undefined;
       if (noSalaryOnFile) {
         map.set(emp.EMP_ID, null);
@@ -951,7 +1130,7 @@ export default function SalaryChart() {
       map.set(emp.EMP_ID, total);
     });
     return map;
-  }, [employees, days, attendanceByEmpByDay]);
+  }, [scopedEmployees, days, attendanceByEmpByDay]);
 
   // Employees are always grouped by designation (EMPDESG) — there's no
   // toggle for this, it's the only mode. Within each group, employees sort
@@ -965,7 +1144,10 @@ export default function SalaryChart() {
 
   const groupedEmployees = useMemo(() => {
     const groups = new Map<string, Employee[]>();
-    employees.forEach((emp) => {
+    scopedEmployees.forEach((emp) => {
+      // "Payable only": skip anyone with nothing owed for the range — ₹0
+      // totals and employees with no salary on file (null) alike.
+      if (payableOnly && !((employeeTotals.get(emp.EMP_ID) ?? 0) > 0)) return;
       const desg = emp.EMPDESG?.trim() || UNSPECIFIED_DESG;
       if (!groups.has(desg)) groups.set(desg, []);
       groups.get(desg)!.push(emp);
@@ -983,11 +1165,11 @@ export default function SalaryChart() {
       designation,
       members: groups.get(designation)!,
     }));
-  }, [employees]);
+  }, [scopedEmployees, payableOnly, employeeTotals]);
 
-  // Flat list in group order — used for the empty-state check and anywhere
-  // that just needs "all employees, grouped order" without caring about
-  // the group boundaries themselves.
+  // Flat list of the rows on screen, in group order — used for the
+  // empty-state check and for the per-day figures (headcount and day
+  // totals), so those always describe exactly the rows being shown.
   const sortedEmployees = useMemo(
     () => groupedEmployees.flatMap((g) => g.members),
     [groupedEmployees],
@@ -1020,18 +1202,20 @@ export default function SalaryChart() {
 
   const employeesWithPay = useMemo(
     () =>
-      employees.filter((e) => e.SALARY !== null && e.SALARY !== undefined)
+      scopedEmployees.filter((e) => e.SALARY !== null && e.SALARY !== undefined)
         .length,
-    [employees],
+    [scopedEmployees],
   );
 
   // Per-day headcount — folded into each date column header instead of a
-  // separate strip. Headcount, not payroll: an employee with no salary on
-  // file still counts here, since presence and pay are separate facts.
+  // separate strip. Headcount, not payroll: with no filters on, an employee
+  // with no salary on file still counts here, since presence and pay are
+  // separate facts. It counts the rows currently on screen, so it follows
+  // the department filter and "Payable only".
   const dayWiseCounts = useMemo(() => {
     const map = new Map<string, number>();
     days.forEach((day) => {
-      const presentCount = employees.reduce((count, emp) => {
+      const presentCount = sortedEmployees.reduce((count, emp) => {
         const bucket = attendanceByEmpByDay[emp.EMP_ID]?.[day];
         const wasPresent =
           bucket?.day?.STATUS === "P" || bucket?.night?.STATUS === "P";
@@ -1040,7 +1224,7 @@ export default function SalaryChart() {
       map.set(day, presentCount);
     });
     return map;
-  }, [days, employees, attendanceByEmpByDay]);
+  }, [days, sortedEmployees, attendanceByEmpByDay]);
   // Per-day payroll total — how much is owed across everyone for that single
   // day. Distinct from dayWiseCounts (headcount): someone can be present with
   // no salary on file, or a regular shift can cost less than an OT one, so
@@ -1053,14 +1237,14 @@ export default function SalaryChart() {
   const dayWiseSalaryTotals = useMemo(() => {
     const map = new Map<string, number>();
     days.forEach((day) => {
-      const total = employees.reduce((sum, emp) => {
+      const total = sortedEmployees.reduce((sum, emp) => {
         const bucket = attendanceByEmpByDay[emp.EMP_ID]?.[day] || {};
         return sum + (dailySalary(emp.SALARY, bucket) ?? 0);
       }, 0);
       map.set(day, total);
     });
     return map;
-  }, [days, employees, attendanceByEmpByDay]);
+  }, [days, sortedEmployees, attendanceByEmpByDay]);
 
   const peakDay = useMemo(() => {
     let bestDay: string | null = null;
@@ -1178,7 +1362,7 @@ export default function SalaryChart() {
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-        className="mb-5"
+        className="mb-5 flex flex-wrap items-end gap-3"
       >
         <RangeControls
           fromKey={fromKey}
@@ -1186,6 +1370,12 @@ export default function SalaryChart() {
           onFrom={setFromKey}
           onTo={setToKey}
         />
+        <DepartmentSelect
+          value={activeDepartment}
+          options={departmentOptions}
+          onChange={setDepartment}
+        />
+        <PayableOnlyToggle checked={payableOnly} onChange={setPayableOnly} />
       </motion.div>
 
       {/* Stat blocks — now also carries the busiest-day figure that used to
@@ -1202,7 +1392,7 @@ export default function SalaryChart() {
           accent="zinc"
           items={[
             { label: "On payroll", value: employeesWithPay },
-            { label: "Total staff", value: employees.length },
+            { label: "Total staff", value: scopedEmployees.length },
           ]}
         />
         <StatBlock
@@ -1253,7 +1443,8 @@ export default function SalaryChart() {
               {days.map((day) => {
                 const count = dayWiseCounts.get(day) ?? 0;
                 const isFull =
-                  employees.length > 0 && count === employees.length;
+                  sortedEmployees.length > 0 &&
+                  count === sortedEmployees.length;
                 return (
                   <th
                     key={day}
@@ -1267,9 +1458,9 @@ export default function SalaryChart() {
                     </div>
                     <div
                       className={`mt-1 whitespace-nowrap font-mono text-[10px] font-normal normal-case ${isFull ? "text-emerald-600" : "text-zinc-300"}`}
-                      title={`${count} of ${employees.length} present`}
+                      title={`${count} of ${sortedEmployees.length} present`}
                     >
-                      {count}/{employees.length} in
+                      {count}/{sortedEmployees.length} in
                     </div>
                   </th>
                 );
@@ -1341,7 +1532,11 @@ export default function SalaryChart() {
             onRetry={() => load(fromKey, toKey)}
           />
         )}
-        {showTableContent && sortedEmployees.length === 0 && <EmptyState />}
+        {showTableContent && sortedEmployees.length === 0 && (
+          <EmptyState
+            hiddenByPayableFilter={payableOnly && scopedEmployees.length > 0}
+          />
+        )}
       </div>
 
       {/* Legend */}

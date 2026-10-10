@@ -36,6 +36,8 @@ interface Employee {
   EMPFNAME: string;
   EMPDESG: string;
   EMPTYPE: EmpType;
+  // Free-text department from the employees table; null or blank when unset.
+  DEPARTMENT?: string | null;
 }
 
 interface AttendanceRecord {
@@ -115,6 +117,66 @@ function initials(name: string = ""): string {
       .map((w) => w[0]?.toUpperCase() || "")
       .join("") || "?"
   );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Department filter helpers
+// ════════════════════════════════════════════════════════════════════════
+//
+// DEPARTMENT is free text on the employees table (nullable, defaults to ""),
+// so the dropdown is built from the distinct values the roster actually
+// contains instead of a hard-coded list. Employees with no department get
+// their own "No department" choice — otherwise they'd become unreachable
+// the moment any department is selected.
+
+// Sentinel <option> values for the two non-department choices. Deliberately
+// not something anyone would type into the DEPARTMENT field.
+const DEPT_ALL = "__ALL__";
+const DEPT_NONE = "__NONE__";
+
+interface DepartmentOptions {
+  names: string[]; // distinct, trimmed, non-empty, sorted A→Z
+  hasUnassigned: boolean; // at least one employee has no department
+}
+
+type HasDepartment = { DEPARTMENT?: string | null };
+
+function departmentOf(emp: HasDepartment): string {
+  return emp.DEPARTMENT?.trim() ?? "";
+}
+
+function buildDepartmentOptions(employees: HasDepartment[]): DepartmentOptions {
+  const names = new Set<string>();
+  let hasUnassigned = false;
+  for (const emp of employees) {
+    const dept = departmentOf(emp);
+    if (dept) names.add(dept);
+    else hasUnassigned = true;
+  }
+  return {
+    names: Array.from(names).sort((a, b) => a.localeCompare(b)),
+    hasUnassigned,
+  };
+}
+
+/** The selection to actually apply. If the chosen department no longer
+ *  exists in the roster (e.g. after a refresh), fall back to "All" rather
+ *  than leaving the page filtered down to nothing. */
+function resolveDepartment(
+  selected: string,
+  options: DepartmentOptions,
+): string {
+  if (selected === DEPT_ALL) return DEPT_ALL;
+  if (selected === DEPT_NONE) {
+    return options.hasUnassigned ? DEPT_NONE : DEPT_ALL;
+  }
+  return options.names.includes(selected) ? selected : DEPT_ALL;
+}
+
+function matchesDepartment(emp: HasDepartment, selected: string): boolean {
+  if (selected === DEPT_ALL) return true;
+  const dept = departmentOf(emp);
+  return selected === DEPT_NONE ? dept === "" : dept === selected;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -570,12 +632,14 @@ function SelectField({
   onChange,
   children,
   width = "w-36",
+  disabled = false,
 }: {
   label: string;
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   children: React.ReactNode;
   width?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -586,7 +650,8 @@ function SelectField({
         <select
           value={value}
           onChange={onChange}
-          className="w-full appearance-none bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-800 font-mono cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all hover:border-zinc-400 pr-8"
+          disabled={disabled}
+          className="w-full appearance-none bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-800 font-mono cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all hover:border-zinc-400 pr-8 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {children}
         </select>
@@ -702,6 +767,7 @@ export default function Attendance() {
   const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
   const [shift, setShift] = useState<ShiftFilter>("DAY");
   const [presentOnly, setPresentOnly] = useState<boolean>(false);
+  const [department, setDepartment] = useState<string>(DEPT_ALL);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -748,10 +814,32 @@ export default function Attendance() {
 
   const isCombined = shift === "BOTH";
 
+  // Dropdown options are the distinct DEPARTMENT values across the whole
+  // roster (not the filtered one), so picking a department never shrinks
+  // the list you're choosing from.
+  const departmentOptions = useMemo(
+    () => buildDepartmentOptions(employees),
+    [employees],
+  );
+  const activeDepartment = resolveDepartment(department, departmentOptions);
+
+  // Department filtering happens before the rows are built, so the table,
+  // the counts and the print sheet all work from the same set of employees.
+  const scopedEmployees = useMemo(
+    () => employees.filter((emp) => matchesDepartment(emp, activeDepartment)),
+    [employees, activeDepartment],
+  );
+
   const allRows = useMemo(
     () =>
-      buildMonthRows(employees, records, shift, selectedMonthIdx, selectedYear),
-    [employees, records, shift, selectedMonthIdx, selectedYear],
+      buildMonthRows(
+        scopedEmployees,
+        records,
+        shift,
+        selectedMonthIdx,
+        selectedYear,
+      ),
+    [scopedEmployees, records, shift, selectedMonthIdx, selectedYear],
   );
 
   // Present-only filter is applied after building rows, so switching it on
@@ -916,6 +1004,24 @@ export default function Attendance() {
           ))}
         </SelectField>
 
+        <SelectField
+          label="Department"
+          value={activeDepartment}
+          onChange={(e) => setDepartment(e.target.value)}
+          width="w-48"
+          disabled={departmentOptions.names.length === 0}
+        >
+          <option value={DEPT_ALL}>All departments</option>
+          {departmentOptions.names.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {departmentOptions.hasUnassigned && (
+            <option value={DEPT_NONE}>No department</option>
+          )}
+        </SelectField>
+
         <ShiftToggle shift={shift} onChange={setShift} />
 
         <PresentOnlyToggle checked={presentOnly} onChange={setPresentOnly} />
@@ -931,8 +1037,8 @@ export default function Attendance() {
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
               {rows.length} employee{rows.length === 1 ? "" : "s"}
-              {presentOnly && allRows.length !== rows.length && (
-                <span className="text-zinc-300">/ {allRows.length}</span>
+              {rows.length !== employees.length && (
+                <span className="text-zinc-300">/ {employees.length}</span>
               )}
             </motion.div>
           )}

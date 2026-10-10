@@ -17,6 +17,7 @@ export const getAllEmployees = async (_req: Request, res: Response) => {
         EMPTYPE: true,
         STATUS: true,
         SALARY: true,          // ← added: needed for the payroll-by-designation view
+        DEPARTMENT: true,
         EMPPROFILEPHOTO: true,
         DEVICEID: true,
       },
